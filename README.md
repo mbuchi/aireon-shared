@@ -11,7 +11,7 @@ Consumed directly from this Git repo, pinned to a release tag (no npm registry):
 ```jsonc
 // package.json of a consuming app
 "dependencies": {
-  "@swissnovo/shared": "github:mbuchi/swissnovo-shared#v0.1.0"
+  "@swissnovo/shared": "github:mbuchi/swissnovo-shared#v0.2.0"
 }
 ```
 

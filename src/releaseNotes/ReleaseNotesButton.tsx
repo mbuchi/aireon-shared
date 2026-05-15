@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import ReleaseNotesPanel from './ReleaseNotesPanel';
 import type { Release } from './types';
@@ -12,10 +12,12 @@ export interface ReleaseNotesButtonProps {
   storageKey: string;
   /** GitHub repo URL, used to link PRs. */
   repoUrl: string;
-  /** Brand name letters before the red "oo". */
-  brandPrefix: string;
-  /** Brand name letters after the red "oo". */
+  /** Brand name letters before the red "oo". Ignored if brandNode is set. */
+  brandPrefix?: string;
+  /** Brand name letters after the red "oo". Ignored if brandNode is set. */
   brandSuffix?: string;
+  /** Full custom wordmark, overriding brandPrefix/brandSuffix (e.g. toolbox's two red "oo"s). */
+  brandNode?: ReactNode;
   /** Stacking context for the panel overlay. Defaults to 60. */
   zIndex?: number;
   /** Extra classes for the pill button. */
@@ -28,6 +30,7 @@ export default function ReleaseNotesButton({
   repoUrl,
   brandPrefix,
   brandSuffix = '',
+  brandNode,
   zIndex = 60,
   className,
 }: ReleaseNotesButtonProps) {
@@ -101,6 +104,7 @@ export default function ReleaseNotesButton({
           repoUrl={repoUrl}
           brandPrefix={brandPrefix}
           brandSuffix={brandSuffix}
+          brandNode={brandNode}
           zIndex={zIndex}
         />
       )}

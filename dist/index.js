@@ -22,25 +22,31 @@ var KIND_META = {
     classes: "text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/30",
     dot: "bg-emerald-500"
   },
+  breaking: {
+    label: "Breaking",
+    classes: "text-rose-700 bg-rose-50 border-rose-200 dark:text-rose-400 dark:bg-rose-500/10 dark:border-rose-500/30",
+    dot: "bg-rose-500"
+  },
   docs: {
     label: "Docs",
     classes: "text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-300 dark:bg-sky-500/10 dark:border-sky-500/30",
     dot: "bg-sky-500"
   }
 };
-var FILTERS = [
-  { kind: "all", label: "All" },
+var ALL_FILTERS = [
   { kind: "new", label: "New" },
   { kind: "improved", label: "Improved" },
   { kind: "fixed", label: "Fixed" },
+  { kind: "breaking", label: "Breaking" },
   { kind: "docs", label: "Docs" }
 ];
 function ReleaseNotesPanel({
   onClose,
   releases,
   repoUrl,
-  brandPrefix,
+  brandPrefix = "",
   brandSuffix = "",
+  brandNode,
   zIndex = 60
 }) {
   const [visible, setVisible] = useState(false);
@@ -87,6 +93,13 @@ function ReleaseNotesPanel({
     };
   }, [releases]);
   const latest = totals.latest;
+  const filters = useMemo(() => {
+    const present = new Set(releases.flatMap((r) => r.items.map((i) => i.kind)));
+    return [
+      { kind: "all", label: "All" },
+      ...ALL_FILTERS.filter((f) => present.has(f.kind))
+    ];
+  }, [releases]);
   return createPortal(
     /* @__PURE__ */ jsxs(
       "div",
@@ -125,11 +138,11 @@ function ReleaseNotesPanel({
                       /* @__PURE__ */ jsxs("h1", { className: "text-xl font-semibold text-gray-900 dark:text-white", children: [
                         "What's new in",
                         " ",
-                        /* @__PURE__ */ jsxs("span", { className: "font-normal", style: { fontFamily: "'Varela Round', sans-serif" }, children: [
+                        /* @__PURE__ */ jsx("span", { className: "font-normal", style: { fontFamily: "'Varela Round', sans-serif" }, children: brandNode ?? /* @__PURE__ */ jsxs(Fragment, { children: [
                           brandPrefix,
                           /* @__PURE__ */ jsx("span", { className: "text-red-600", children: "oo" }),
                           brandSuffix
-                        ] })
+                        ] }) })
                       ] }),
                       /* @__PURE__ */ jsxs("p", { className: "mt-1 text-sm leading-relaxed text-gray-500 dark:text-slate-400", children: [
                         "Every shipped change, grouped by version. Latest release",
@@ -200,7 +213,7 @@ function ReleaseNotesPanel({
                         }
                       )
                     ] }),
-                    /* @__PURE__ */ jsx("div", { className: "flex items-center gap-1.5 flex-wrap", children: FILTERS.map((f) => {
+                    /* @__PURE__ */ jsx("div", { className: "flex items-center gap-1.5 flex-wrap", children: filters.map((f) => {
                       const active = activeFilter === f.kind;
                       return /* @__PURE__ */ jsx(
                         "button",
@@ -370,6 +383,7 @@ function ReleaseNotesButton({
   repoUrl,
   brandPrefix,
   brandSuffix = "",
+  brandNode,
   zIndex = 60,
   className
 }) {
@@ -440,6 +454,7 @@ function ReleaseNotesButton({
         repoUrl,
         brandPrefix,
         brandSuffix,
+        brandNode,
         zIndex
       }
     )

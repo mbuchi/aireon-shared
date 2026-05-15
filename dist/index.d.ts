@@ -1,8 +1,9 @@
 import * as react from 'react';
+import { ReactNode } from 'react';
 import { LucideIcon } from 'lucide-react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
 
-type ChangeKind = 'new' | 'improved' | 'fixed' | 'docs';
+type ChangeKind = 'new' | 'improved' | 'fixed' | 'breaking' | 'docs';
 interface ChangeItem {
     kind: ChangeKind;
     icon: LucideIcon;
@@ -30,14 +31,16 @@ interface ReleaseNotesPanelProps {
     releases: Release[];
     /** GitHub repo URL, used to link PRs (e.g. https://github.com/mbuchi/boom). */
     repoUrl: string;
-    /** Brand name letters before the red "oo" (e.g. "b" for boom). */
-    brandPrefix: string;
-    /** Brand name letters after the red "oo" (e.g. "m" for boom). */
+    /** Brand name letters before the red "oo" (e.g. "b" for boom). Ignored if brandNode is set. */
+    brandPrefix?: string;
+    /** Brand name letters after the red "oo" (e.g. "m" for boom). Ignored if brandNode is set. */
     brandSuffix?: string;
+    /** Full custom wordmark, for brands the prefix/oo/suffix split can't express (e.g. toolbox's two red "oo"s). Overrides brandPrefix/brandSuffix. */
+    brandNode?: ReactNode;
     /** Stacking context for the overlay. Defaults to 60; raise it for apps with high-z headers. */
     zIndex?: number;
 }
-declare function ReleaseNotesPanel({ onClose, releases, repoUrl, brandPrefix, brandSuffix, zIndex, }: ReleaseNotesPanelProps): react.ReactPortal;
+declare function ReleaseNotesPanel({ onClose, releases, repoUrl, brandPrefix, brandSuffix, brandNode, zIndex, }: ReleaseNotesPanelProps): react.ReactPortal;
 
 interface ReleaseNotesButtonProps {
     /** The app's release history, newest first. */
@@ -46,15 +49,17 @@ interface ReleaseNotesButtonProps {
     storageKey: string;
     /** GitHub repo URL, used to link PRs. */
     repoUrl: string;
-    /** Brand name letters before the red "oo". */
-    brandPrefix: string;
-    /** Brand name letters after the red "oo". */
+    /** Brand name letters before the red "oo". Ignored if brandNode is set. */
+    brandPrefix?: string;
+    /** Brand name letters after the red "oo". Ignored if brandNode is set. */
     brandSuffix?: string;
+    /** Full custom wordmark, overriding brandPrefix/brandSuffix (e.g. toolbox's two red "oo"s). */
+    brandNode?: ReactNode;
     /** Stacking context for the panel overlay. Defaults to 60. */
     zIndex?: number;
     /** Extra classes for the pill button. */
     className?: string;
 }
-declare function ReleaseNotesButton({ releases, storageKey, repoUrl, brandPrefix, brandSuffix, zIndex, className, }: ReleaseNotesButtonProps): react_jsx_runtime.JSX.Element;
+declare function ReleaseNotesButton({ releases, storageKey, repoUrl, brandPrefix, brandSuffix, brandNode, zIndex, className, }: ReleaseNotesButtonProps): react_jsx_runtime.JSX.Element;
 
 export { type ChangeItem, type ChangeKind, KIND_META, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps };

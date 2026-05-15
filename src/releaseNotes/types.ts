@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 
-export type ChangeKind = 'new' | 'improved' | 'fixed' | 'docs';
+export type ChangeKind = 'new' | 'improved' | 'fixed' | 'breaking' | 'docs';
 
 export interface ChangeItem {
   kind: ChangeKind;
@@ -36,6 +36,12 @@ export const KIND_META: Record<ChangeKind, { label: string; classes: string; dot
     classes:
       'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/30',
     dot: 'bg-emerald-500',
+  },
+  breaking: {
+    label: 'Breaking',
+    classes:
+      'text-rose-700 bg-rose-50 border-rose-200 dark:text-rose-400 dark:bg-rose-500/10 dark:border-rose-500/30',
+    dot: 'bg-rose-500',
   },
   docs: {
     label: 'Docs',

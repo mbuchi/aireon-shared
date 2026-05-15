@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   X, Search, Sparkles, ChevronDown, ChevronUp, ExternalLink, GitPullRequest, Tag,
@@ -12,19 +12,21 @@ export interface ReleaseNotesPanelProps {
   releases: Release[];
   /** GitHub repo URL, used to link PRs (e.g. https://github.com/mbuchi/boom). */
   repoUrl: string;
-  /** Brand name letters before the red "oo" (e.g. "b" for boom). */
-  brandPrefix: string;
-  /** Brand name letters after the red "oo" (e.g. "m" for boom). */
+  /** Brand name letters before the red "oo" (e.g. "b" for boom). Ignored if brandNode is set. */
+  brandPrefix?: string;
+  /** Brand name letters after the red "oo" (e.g. "m" for boom). Ignored if brandNode is set. */
   brandSuffix?: string;
+  /** Full custom wordmark, for brands the prefix/oo/suffix split can't express (e.g. toolbox's two red "oo"s). Overrides brandPrefix/brandSuffix. */
+  brandNode?: ReactNode;
   /** Stacking context for the overlay. Defaults to 60; raise it for apps with high-z headers. */
   zIndex?: number;
 }
 
-const FILTERS: { kind: ChangeKind | 'all'; label: string }[] = [
-  { kind: 'all', label: 'All' },
+const ALL_FILTERS: { kind: ChangeKind; label: string }[] = [
   { kind: 'new', label: 'New' },
   { kind: 'improved', label: 'Improved' },
   { kind: 'fixed', label: 'Fixed' },
+  { kind: 'breaking', label: 'Breaking' },
   { kind: 'docs', label: 'Docs' },
 ];
 
@@ -32,8 +34,9 @@ export default function ReleaseNotesPanel({
   onClose,
   releases,
   repoUrl,
-  brandPrefix,
+  brandPrefix = '',
   brandSuffix = '',
+  brandNode,
   zIndex = 60,
 }: ReleaseNotesPanelProps) {
   const [visible, setVisible] = useState(false);
@@ -94,6 +97,15 @@ export default function ReleaseNotesPanel({
 
   const latest = totals.latest;
 
+  // Only show filter chips for change kinds this app actually uses.
+  const filters = useMemo(() => {
+    const present = new Set(releases.flatMap((r) => r.items.map((i) => i.kind)));
+    return [
+      { kind: 'all' as const, label: 'All' },
+      ...ALL_FILTERS.filter((f) => present.has(f.kind)),
+    ];
+  }, [releases]);
+
   return createPortal(
     <div
       className={`fixed inset-0 flex items-stretch justify-end transition-opacity duration-200 ${
@@ -132,7 +144,9 @@ export default function ReleaseNotesPanel({
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
                 What's new in{' '}
                 <span className="font-normal" style={{ fontFamily: "'Varela Round', sans-serif" }}>
-                  {brandPrefix}<span className="text-red-600">oo</span>{brandSuffix}
+                  {brandNode ?? (
+                    <>{brandPrefix}<span className="text-red-600">oo</span>{brandSuffix}</>
+                  )}
                 </span>
               </h1>
               <p className="mt-1 text-sm leading-relaxed text-gray-500 dark:text-slate-400">
@@ -181,7 +195,7 @@ export default function ReleaseNotesPanel({
               />
             </div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              {FILTERS.map((f) => {
+              {filters.map((f) => {
                 const active = activeFilter === f.kind;
                 return (
                   <button
