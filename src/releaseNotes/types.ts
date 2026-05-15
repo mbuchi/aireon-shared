@@ -6,7 +6,8 @@ export interface ChangeItem {
   kind: ChangeKind;
   icon: LucideIcon;
   text: string;
-  prs: number[];
+  /** Related PR numbers. Optional — not every change maps to a PR. */
+  prs?: number[];
 }
 
 export interface Release {

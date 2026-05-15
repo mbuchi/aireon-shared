@@ -78,7 +78,7 @@ function ReleaseNotesPanel({
     return releases.map((release) => {
       const items = release.items.filter((item) => {
         const kindOk = activeFilter === "all" || item.kind === activeFilter;
-        const queryOk = !q || item.text.toLowerCase().includes(q) || release.codename.toLowerCase().includes(q) || release.version.includes(q) || item.prs.some((n) => `#${n}`.includes(q) || String(n) === q);
+        const queryOk = !q || item.text.toLowerCase().includes(q) || release.codename.toLowerCase().includes(q) || release.version.includes(q) || (item.prs ?? []).some((n) => `#${n}`.includes(q) || String(n) === q);
         return kindOk && queryOk;
       });
       return { ...release, items };
@@ -310,7 +310,7 @@ function ReleaseNotesPanel({
                                           ]
                                         }
                                       ),
-                                      item.prs.map((n) => /* @__PURE__ */ jsxs(
+                                      (item.prs ?? []).map((n) => /* @__PURE__ */ jsxs(
                                         "a",
                                         {
                                           href: `${repoUrl}/pull/${n}`,

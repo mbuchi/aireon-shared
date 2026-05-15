@@ -79,7 +79,7 @@ export default function ReleaseNotesPanel({
           item.text.toLowerCase().includes(q) ||
           release.codename.toLowerCase().includes(q) ||
           release.version.includes(q) ||
-          item.prs.some((n) => `#${n}`.includes(q) || String(n) === q);
+          (item.prs ?? []).some((n) => `#${n}`.includes(q) || String(n) === q);
         return kindOk && queryOk;
       });
       return { ...release, items };
@@ -321,7 +321,7 @@ export default function ReleaseNotesPanel({
                                       <span className={`w-1 h-1 rounded-full ${meta.dot}`} />
                                       {meta.label}
                                     </span>
-                                    {item.prs.map((n) => (
+                                    {(item.prs ?? []).map((n) => (
                                       <a
                                         key={n}
                                         href={`${repoUrl}/pull/${n}`}
