@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import ReleaseNotesPanel from './ReleaseNotesPanel';
 import type { Release } from './types';
@@ -18,7 +18,7 @@ export interface ReleaseNotesButtonProps {
   brandSuffix?: string;
   /** Full custom wordmark, overriding brandPrefix/brandSuffix (e.g. toolbox's two red "oo"s). */
   brandNode?: ReactNode;
-  /** Stacking context for the panel overlay. Defaults to 60. */
+  /** Stacking context for the panel overlay. Defaults to the top of the stack. */
   zIndex?: number;
   /** Extra classes for the pill button. */
   className?: string;
@@ -31,12 +31,13 @@ export default function ReleaseNotesButton({
   brandPrefix,
   brandSuffix = '',
   brandNode,
-  zIndex = 60,
+  zIndex,
   className,
 }: ReleaseNotesButtonProps) {
   const currentVersion = releases[0].version;
   const [open, setOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const closeRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     try {
@@ -66,6 +67,17 @@ export default function ReleaseNotesButton({
     }
   }, []);
 
+  // Clicking the version pill toggles the panel: open it, or dismiss it if
+  // already open (animated close via the panel's own handler).
+  const handleToggle = useCallback(() => {
+    if (open) {
+      if (closeRef.current) closeRef.current();
+      else setOpen(false);
+    } else {
+      handleOpen();
+    }
+  }, [open, handleOpen]);
+
   const handleClose = useCallback(() => {
     setOpen(false);
     setHasUnread(false);
@@ -86,7 +98,8 @@ export default function ReleaseNotesButton({
   return (
     <>
       <button
-        onClick={handleOpen}
+        onClick={handleToggle}
+        aria-expanded={open}
         title={`What's new — v${currentVersion}`}
         aria-label={`What's new — v${currentVersion}`}
         className={`hidden sm:inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full text-[11px] font-semibold border transition-colors border-gray-200 text-gray-600 hover:text-red-700 hover:border-red-200 hover:bg-red-50 dark:border-gray-700 dark:text-gray-300 dark:hover:text-red-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 ${className ?? ''}`}
@@ -100,6 +113,7 @@ export default function ReleaseNotesButton({
       {open && (
         <ReleaseNotesPanel
           onClose={handleClose}
+          closeRef={closeRef}
           releases={releases}
           repoUrl={repoUrl}
           brandPrefix={brandPrefix}

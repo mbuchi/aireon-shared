@@ -1,4 +1,11 @@
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type MutableRefObject,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 import {
   X, Search, Sparkles, ChevronDown, ChevronUp, ExternalLink, GitPullRequest, Tag,
@@ -18,9 +25,14 @@ export interface ReleaseNotesPanelProps {
   brandSuffix?: string;
   /** Full custom wordmark, for brands the prefix/oo/suffix split can't express (e.g. toolbox's two red "oo"s). Overrides brandPrefix/brandSuffix. */
   brandNode?: ReactNode;
-  /** Stacking context for the overlay. Defaults to 60; raise it for apps with high-z headers. */
+  /** Stacking context for the overlay. Defaults to the top of the stack so the panel always sits above app chrome (navbars, dropdowns). */
   zIndex?: number;
+  /** Optional ref the panel populates with its animated-close handler, so the trigger can dismiss the panel. */
+  closeRef?: MutableRefObject<(() => void) | null>;
 }
+
+/** Max 32-bit signed int — keeps the modal above any app navbar/dropdown stacking context. */
+const TOP_Z_INDEX = 2147483647;
 
 const ALL_FILTERS: { kind: ChangeKind; label: string }[] = [
   { kind: 'new', label: 'New' },
@@ -37,7 +49,8 @@ export default function ReleaseNotesPanel({
   brandPrefix = '',
   brandSuffix = '',
   brandNode,
-  zIndex = 60,
+  zIndex = TOP_Z_INDEX,
+  closeRef,
 }: ReleaseNotesPanelProps) {
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState('');
@@ -49,6 +62,7 @@ export default function ReleaseNotesPanel({
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
+    if (closeRef) closeRef.current = handleClose;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleClose();
       if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
@@ -57,7 +71,10 @@ export default function ReleaseNotesPanel({
       }
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      if (closeRef) closeRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

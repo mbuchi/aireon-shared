@@ -1,5 +1,5 @@
 import * as react from 'react';
-import { ReactNode } from 'react';
+import { ReactNode, MutableRefObject } from 'react';
 import { LucideIcon } from 'lucide-react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
 
@@ -38,10 +38,12 @@ interface ReleaseNotesPanelProps {
     brandSuffix?: string;
     /** Full custom wordmark, for brands the prefix/oo/suffix split can't express (e.g. toolbox's two red "oo"s). Overrides brandPrefix/brandSuffix. */
     brandNode?: ReactNode;
-    /** Stacking context for the overlay. Defaults to 60; raise it for apps with high-z headers. */
+    /** Stacking context for the overlay. Defaults to the top of the stack so the panel always sits above app chrome (navbars, dropdowns). */
     zIndex?: number;
+    /** Optional ref the panel populates with its animated-close handler, so the trigger can dismiss the panel. */
+    closeRef?: MutableRefObject<(() => void) | null>;
 }
-declare function ReleaseNotesPanel({ onClose, releases, repoUrl, brandPrefix, brandSuffix, brandNode, zIndex, }: ReleaseNotesPanelProps): react.ReactPortal;
+declare function ReleaseNotesPanel({ onClose, releases, repoUrl, brandPrefix, brandSuffix, brandNode, zIndex, closeRef, }: ReleaseNotesPanelProps): react.ReactPortal;
 
 interface ReleaseNotesButtonProps {
     /** The app's release history, newest first. */
@@ -56,7 +58,7 @@ interface ReleaseNotesButtonProps {
     brandSuffix?: string;
     /** Full custom wordmark, overriding brandPrefix/brandSuffix (e.g. toolbox's two red "oo"s). */
     brandNode?: ReactNode;
-    /** Stacking context for the panel overlay. Defaults to 60. */
+    /** Stacking context for the panel overlay. Defaults to the top of the stack. */
     zIndex?: number;
     /** Extra classes for the pill button. */
     className?: string;

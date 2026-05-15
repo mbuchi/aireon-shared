@@ -33,6 +33,7 @@ var KIND_META = {
     dot: "bg-sky-500"
   }
 };
+var TOP_Z_INDEX = 2147483647;
 var ALL_FILTERS = [
   { kind: "new", label: "New" },
   { kind: "improved", label: "Improved" },
@@ -47,7 +48,8 @@ function ReleaseNotesPanel({
   brandPrefix = "",
   brandSuffix = "",
   brandNode,
-  zIndex = 60
+  zIndex = TOP_Z_INDEX,
+  closeRef
 }) {
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
@@ -58,6 +60,7 @@ function ReleaseNotesPanel({
   const searchRef = useRef(null);
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
+    if (closeRef) closeRef.current = handleClose;
     const onKey = (e) => {
       if (e.key === "Escape") handleClose();
       if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
@@ -66,7 +69,10 @@ function ReleaseNotesPanel({
       }
     };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (closeRef) closeRef.current = null;
+    };
   }, []);
   const handleClose = () => {
     setVisible(false);
@@ -384,12 +390,13 @@ function ReleaseNotesButton({
   brandPrefix,
   brandSuffix = "",
   brandNode,
-  zIndex = 60,
+  zIndex,
   className
 }) {
   const currentVersion = releases[0].version;
   const [open, setOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
+  const closeRef = useRef(null);
   useEffect(() => {
     try {
       const lastSeen = localStorage.getItem(storageKey);
@@ -413,6 +420,14 @@ function ReleaseNotesButton({
       );
     }
   }, []);
+  const handleToggle = useCallback(() => {
+    if (open) {
+      if (closeRef.current) closeRef.current();
+      else setOpen(false);
+    } else {
+      handleOpen();
+    }
+  }, [open, handleOpen]);
   const handleClose = useCallback(() => {
     setOpen(false);
     setHasUnread(false);
@@ -432,7 +447,8 @@ function ReleaseNotesButton({
     /* @__PURE__ */ jsxs(
       "button",
       {
-        onClick: handleOpen,
+        onClick: handleToggle,
+        "aria-expanded": open,
         title: `What's new \u2014 v${currentVersion}`,
         "aria-label": `What's new \u2014 v${currentVersion}`,
         className: `hidden sm:inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full text-[11px] font-semibold border transition-colors border-gray-200 text-gray-600 hover:text-red-700 hover:border-red-200 hover:bg-red-50 dark:border-gray-700 dark:text-gray-300 dark:hover:text-red-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 ${className ?? ""}`,
@@ -450,6 +466,7 @@ function ReleaseNotesButton({
       ReleaseNotesPanel,
       {
         onClose: handleClose,
+        closeRef,
         releases,
         repoUrl,
         brandPrefix,
