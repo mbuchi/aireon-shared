@@ -610,6 +610,10 @@ function AuthProvider({ children }) {
     sessionStorage.removeItem(SSO_ATTEMPTED_KEY);
     await userManager.signinRedirect();
   }, []);
+  const register = useCallback(async () => {
+    sessionStorage.removeItem(SSO_ATTEMPTED_KEY);
+    await userManager.signinRedirect({ extraQueryParams: { prompt: "create" } });
+  }, []);
   const logout = useCallback(async () => {
     sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
     try {
@@ -633,6 +637,7 @@ function AuthProvider({ children }) {
       isAuthenticated,
       isLoading,
       login,
+      register,
       logout,
       getAccessToken,
       displayName: displayName || email || "User",
@@ -640,7 +645,7 @@ function AuthProvider({ children }) {
       initials: computeInitials(displayName, email),
       picture
     };
-  }, [user, isLoading, login, logout, getAccessToken]);
+  }, [user, isLoading, login, register, logout, getAccessToken]);
   return /* @__PURE__ */ jsx(AuthContext.Provider, { value, children });
 }
 function useAuth() {

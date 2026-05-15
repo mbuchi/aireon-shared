@@ -78,6 +78,8 @@ interface AuthContextValue {
     isLoading: boolean;
     /** Start an interactive (full-page redirect) sign-in. */
     login: () => Promise<void>;
+    /** Start an interactive sign-up — sends the user to the Zitadel registration form (prompt=create). */
+    register: () => Promise<void>;
     /** Sign out (redirect), falling back to a local session clear. */
     logout: () => Promise<void>;
     /** The current access token, if any. */

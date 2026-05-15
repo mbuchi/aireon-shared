@@ -29,6 +29,8 @@ export interface AuthContextValue {
   isLoading: boolean;
   /** Start an interactive (full-page redirect) sign-in. */
   login: () => Promise<void>;
+  /** Start an interactive sign-up — sends the user to the Zitadel registration form (prompt=create). */
+  register: () => Promise<void>;
   /** Sign out (redirect), falling back to a local session clear. */
   logout: () => Promise<void>;
   /** The current access token, if any. */
@@ -153,6 +155,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await userManager.signinRedirect();
   }, []);
 
+  const register = useCallback(async () => {
+    sessionStorage.removeItem(SSO_ATTEMPTED_KEY);
+    await userManager.signinRedirect({ extraQueryParams: { prompt: 'create' } });
+  }, []);
+
   const logout = useCallback(async () => {
     sessionStorage.setItem(SSO_ATTEMPTED_KEY, '1');
     try {
@@ -181,6 +188,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated,
       isLoading,
       login,
+      register,
       logout,
       getAccessToken,
       displayName: displayName || email || 'User',
@@ -188,7 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       initials: computeInitials(displayName, email),
       picture,
     };
-  }, [user, isLoading, login, logout, getAccessToken]);
+  }, [user, isLoading, login, register, logout, getAccessToken]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
