@@ -34,16 +34,96 @@ var KIND_META = {
     dot: "bg-sky-500"
   }
 };
+
+// src/releaseNotes/i18n.ts
+var RELEASE_NOTES_STRINGS = {
+  en: {
+    whatsNewIn: "What's new in",
+    subtitleLead: "Every shipped change, grouped by version. Latest release",
+    live: "live",
+    releases: "releases",
+    changes: "changes",
+    viewAllPRs: "View all PRs",
+    searchPlaceholder: "Search changes, versions, or PR numbers\u2026 ( / to focus)",
+    filterAll: "All",
+    noMatch: "No changes match that filter.",
+    latest: "Latest",
+    change: "change",
+    changesPlural: "changes",
+    footerPre: "Versions follow",
+    footerPost: ". History is reconstructed from merged pull requests.",
+    close: "Close",
+    dialogLabel: "Release notes",
+    whatsNew: "What's new",
+    kind: { new: "New", improved: "Improved", fixed: "Fixed", breaking: "Breaking", docs: "Docs" }
+  },
+  de: {
+    whatsNewIn: "Neuigkeiten in",
+    subtitleLead: "Jede ausgelieferte \xC4nderung, nach Version gruppiert. Neueste Version",
+    live: "live",
+    releases: "Versionen",
+    changes: "\xC4nderungen",
+    viewAllPRs: "Alle PRs ansehen",
+    searchPlaceholder: "\xC4nderungen, Versionen oder PR-Nummern suchen\u2026 ( / zum Fokussieren)",
+    filterAll: "Alle",
+    noMatch: "Keine \xC4nderungen passen zu diesem Filter.",
+    latest: "Neueste",
+    change: "\xC4nderung",
+    changesPlural: "\xC4nderungen",
+    footerPre: "Versionen folgen",
+    footerPost: ". Der Verlauf wird aus zusammengef\xFChrten Pull Requests rekonstruiert.",
+    close: "Schlie\xDFen",
+    dialogLabel: "Versionshinweise",
+    whatsNew: "Neuigkeiten",
+    kind: { new: "Neu", improved: "Verbessert", fixed: "Behoben", breaking: "Breaking", docs: "Docs" }
+  },
+  fr: {
+    whatsNewIn: "Nouveaut\xE9s dans",
+    subtitleLead: "Chaque changement livr\xE9, regroup\xE9 par version. Derni\xE8re version",
+    live: "en ligne",
+    releases: "versions",
+    changes: "changements",
+    viewAllPRs: "Voir toutes les PR",
+    searchPlaceholder: "Rechercher changements, versions ou num\xE9ros de PR\u2026 ( / pour cibler)",
+    filterAll: "Tous",
+    noMatch: "Aucun changement ne correspond \xE0 ce filtre.",
+    latest: "Derni\xE8re",
+    change: "changement",
+    changesPlural: "changements",
+    footerPre: "Les versions suivent",
+    footerPost: ". L\u2019historique est reconstruit \xE0 partir des pull requests fusionn\xE9es.",
+    close: "Fermer",
+    dialogLabel: "Notes de version",
+    whatsNew: "Nouveaut\xE9s",
+    kind: { new: "Nouveau", improved: "Am\xE9lior\xE9", fixed: "Corrig\xE9", breaking: "Breaking", docs: "Docs" }
+  },
+  it: {
+    whatsNewIn: "Novit\xE0 in",
+    subtitleLead: "Ogni modifica rilasciata, raggruppata per versione. Ultima versione",
+    live: "attiva",
+    releases: "versioni",
+    changes: "modifiche",
+    viewAllPRs: "Vedi tutte le PR",
+    searchPlaceholder: "Cerca modifiche, versioni o numeri di PR\u2026 ( / per mettere a fuoco)",
+    filterAll: "Tutti",
+    noMatch: "Nessuna modifica corrisponde a questo filtro.",
+    latest: "Ultima",
+    change: "modifica",
+    changesPlural: "modifiche",
+    footerPre: "Le versioni seguono",
+    footerPost: ". La cronologia \xE8 ricostruita dalle pull request unite.",
+    close: "Chiudi",
+    dialogLabel: "Note di rilascio",
+    whatsNew: "Novit\xE0",
+    kind: { new: "Nuovo", improved: "Migliorato", fixed: "Corretto", breaking: "Breaking", docs: "Docs" }
+  }
+};
+var getReleaseNotesStrings = (locale = "en") => RELEASE_NOTES_STRINGS[locale] ?? RELEASE_NOTES_STRINGS.en;
 var TOP_Z_INDEX = 2147483647;
-var ALL_FILTERS = [
-  { kind: "new", label: "New" },
-  { kind: "improved", label: "Improved" },
-  { kind: "fixed", label: "Fixed" },
-  { kind: "breaking", label: "Breaking" },
-  { kind: "docs", label: "Docs" }
-];
+var FILTER_ORDER = ["new", "improved", "fixed", "breaking", "docs"];
 function ReleaseNotesPanel({
   onClose,
+  locale = "en",
   releases,
   repoUrl,
   brandPrefix = "",
@@ -52,6 +132,7 @@ function ReleaseNotesPanel({
   zIndex = TOP_Z_INDEX,
   closeRef
 }) {
+  const t = getReleaseNotesStrings(locale);
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
@@ -103,10 +184,10 @@ function ReleaseNotesPanel({
   const filters = useMemo(() => {
     const present = new Set(releases.flatMap((r) => r.items.map((i) => i.kind)));
     return [
-      { kind: "all", label: "All" },
-      ...ALL_FILTERS.filter((f) => present.has(f.kind))
+      { kind: "all", label: t.filterAll },
+      ...FILTER_ORDER.filter((k) => present.has(k)).map((k) => ({ kind: k, label: t.kind[k] }))
     ];
-  }, [releases]);
+  }, [releases, t]);
   return createPortal(
     /* @__PURE__ */ jsxs(
       "div",
@@ -115,7 +196,7 @@ function ReleaseNotesPanel({
         style: { zIndex },
         role: "dialog",
         "aria-modal": "true",
-        "aria-label": "Release notes",
+        "aria-label": t.dialogLabel,
         children: [
           /* @__PURE__ */ jsx(
             "div",
@@ -135,7 +216,7 @@ function ReleaseNotesPanel({
                     {
                       onClick: handleClose,
                       className: "absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors",
-                      "aria-label": "Close",
+                      "aria-label": t.close,
                       children: /* @__PURE__ */ jsx(X, { size: 18 })
                     }
                   ),
@@ -143,7 +224,7 @@ function ReleaseNotesPanel({
                     /* @__PURE__ */ jsx("div", { className: "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/30", children: /* @__PURE__ */ jsx(Sparkles, { className: "text-red-600 dark:text-red-400", size: 22 }) }),
                     /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
                       /* @__PURE__ */ jsxs("h1", { className: "text-xl font-semibold text-gray-900 dark:text-white", children: [
-                        "What's new in",
+                        t.whatsNewIn,
                         " ",
                         /* @__PURE__ */ jsx("span", { className: "font-normal", style: { fontFamily: "'Varela Round', sans-serif" }, children: brandNode ?? /* @__PURE__ */ jsxs(Fragment, { children: [
                           brandPrefix,
@@ -152,7 +233,7 @@ function ReleaseNotesPanel({
                         ] }) })
                       ] }),
                       /* @__PURE__ */ jsxs("p", { className: "mt-1 text-sm leading-relaxed text-gray-500 dark:text-slate-400", children: [
-                        "Every shipped change, grouped by version. Latest release",
+                        t.subtitleLead,
                         " ",
                         /* @__PURE__ */ jsxs("span", { className: "font-mono font-semibold text-red-600 dark:text-red-400", children: [
                           "v",
@@ -170,19 +251,22 @@ function ReleaseNotesPanel({
                           /* @__PURE__ */ jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" }),
                           "v",
                           latest.version,
-                          " live"
+                          " ",
+                          t.live
                         ] }),
                         /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-white/[0.05] dark:text-slate-300", children: [
                           /* @__PURE__ */ jsx(Tag, { size: 12 }),
                           " ",
                           totals.releases,
-                          " releases"
+                          " ",
+                          t.releases
                         ] }),
                         /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-white/[0.05] dark:text-slate-300", children: [
                           /* @__PURE__ */ jsx(GitPullRequest, { size: 12 }),
                           " ",
                           totals.changes,
-                          " changes"
+                          " ",
+                          t.changes
                         ] }),
                         /* @__PURE__ */ jsxs(
                           "a",
@@ -193,7 +277,8 @@ function ReleaseNotesPanel({
                             className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-white/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.08] transition-colors",
                             children: [
                               /* @__PURE__ */ jsx(ExternalLink, { size: 12 }),
-                              " View all PRs"
+                              " ",
+                              t.viewAllPRs
                             ]
                           }
                         )
@@ -215,7 +300,7 @@ function ReleaseNotesPanel({
                           ref: searchRef,
                           value: query,
                           onChange: (e) => setQuery(e.target.value),
-                          placeholder: "Search changes, versions, or PR numbers\u2026 ( / to focus)",
+                          placeholder: t.searchPlaceholder,
                           className: "w-full h-9 pl-9 pr-3 text-sm rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder:text-gray-400 dark:bg-white/[0.04] dark:border-white/[0.08] dark:text-gray-100 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-400 transition-colors"
                         }
                       )
@@ -235,7 +320,7 @@ function ReleaseNotesPanel({
                   ] })
                 ] }),
                 /* @__PURE__ */ jsxs("div", { className: "flex-1 overflow-y-auto px-6 py-6", children: [
-                  filteredReleases.length === 0 && /* @__PURE__ */ jsx("div", { className: "text-center py-16 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 dark:border-white/[0.08] dark:text-slate-500", children: /* @__PURE__ */ jsx("p", { className: "text-sm", children: "No changes match that filter." }) }),
+                  filteredReleases.length === 0 && /* @__PURE__ */ jsx("div", { className: "text-center py-16 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 dark:border-white/[0.08] dark:text-slate-500", children: /* @__PURE__ */ jsx("p", { className: "text-sm", children: t.noMatch }) }),
                   /* @__PURE__ */ jsx("ol", { className: "relative space-y-5", children: filteredReleases.map((release, idx) => {
                     const isOpen = openVersions[release.version] ?? false;
                     const isLatest = idx === 0 && release.version === releases[0].version;
@@ -280,14 +365,14 @@ function ReleaseNotesPanel({
                                       ] }),
                                       /* @__PURE__ */ jsx("span", { className: "text-gray-300 dark:text-slate-600", children: "\xB7" }),
                                       /* @__PURE__ */ jsx("span", { className: "text-sm font-medium text-gray-700 dark:text-slate-200", children: release.codename }),
-                                      isLatest && /* @__PURE__ */ jsx("span", { className: "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-red-600 text-white", children: "Latest" })
+                                      isLatest && /* @__PURE__ */ jsx("span", { className: "inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-red-600 text-white", children: t.latest })
                                     ] }),
                                     /* @__PURE__ */ jsxs("p", { className: "text-xs mt-0.5 text-gray-400 dark:text-slate-500", children: [
                                       release.date,
                                       " \xB7 ",
                                       release.items.length,
-                                      " change",
-                                      release.items.length === 1 ? "" : "s"
+                                      " ",
+                                      release.items.length === 1 ? t.change : t.changesPlural
                                     ] })
                                   ] }),
                                   isOpen ? /* @__PURE__ */ jsx(ChevronUp, { size: 16, className: "text-gray-400 dark:text-slate-500" }) : /* @__PURE__ */ jsx(ChevronDown, { size: 16, className: "text-gray-400 dark:text-slate-500" })
@@ -313,7 +398,7 @@ function ReleaseNotesPanel({
                                           className: `inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border ${meta.classes}`,
                                           children: [
                                             /* @__PURE__ */ jsx("span", { className: `w-1 h-1 rounded-full ${meta.dot}` }),
-                                            meta.label
+                                            t.kind[item.kind]
                                           ]
                                         }
                                       ),
@@ -348,7 +433,7 @@ function ReleaseNotesPanel({
                 ] }),
                 /* @__PURE__ */ jsxs("div", { className: "shrink-0 px-6 py-4 border-t border-gray-200 dark:border-white/[0.06] text-gray-400 dark:text-slate-500 flex items-center justify-between text-xs", children: [
                   /* @__PURE__ */ jsxs("span", { children: [
-                    "Versions follow",
+                    t.footerPre,
                     " ",
                     /* @__PURE__ */ jsx(
                       "a",
@@ -360,7 +445,7 @@ function ReleaseNotesPanel({
                         children: "SemVer"
                       }
                     ),
-                    ". History is reconstructed from merged pull requests."
+                    t.footerPost
                   ] }),
                   /* @__PURE__ */ jsxs(
                     "button",
@@ -368,7 +453,8 @@ function ReleaseNotesPanel({
                       onClick: handleClose,
                       className: "hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 text-gray-500 hover:text-gray-900 dark:bg-white/[0.05] dark:text-slate-400 dark:hover:text-slate-100",
                       children: [
-                        "Close ",
+                        t.close,
+                        " ",
                         /* @__PURE__ */ jsx("kbd", { className: "font-mono text-[10px]", children: "Esc" })
                       ]
                     }
@@ -386,6 +472,7 @@ function ReleaseNotesPanel({
 var HASH = "#release-notes";
 function ReleaseNotesButton({
   releases,
+  locale = "en",
   storageKey,
   repoUrl,
   brandPrefix,
@@ -394,6 +481,7 @@ function ReleaseNotesButton({
   zIndex,
   className
 }) {
+  const t = getReleaseNotesStrings(locale);
   const currentVersion = releases[0].version;
   const [open, setOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
@@ -450,8 +538,8 @@ function ReleaseNotesButton({
       {
         onClick: handleToggle,
         "aria-expanded": open,
-        title: `What's new \u2014 v${currentVersion}`,
-        "aria-label": `What's new \u2014 v${currentVersion}`,
+        title: `${t.whatsNew} \u2014 v${currentVersion}`,
+        "aria-label": `${t.whatsNew} \u2014 v${currentVersion}`,
         className: `hidden sm:inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full text-[11px] font-semibold border transition-colors border-gray-200 text-gray-600 hover:text-red-700 hover:border-red-200 hover:bg-red-50 dark:border-gray-700 dark:text-gray-300 dark:hover:text-red-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 ${className ?? ""}`,
         children: [
           /* @__PURE__ */ jsx(Sparkles, { size: 12, className: "text-red-600 dark:text-red-400" }),
@@ -468,6 +556,7 @@ function ReleaseNotesButton({
       {
         onClose: handleClose,
         closeRef,
+        locale,
         releases,
         repoUrl,
         brandPrefix,
@@ -654,4 +743,4 @@ function useAuth() {
   return ctx;
 }
 
-export { AuthProvider, KIND_META, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, getAuthToken, getExistingUser, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+export { AuthProvider, KIND_META, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, getAuthToken, getExistingUser, getReleaseNotesStrings, stripAuthParams, urlHasAuthParams, useAuth, userManager };

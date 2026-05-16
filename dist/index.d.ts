@@ -26,9 +26,52 @@ declare const KIND_META: Record<ChangeKind, {
     dot: string;
 }>;
 
+/** Languages supported across the SwissNovo suite. */
+type Locale = 'de' | 'en' | 'fr' | 'it';
+interface ReleaseNotesStrings {
+    /** Panel <h1>, followed by the brand wordmark. */
+    whatsNewIn: string;
+    /** Subtitle lead-in, followed by "vX · codename · date". */
+    subtitleLead: string;
+    /** Suffix on the pulsing "vX <live>" badge. */
+    live: string;
+    /** "{n} releases" badge. */
+    releases: string;
+    /** "{n} changes" badge. */
+    changes: string;
+    /** Link to the repo's pull-request list. */
+    viewAllPRs: string;
+    /** Search input placeholder. */
+    searchPlaceholder: string;
+    /** "All" filter chip. */
+    filterAll: string;
+    /** Empty-state when a filter/search matches nothing. */
+    noMatch: string;
+    /** "Latest" badge on the newest release. */
+    latest: string;
+    /** Singular / plural noun for the per-release change count. */
+    change: string;
+    changesPlural: string;
+    /** Footer sentence, split around the linked "SemVer" word. */
+    footerPre: string;
+    footerPost: string;
+    /** Footer dismiss button + close-icon aria-label. */
+    close: string;
+    /** Dialog aria-label. */
+    dialogLabel: string;
+    /** Button tooltip / aria-label lead-in, followed by " — vX". */
+    whatsNew: string;
+    /** Change-kind labels (badges + filter chips). */
+    kind: Record<ChangeKind, string>;
+}
+declare const RELEASE_NOTES_STRINGS: Record<Locale, ReleaseNotesStrings>;
+declare const getReleaseNotesStrings: (locale?: Locale) => ReleaseNotesStrings;
+
 interface ReleaseNotesPanelProps {
     /** Called when the panel finishes its close animation. */
     onClose: () => void;
+    /** UI language for the panel chrome. Defaults to English. */
+    locale?: Locale;
     /** The app's release history, newest first. */
     releases: Release[];
     /** GitHub repo URL, used to link PRs (e.g. https://github.com/mbuchi/boom). */
@@ -44,11 +87,13 @@ interface ReleaseNotesPanelProps {
     /** Optional ref the panel populates with its animated-close handler, so the trigger can dismiss the panel. */
     closeRef?: MutableRefObject<(() => void) | null>;
 }
-declare function ReleaseNotesPanel({ onClose, releases, repoUrl, brandPrefix, brandSuffix, brandNode, zIndex, closeRef, }: ReleaseNotesPanelProps): react.ReactPortal;
+declare function ReleaseNotesPanel({ onClose, locale, releases, repoUrl, brandPrefix, brandSuffix, brandNode, zIndex, closeRef, }: ReleaseNotesPanelProps): react.ReactPortal;
 
 interface ReleaseNotesButtonProps {
     /** The app's release history, newest first. */
     releases: Release[];
+    /** UI language for the button + panel chrome. Defaults to English. */
+    locale?: Locale;
     /** localStorage key for unread tracking — namespace per app, e.g. "boom:lastSeenReleaseVersion". */
     storageKey: string;
     /** GitHub repo URL, used to link PRs. */
@@ -64,7 +109,7 @@ interface ReleaseNotesButtonProps {
     /** Extra classes for the pill button. */
     className?: string;
 }
-declare function ReleaseNotesButton({ releases, storageKey, repoUrl, brandPrefix, brandSuffix, brandNode, zIndex, className, }: ReleaseNotesButtonProps): react_jsx_runtime.JSX.Element;
+declare function ReleaseNotesButton({ releases, locale, storageKey, repoUrl, brandPrefix, brandSuffix, brandNode, zIndex, className, }: ReleaseNotesButtonProps): react_jsx_runtime.JSX.Element;
 
 type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 interface AuthContextValue {
@@ -123,4 +168,4 @@ declare function urlHasAuthParams(url?: URL): boolean;
 /** Strips OIDC callback query params from the address bar. */
 declare function stripAuthParams(): void;
 
-export { type AuthContextValue, AuthProvider, type AuthStatus, type ChangeItem, type ChangeKind, KIND_META, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, SSO_ATTEMPTED_KEY, getAuthToken, getExistingUser, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+export { type AuthContextValue, AuthProvider, type AuthStatus, type ChangeItem, type ChangeKind, KIND_META, type Locale, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, getAuthToken, getExistingUser, getReleaseNotesStrings, stripAuthParams, urlHasAuthParams, useAuth, userManager };

@@ -11,10 +11,13 @@ import {
   X, Search, Sparkles, ChevronDown, ChevronUp, ExternalLink, GitPullRequest, Tag,
 } from 'lucide-react';
 import { KIND_META, type ChangeKind, type Release } from './types';
+import { getReleaseNotesStrings, type Locale } from './i18n';
 
 export interface ReleaseNotesPanelProps {
   /** Called when the panel finishes its close animation. */
   onClose: () => void;
+  /** UI language for the panel chrome. Defaults to English. */
+  locale?: Locale;
   /** The app's release history, newest first. */
   releases: Release[];
   /** GitHub repo URL, used to link PRs (e.g. https://github.com/mbuchi/boom). */
@@ -34,16 +37,11 @@ export interface ReleaseNotesPanelProps {
 /** Max 32-bit signed int — keeps the modal above any app navbar/dropdown stacking context. */
 const TOP_Z_INDEX = 2147483647;
 
-const ALL_FILTERS: { kind: ChangeKind; label: string }[] = [
-  { kind: 'new', label: 'New' },
-  { kind: 'improved', label: 'Improved' },
-  { kind: 'fixed', label: 'Fixed' },
-  { kind: 'breaking', label: 'Breaking' },
-  { kind: 'docs', label: 'Docs' },
-];
+const FILTER_ORDER: ChangeKind[] = ['new', 'improved', 'fixed', 'breaking', 'docs'];
 
 export default function ReleaseNotesPanel({
   onClose,
+  locale = 'en',
   releases,
   repoUrl,
   brandPrefix = '',
@@ -52,6 +50,7 @@ export default function ReleaseNotesPanel({
   zIndex = TOP_Z_INDEX,
   closeRef,
 }: ReleaseNotesPanelProps) {
+  const t = getReleaseNotesStrings(locale);
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<ChangeKind | 'all'>('all');
@@ -118,10 +117,10 @@ export default function ReleaseNotesPanel({
   const filters = useMemo(() => {
     const present = new Set(releases.flatMap((r) => r.items.map((i) => i.kind)));
     return [
-      { kind: 'all' as const, label: 'All' },
-      ...ALL_FILTERS.filter((f) => present.has(f.kind)),
+      { kind: 'all' as const, label: t.filterAll },
+      ...FILTER_ORDER.filter((k) => present.has(k)).map((k) => ({ kind: k, label: t.kind[k] })),
     ];
-  }, [releases]);
+  }, [releases, t]);
 
   return createPortal(
     <div
@@ -131,7 +130,7 @@ export default function ReleaseNotesPanel({
       style={{ zIndex }}
       role="dialog"
       aria-modal="true"
-      aria-label="Release notes"
+      aria-label={t.dialogLabel}
     >
       <div
         className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
@@ -148,7 +147,7 @@ export default function ReleaseNotesPanel({
           <button
             onClick={handleClose}
             className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 dark:text-slate-500 hover:text-gray-700 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors"
-            aria-label="Close"
+            aria-label={t.close}
           >
             <X size={18} />
           </button>
@@ -159,7 +158,7 @@ export default function ReleaseNotesPanel({
             </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                What's new in{' '}
+                {t.whatsNewIn}{' '}
                 <span className="font-normal" style={{ fontFamily: "'Varela Round', sans-serif" }}>
                   {brandNode ?? (
                     <>{brandPrefix}<span className="text-red-600">oo</span>{brandSuffix}</>
@@ -167,7 +166,7 @@ export default function ReleaseNotesPanel({
                 </span>
               </h1>
               <p className="mt-1 text-sm leading-relaxed text-gray-500 dark:text-slate-400">
-                Every shipped change, grouped by version. Latest release{' '}
+                {t.subtitleLead}{' '}
                 <span className="font-mono font-semibold text-red-600 dark:text-red-400">
                   v{latest.version}
                 </span>{' '}
@@ -176,13 +175,13 @@ export default function ReleaseNotesPanel({
               <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-red-50 text-red-700 border border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/30">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                  v{latest.version} live
+                  v{latest.version} {t.live}
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-white/[0.05] dark:text-slate-300">
-                  <Tag size={12} /> {totals.releases} releases
+                  <Tag size={12} /> {totals.releases} {t.releases}
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-white/[0.05] dark:text-slate-300">
-                  <GitPullRequest size={12} /> {totals.changes} changes
+                  <GitPullRequest size={12} /> {totals.changes} {t.changes}
                 </span>
                 <a
                   href={`${repoUrl}/pulls?q=is%3Apr+is%3Aclosed`}
@@ -190,7 +189,7 @@ export default function ReleaseNotesPanel({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-white/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.08] transition-colors"
                 >
-                  <ExternalLink size={12} /> View all PRs
+                  <ExternalLink size={12} /> {t.viewAllPRs}
                 </a>
               </div>
             </div>
@@ -207,7 +206,7 @@ export default function ReleaseNotesPanel({
                 ref={searchRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search changes, versions, or PR numbers… ( / to focus)"
+                placeholder={t.searchPlaceholder}
                 className="w-full h-9 pl-9 pr-3 text-sm rounded-lg bg-gray-50 border border-gray-200 text-gray-900 placeholder:text-gray-400 dark:bg-white/[0.04] dark:border-white/[0.08] dark:text-gray-100 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-400 transition-colors"
               />
             </div>
@@ -236,7 +235,7 @@ export default function ReleaseNotesPanel({
         <div className="flex-1 overflow-y-auto px-6 py-6">
           {filteredReleases.length === 0 && (
             <div className="text-center py-16 rounded-2xl border-2 border-dashed border-gray-200 text-gray-400 dark:border-white/[0.08] dark:text-slate-500">
-              <p className="text-sm">No changes match that filter.</p>
+              <p className="text-sm">{t.noMatch}</p>
             </div>
           )}
 
@@ -293,12 +292,13 @@ export default function ReleaseNotesPanel({
                               </span>
                               {isLatest && (
                                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-red-600 text-white">
-                                  Latest
+                                  {t.latest}
                                 </span>
                               )}
                             </div>
                             <p className="text-xs mt-0.5 text-gray-400 dark:text-slate-500">
-                              {release.date} · {release.items.length} change{release.items.length === 1 ? '' : 's'}
+                              {release.date} · {release.items.length}{' '}
+                              {release.items.length === 1 ? t.change : t.changesPlural}
                             </p>
                           </div>
                           {isOpen ? (
@@ -336,7 +336,7 @@ export default function ReleaseNotesPanel({
                                       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border ${meta.classes}`}
                                     >
                                       <span className={`w-1 h-1 rounded-full ${meta.dot}`} />
-                                      {meta.label}
+                                      {t.kind[item.kind]}
                                     </span>
                                     {(item.prs ?? []).map((n) => (
                                       <a
@@ -371,7 +371,7 @@ export default function ReleaseNotesPanel({
         {/* Footer */}
         <div className="shrink-0 px-6 py-4 border-t border-gray-200 dark:border-white/[0.06] text-gray-400 dark:text-slate-500 flex items-center justify-between text-xs">
           <span>
-            Versions follow{' '}
+            {t.footerPre}{' '}
             <a
               href="https://semver.org"
               target="_blank"
@@ -380,13 +380,13 @@ export default function ReleaseNotesPanel({
             >
               SemVer
             </a>
-            . History is reconstructed from merged pull requests.
+            {t.footerPost}
           </span>
           <button
             onClick={handleClose}
             className="hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 text-gray-500 hover:text-gray-900 dark:bg-white/[0.05] dark:text-slate-400 dark:hover:text-slate-100"
           >
-            Close <kbd className="font-mono text-[10px]">Esc</kbd>
+            {t.close} <kbd className="font-mono text-[10px]">Esc</kbd>
           </button>
         </div>
       </div>

@@ -2,12 +2,15 @@ import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
 import { Sparkles } from 'lucide-react';
 import ReleaseNotesPanel from './ReleaseNotesPanel';
 import type { Release } from './types';
+import { getReleaseNotesStrings, type Locale } from './i18n';
 
 const HASH = '#release-notes';
 
 export interface ReleaseNotesButtonProps {
   /** The app's release history, newest first. */
   releases: Release[];
+  /** UI language for the button + panel chrome. Defaults to English. */
+  locale?: Locale;
   /** localStorage key for unread tracking — namespace per app, e.g. "boom:lastSeenReleaseVersion". */
   storageKey: string;
   /** GitHub repo URL, used to link PRs. */
@@ -26,6 +29,7 @@ export interface ReleaseNotesButtonProps {
 
 export default function ReleaseNotesButton({
   releases,
+  locale = 'en',
   storageKey,
   repoUrl,
   brandPrefix,
@@ -34,6 +38,7 @@ export default function ReleaseNotesButton({
   zIndex,
   className,
 }: ReleaseNotesButtonProps) {
+  const t = getReleaseNotesStrings(locale);
   const currentVersion = releases[0].version;
   const [open, setOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
@@ -100,8 +105,8 @@ export default function ReleaseNotesButton({
       <button
         onClick={handleToggle}
         aria-expanded={open}
-        title={`What's new — v${currentVersion}`}
-        aria-label={`What's new — v${currentVersion}`}
+        title={`${t.whatsNew} — v${currentVersion}`}
+        aria-label={`${t.whatsNew} — v${currentVersion}`}
         className={`hidden sm:inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full text-[11px] font-semibold border transition-colors border-gray-200 text-gray-600 hover:text-red-700 hover:border-red-200 hover:bg-red-50 dark:border-gray-700 dark:text-gray-300 dark:hover:text-red-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 ${className ?? ''}`}
       >
         <Sparkles size={12} className="text-red-600 dark:text-red-400" />
@@ -114,6 +119,7 @@ export default function ReleaseNotesButton({
         <ReleaseNotesPanel
           onClose={handleClose}
           closeRef={closeRef}
+          locale={locale}
           releases={releases}
           repoUrl={repoUrl}
           brandPrefix={brandPrefix}
