@@ -150,16 +150,22 @@ function gwrLines(p: Record<string, unknown>): string[] {
   return lines;
 }
 
+export interface ClaireContext {
+  /** Ready-to-prepend context block ('' when nothing is found / on error). */
+  text: string;
+  /** GWR street address ("Fliegaufstrasse 7, 8280 Kreuzlingen"), when found. */
+  address?: string;
+}
+
 /**
- * Fetches authoritative federal records for a coordinate and returns them as
- * a ready-to-prepend context block (or '' when nothing is found / on error).
- * Never throws — enrichment is strictly best-effort.
+ * Fetches authoritative federal records for a coordinate. Returns the context
+ * block plus the GWR street address. Never throws — best-effort enrichment.
  */
 export async function fetchClaireContext(
   lng: number,
   lat: number,
   signal?: AbortSignal,
-): Promise<string> {
+): Promise<ClaireContext> {
   const delta = 0.0012;
   const params = new URLSearchParams({
     geometry: `${lng},${lat}`,
@@ -177,21 +183,32 @@ export async function fetchClaireContext(
   let results: IdentifyResult[];
   try {
     const res = await fetch(`${IDENTIFY_API}?${params}`, { signal });
-    if (!res.ok) return '';
+    if (!res.ok) return { text: '' };
     const data = (await res.json()) as { results?: IdentifyResult[] };
     results = data.results ?? [];
   } catch {
-    return '';
+    return { text: '' };
   }
 
   const sections: string[] = [];
+  let address: string | undefined;
 
   // GWR — closest building (first result).
   const gwr = results.find((r) => r.layerBodId === GWR_LAYER);
   if (gwr) {
-    const lines = gwrLines(gwr.properties ?? gwr.attributes ?? {});
+    const p = gwr.properties ?? gwr.attributes ?? {};
+    const lines = gwrLines(p);
     if (lines.length > 0) {
       sections.push(`Federal Register of Buildings and Dwellings (GWR):\n${lines.join('\n')}`);
+    }
+    // GWR street address — used as the signal/conversation address fallback
+    // when the host app's tile data carries no address field.
+    const street = str(p.strname_deinr);
+    if (street) {
+      const city = str(p.ggdename) ?? str(p.dplzname);
+      const zip = str(p.dplz4) ?? str(p.plz_plz6);
+      const place = [zip, city].filter(Boolean).join(' ');
+      address = place ? `${street}, ${place}` : street;
     }
   }
 
@@ -223,6 +240,9 @@ export async function fetchClaireContext(
     sections.push(`Official zoning & locality (swisstopo / ARE):\n${misc.join('\n')}`);
   }
 
-  if (sections.length === 0) return '';
-  return `Authoritative Swiss federal records for this location:\n\n${sections.join('\n\n')}`;
+  const text =
+    sections.length === 0
+      ? ''
+      : `Authoritative Swiss federal records for this location:\n\n${sections.join('\n\n')}`;
+  return { text, address };
 }

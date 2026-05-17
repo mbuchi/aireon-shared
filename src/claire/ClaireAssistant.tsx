@@ -182,20 +182,24 @@ const ClaireAssistant = ({
   // Authoritative federal records (GWR building register, ARE zoning,
   // swisstopo locality) fetched live from geo.admin.ch and appended to the
   // parcel context — best-effort, so it never blocks or breaks the chat.
-  const [officialContext, setOfficialContext] = useState('');
+  // Also yields the GWR street address, used as a fallback when the host
+  // app's tile data carries no address field.
+  const [official, setOfficial] = useState<{ text: string; address?: string }>({
+    text: '',
+  });
   useEffect(() => {
     const controller = new AbortController();
-    setOfficialContext('');
+    setOfficial({ text: '' });
     void fetchClaireContext(lngLat.lng, lngLat.lat, controller.signal)
-      .then((ctx) => setOfficialContext(ctx))
+      .then((res) => setOfficial(res))
       .catch(() => {});
     return () => controller.abort();
   }, [lngLat.lng, lngLat.lat]);
 
   const fullContext = useMemo(
     () =>
-      officialContext ? `${parcelContext}\n\n${officialContext}` : parcelContext,
-    [parcelContext, officialContext],
+      official.text ? `${parcelContext}\n\n${official.text}` : parcelContext,
+    [parcelContext, official.text],
   );
 
   // Reset conversation whenever the targeted parcel changes — the chat must
@@ -283,14 +287,18 @@ const ClaireAssistant = ({
       setError(null);
       setLoading(true);
 
+      // Address: prefer the host app's header address, fall back to the GWR
+      // street address from the federal records fetch.
+      const address = headerAddress || official.address;
+
       // Telemetry: one signal per Claire message, scoped to this parcel, so
-      // the RES admin dashboard can count interactions per parcel.
+      // the RES admin dashboard can count interactions per parcel. The RES
+      // API resolves the canonical parcel (EGRID) from the coordinates.
       void sendClaireMessageSignal({
         appName,
         lat: lngLat.lat,
         lng: lngLat.lng,
-        parcelId,
-        address: headerAddress,
+        address,
         source,
       });
 
@@ -319,7 +327,7 @@ const ClaireAssistant = ({
             messages: [...nextHistory, { role: 'assistant', content: reply }],
             accessToken: getAccessToken(),
             appName,
-            address: headerAddress,
+            address,
             lat: lngLat.lat,
             lng: lngLat.lng,
           });
@@ -347,6 +355,7 @@ const ClaireAssistant = ({
       lngLat.lng,
       parcelId,
       headerAddress,
+      official.address,
       getAccessToken,
       appName,
       geminiApiKey,

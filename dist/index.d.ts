@@ -268,8 +268,6 @@ interface ClaireMessageSignal {
     lat: number;
     /** WGS84 longitude of the parcel the conversation is scoped to. */
     lng: number;
-    /** Stable parcel identifier, when the map tile provides one. */
-    parcelId?: string | null;
     /** Human-readable parcel address, when known. */
     address?: string;
     /** Where the message originated — typed vs. a quick-prompt chip. */
@@ -281,13 +279,18 @@ interface ClaireMessageSignal {
  * can count Claire interactions per parcel. Never throws — telemetry must
  * not interfere with the chat.
  */
-declare function sendClaireMessageSignal({ appName, lat, lng, parcelId, address, source, }: ClaireMessageSignal): Promise<void>;
+declare function sendClaireMessageSignal({ appName, lat, lng, address, source, }: ClaireMessageSignal): Promise<void>;
 
+interface ClaireContext {
+    /** Ready-to-prepend context block ('' when nothing is found / on error). */
+    text: string;
+    /** GWR street address ("Fliegaufstrasse 7, 8280 Kreuzlingen"), when found. */
+    address?: string;
+}
 /**
- * Fetches authoritative federal records for a coordinate and returns them as
- * a ready-to-prepend context block (or '' when nothing is found / on error).
- * Never throws — enrichment is strictly best-effort.
+ * Fetches authoritative federal records for a coordinate. Returns the context
+ * block plus the GWR street address. Never throws — best-effort enrichment.
  */
-declare function fetchClaireContext(lng: number, lat: number, signal?: AbortSignal): Promise<string>;
+declare function fetchClaireContext(lng: number, lat: number, signal?: AbortSignal): Promise<ClaireContext>;
 
-export { type AuthContextValue, AuthProvider, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+export { type AuthContextValue, AuthProvider, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
