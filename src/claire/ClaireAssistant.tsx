@@ -17,6 +17,7 @@ import {
   generateParcelChatReply,
 } from './geminiClient';
 import { sendClaireMessageSignal } from './signal';
+import { fetchClaireContext } from './claireContext';
 import {
   loadClaireConversation,
   saveClaireConversation,
@@ -178,6 +179,25 @@ const ClaireAssistant = ({
     [properties, enrichment, lngLat, lv95],
   );
 
+  // Authoritative federal records (GWR building register, ARE zoning,
+  // swisstopo locality) fetched live from geo.admin.ch and appended to the
+  // parcel context — best-effort, so it never blocks or breaks the chat.
+  const [officialContext, setOfficialContext] = useState('');
+  useEffect(() => {
+    const controller = new AbortController();
+    setOfficialContext('');
+    void fetchClaireContext(lngLat.lng, lngLat.lat, controller.signal)
+      .then((ctx) => setOfficialContext(ctx))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [lngLat.lng, lngLat.lat]);
+
+  const fullContext = useMemo(
+    () =>
+      officialContext ? `${parcelContext}\n\n${officialContext}` : parcelContext,
+    [parcelContext, officialContext],
+  );
+
   // Reset conversation whenever the targeted parcel changes — the chat must
   // refresh its context to match the freshly selected parcel.
   useEffect(() => {
@@ -282,7 +302,7 @@ const ClaireAssistant = ({
           apiKey: geminiApiKey ?? '',
           model: geminiModel,
           appName,
-          parcelContext,
+          parcelContext: fullContext,
           history: nextHistory,
           signal: controller.signal,
         });
@@ -322,7 +342,7 @@ const ClaireAssistant = ({
       configured,
       loading,
       messages,
-      parcelContext,
+      fullContext,
       lngLat.lat,
       lngLat.lng,
       parcelId,
