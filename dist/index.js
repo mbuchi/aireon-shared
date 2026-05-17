@@ -1,11 +1,9 @@
+export { RES_API_BASE_URL, createResApiClient } from './chunk-LGHK7RPJ.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Loader2, AlertCircle, Send } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
-import createClient from 'openapi-fetch';
-
-// src/releaseNotes/ReleaseNotesPanel.tsx
 
 // src/releaseNotes/types.ts
 var KIND_META = {
@@ -1736,21 +1734,5 @@ ${official.text}` : parcelContext,
   );
 };
 var ClaireAssistant_default = ClaireAssistant;
-var RES_API_BASE_URL = "https://res.zeroo.ch";
-function createResApiClient(options = {}) {
-  const { baseUrl = RES_API_BASE_URL, token, fetch: fetch2 } = options;
-  const headers = {
-    // Opt in to the corrected error contract — see project_RES openapi.json.
-    "X-RES-API-Version": "2"
-  };
-  if (token) {
-    headers.token = token;
-  }
-  return createClient({
-    baseUrl,
-    headers,
-    ...fetch2 ? { fetch: fetch2 } : {}
-  });
-}
 
-export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, RELEASE_NOTES_STRINGS, RES_API_BASE_URL, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, buildParcelContextSummary, createResApiClient, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
