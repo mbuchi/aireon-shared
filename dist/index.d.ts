@@ -195,10 +195,10 @@ interface ClaireAssistantProps {
  * persisted per signed-in user per parcel on the RES API.
  *
  * Each consuming app must:
- *  - serve `public/claire.png`,
  *  - expose an `/api/signal-collect` proxy,
  *  - pass its `VITE_GEMINI_API_KEY` as `geminiApiKey`,
  *  - be wrapped in this package's <AuthProvider>.
+ * The avatar is inlined — no per-app public/ asset is needed.
  */
 declare const ClaireAssistant: ({ appName, geminiApiKey, geminiModel, darkMode, properties, enrichment, lngLat, lv95, headerAddress, }: ClaireAssistantProps) => react.ReactPortal;
 
