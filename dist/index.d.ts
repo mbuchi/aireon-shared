@@ -283,4 +283,11 @@ interface ClaireMessageSignal {
  */
 declare function sendClaireMessageSignal({ appName, lat, lng, parcelId, address, source, }: ClaireMessageSignal): Promise<void>;
 
-export { type AuthContextValue, AuthProvider, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, buildParcelContextSummary, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+/**
+ * Fetches authoritative federal records for a coordinate and returns them as
+ * a ready-to-prepend context block (or '' when nothing is found / on error).
+ * Never throws — enrichment is strictly best-effort.
+ */
+declare function fetchClaireContext(lng: number, lat: number, signal?: AbortSignal): Promise<string>;
+
+export { type AuthContextValue, AuthProvider, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };

@@ -950,6 +950,178 @@ async function sendClaireMessageSignal({
   }
 }
 
+// src/claire/claireContext.ts
+var IDENTIFY_API = "https://api3.geo.admin.ch/rest/services/api/MapServer/identify";
+var GWR_LAYER = "ch.bfs.gebaeude_wohnungs_register";
+var BAUZONEN_LAYER = "ch.are.bauzonen_harmonisiert_v2";
+var PLZ_LAYER = "ch.swisstopo-vd.ortschaftenverzeichnis_plz";
+var GKAT = {
+  "1010": "Provisional accommodation",
+  "1020": "Residential building (residential use only)",
+  "1030": "Residential building with secondary use",
+  "1040": "Building with partial residential use",
+  "1060": "Building without residential use",
+  "1080": "Special structure"
+};
+var GKLAS = {
+  "1110": "One-dwelling building",
+  "1121": "Two-dwelling building",
+  "1122": "Building with three or more dwellings",
+  "1130": "Residential building for communities",
+  "1211": "Hotel building",
+  "1212": "Other short-stay accommodation building",
+  "1220": "Office building",
+  "1230": "Wholesale / retail building",
+  "1231": "Restaurant / bar building",
+  "1241": "Transport / communications building",
+  "1242": "Garage building",
+  "1251": "Industrial building",
+  "1252": "Tank / silo / warehouse building",
+  "1261": "Culture / leisure building",
+  "1262": "Museum / library building",
+  "1263": "School / university building",
+  "1264": "Hospital building",
+  "1265": "Sports hall",
+  "1271": "Agricultural building",
+  "1272": "Church / religious building",
+  "1273": "Historic monument",
+  "1274": "Other non-residential building",
+  "1275": "Other building",
+  "1276": "Protective structure"
+};
+var GSTAT = {
+  "1001": "Planned",
+  "1002": "Authorised",
+  "1003": "Under construction",
+  "1004": "Existing",
+  "1005": "Not usable",
+  "1007": "Demolished",
+  "1008": "Not built"
+};
+var GBAUP = {
+  "8011": "before 1919",
+  "8012": "1919\u20131945",
+  "8013": "1946\u20131960",
+  "8014": "1961\u20131970",
+  "8015": "1971\u20131980",
+  "8016": "1981\u20131985",
+  "8017": "1986\u20131990",
+  "8018": "1991\u20131995",
+  "8019": "1996\u20132000",
+  "8020": "2001\u20132005",
+  "8021": "2006\u20132010",
+  "8022": "2011\u20132015",
+  "8023": "2016\u20132020",
+  "8024": "2021\u20132025",
+  "8025": "2026\u20132030"
+};
+function str(v) {
+  if (v === void 0 || v === null || v === "") return void 0;
+  return String(v);
+}
+function num(v) {
+  if (v === void 0 || v === null || v === "") return void 0;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : void 0;
+}
+function firstString(attrs, keys) {
+  for (const k of keys) {
+    const s = str(attrs[k]);
+    if (s !== void 0) return s;
+  }
+  return void 0;
+}
+function gwrLines(p) {
+  const lines = [];
+  const add = (label, value) => {
+    if (value !== void 0 && value !== "") lines.push(`- ${label}: ${value}`);
+  };
+  add("GWR building ID (EGID)", str(p.egid));
+  add("Building address (GWR)", str(p.strname_deinr));
+  const place = [str(p.dplz4) ?? str(p.plz_plz6), str(p.ggdename ?? p.dplzname)].filter(Boolean).join(" ");
+  add("Municipality", [place, str(p.gdekt)].filter(Boolean).join(", ") || void 0);
+  add("Official parcel ID (EGRID)", str(p.egrid));
+  const year = num(p.gbauj);
+  add("Construction year", year ?? (str(p.gbaup) && GBAUP[String(p.gbaup)]));
+  add("Floors above ground", num(p.gastw));
+  add("Dwellings", num(p.ganzwhg));
+  add("Building footprint", num(p.garea) !== void 0 ? `${num(p.garea)} m\xB2` : void 0);
+  add("Building volume", num(p.gvol) !== void 0 ? `${num(p.gvol)} m\xB3` : void 0);
+  add(
+    "Energy reference area",
+    num(p.gebf) !== void 0 ? `${num(p.gebf)} m\xB2` : void 0
+  );
+  add("Building category", str(p.gkat) && GKAT[String(p.gkat)]);
+  add("Building class", str(p.gklas) && GKLAS[String(p.gklas)]);
+  add("Building status", str(p.gstat) && GSTAT[String(p.gstat)]);
+  const rooms = Array.isArray(p.wazim) ? p.wazim.map(num).filter((n) => n !== void 0) : [];
+  if (rooms.length > 0) {
+    const min = Math.min(...rooms);
+    const max = Math.max(...rooms);
+    add("Dwelling sizes", min === max ? `${min} rooms` : `${min}\u2013${max} rooms`);
+  }
+  return lines;
+}
+async function fetchClaireContext(lng, lat, signal) {
+  const delta = 12e-4;
+  const params = new URLSearchParams({
+    geometry: `${lng},${lat}`,
+    geometryType: "esriGeometryPoint",
+    geometryFormat: "geojson",
+    imageDisplay: "1024,768,96",
+    mapExtent: `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`,
+    tolerance: "6",
+    layers: `all:${GWR_LAYER},${BAUZONEN_LAYER},${PLZ_LAYER}`,
+    sr: "4326",
+    returnGeometry: "false",
+    lang: "en"
+  });
+  let results;
+  try {
+    const res = await fetch(`${IDENTIFY_API}?${params}`, { signal });
+    if (!res.ok) return "";
+    const data = await res.json();
+    results = data.results ?? [];
+  } catch {
+    return "";
+  }
+  const sections = [];
+  const gwr = results.find((r) => r.layerBodId === GWR_LAYER);
+  if (gwr) {
+    const lines = gwrLines(gwr.properties ?? gwr.attributes ?? {});
+    if (lines.length > 0) {
+      sections.push(`Federal Register of Buildings and Dwellings (GWR):
+${lines.join("\n")}`);
+    }
+  }
+  const zone = results.find((r) => r.layerBodId === BAUZONEN_LAYER);
+  const zoneName = zone ? firstString(zone.properties ?? zone.attributes ?? {}, [
+    "ch_bezeichnung",
+    "ch_typ_text",
+    "typ_kt_text",
+    "typ_text",
+    "bezeichnung_de",
+    "bezeichnung"
+  ]) : void 0;
+  const plz = results.find((r) => r.layerBodId === PLZ_LAYER);
+  const plzAttrs = plz ? plz.properties ?? plz.attributes ?? {} : {};
+  const town = firstString(plzAttrs, ["ortbez27", "ortbez18", "ortschaftsname"]);
+  const code = firstString(plzAttrs, ["plz", "postleitzahl"]);
+  const misc = [];
+  if (zoneName) misc.push(`- Harmonised building zone (ARE): ${zoneName}`);
+  if (town || code) {
+    misc.push(`- Locality: ${[code, town].filter(Boolean).join(" ")}`);
+  }
+  if (misc.length > 0) {
+    sections.push(`Official zoning & locality (swisstopo / ARE):
+${misc.join("\n")}`);
+  }
+  if (sections.length === 0) return "";
+  return `Authoritative Swiss federal records for this location:
+
+${sections.join("\n\n")}`;
+}
+
 // src/claire/claireConversation.ts
 var CLAIRE_API_BASE = "https://res.zeroo.ch/res_api/claire";
 async function loadClaireConversation(parcelId, accessToken) {
@@ -1093,6 +1265,20 @@ var ClaireAssistant = ({
     }),
     [properties, enrichment, lngLat, lv95]
   );
+  const [officialContext, setOfficialContext] = useState("");
+  useEffect(() => {
+    const controller = new AbortController();
+    setOfficialContext("");
+    void fetchClaireContext(lngLat.lng, lngLat.lat, controller.signal).then((ctx) => setOfficialContext(ctx)).catch(() => {
+    });
+    return () => controller.abort();
+  }, [lngLat.lng, lngLat.lat]);
+  const fullContext = useMemo(
+    () => officialContext ? `${parcelContext}
+
+${officialContext}` : parcelContext,
+    [parcelContext, officialContext]
+  );
   useEffect(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -1177,7 +1363,7 @@ var ClaireAssistant = ({
           apiKey: geminiApiKey ?? "",
           model: geminiModel,
           appName,
-          parcelContext,
+          parcelContext: fullContext,
           history: nextHistory,
           signal: controller.signal
         });
@@ -1209,7 +1395,7 @@ var ClaireAssistant = ({
       configured,
       loading,
       messages,
-      parcelContext,
+      fullContext,
       lngLat.lat,
       lngLat.lng,
       parcelId,
@@ -1524,4 +1710,4 @@ var ClaireAssistant = ({
 };
 var ClaireAssistant_default = ClaireAssistant;
 
-export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, buildParcelContextSummary, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };

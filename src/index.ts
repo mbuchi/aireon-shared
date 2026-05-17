@@ -36,3 +36,4 @@ export {
 } from './claire/claireConversation';
 export type { ClaireTurn } from './claire/claireConversation';
 export { sendClaireMessageSignal } from './claire/signal';
+export { fetchClaireContext } from './claire/claireContext';
