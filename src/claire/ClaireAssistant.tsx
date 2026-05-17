@@ -54,7 +54,12 @@ export interface ClaireAssistantProps {
   geminiApiKey?: string;
   /** Optional Gemini model override (defaults to gemini-3.1-flash-lite). */
   geminiModel?: string;
-  darkMode: boolean;
+  /**
+   * @deprecated Accepted for backward compatibility but ignored. Claire now
+   * renders one fixed look suite-wide (valoo's dark theme) so the widget is
+   * visually consistent across every app, regardless of the host's theme.
+   */
+  darkMode?: boolean;
   properties: Record<string, unknown>;
   enrichment?: Record<string, unknown> | null;
   lngLat: { lng: number; lat: number };
@@ -163,13 +168,18 @@ const ClaireAssistant = ({
   appName,
   geminiApiKey,
   geminiModel,
-  darkMode,
   properties,
   enrichment,
   lngLat,
   lv95,
   headerAddress,
 }: ClaireAssistantProps) => {
+  // Claire renders one fixed look suite-wide — valoo's dark theme — so the
+  // widget is identical across every app regardless of the host's light/dark
+  // mode. The `darkMode` prop is accepted (back-compat) but intentionally
+  // ignored; every `darkMode ? … : …` below resolves to the dark branch.
+  const darkMode: boolean = true;
+
   // Floating widget: a launcher bubble that is always visible while a parcel
   // is selected, expanding into a free-floating chat card.
   const [open, setOpen] = useState(false);

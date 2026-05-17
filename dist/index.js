@@ -1262,7 +1262,6 @@ var ClaireAssistant = ({
   appName,
   geminiApiKey,
   geminiModel,
-  darkMode,
   properties,
   enrichment,
   lngLat,
@@ -1460,7 +1459,7 @@ ${official.text}` : parcelContext,
       onClick: () => setOpen(true),
       "aria-label": "Open Claire, the AI parcel assistant",
       title: "Ask Claire about this parcel",
-      className: `fixed z-[60] ${launcherPos} group flex items-center justify-center w-14 h-14 rounded-full transition-all duration-200 active:scale-95 ${darkMode ? "bg-gradient-to-br from-amber-400 to-orange-500 text-[#1a0f00] shadow-[0_10px_30px_-8px_rgba(251,191,36,0.55)] hover:brightness-110" : "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-[0_10px_30px_-8px_rgba(251,146,60,0.6)] hover:brightness-105"}`,
+      className: `fixed z-[60] ${launcherPos} group flex items-center justify-center w-14 h-14 rounded-full transition-all duration-200 active:scale-95 ${"bg-gradient-to-br from-amber-400 to-orange-500 text-[#1a0f00] shadow-[0_10px_30px_-8px_rgba(251,191,36,0.55)] hover:brightness-110" }`,
       children: [
         /* @__PURE__ */ jsx("span", { className: "absolute inset-0 rounded-full bg-amber-400/50 chat-launch-ping" }),
         /* @__PURE__ */ jsx(
@@ -1479,17 +1478,17 @@ ${official.text}` : parcelContext,
     {
       role: "dialog",
       "aria-label": "Claire \u2014 AI Parcel Assistant",
-      className: `fixed z-[60] ${cardPos} chat-card-pop flex flex-col overflow-hidden rounded-2xl ${darkMode ? "bg-[#0b0f15] ring-1 ring-white/[0.08] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]" : "bg-white ring-1 ring-gray-200/90 shadow-[0_24px_60px_-20px_rgba(15,23,42,0.4)]"}`,
+      className: `fixed z-[60] ${cardPos} chat-card-pop flex flex-col overflow-hidden rounded-2xl ${"bg-[#0b0f15] ring-1 ring-white/[0.08] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]" }`,
       children: [
         /* @__PURE__ */ jsxs(
           "div",
           {
-            className: `flex items-center gap-3 px-3.5 py-3 shrink-0 ${darkMode ? "bg-gradient-to-b from-white/[0.04] to-transparent border-b border-white/[0.06]" : "bg-gradient-to-b from-gray-50/80 to-transparent border-b border-gray-200/70"}`,
+            className: `flex items-center gap-3 px-3.5 py-3 shrink-0 ${"bg-gradient-to-b from-white/[0.04] to-transparent border-b border-white/[0.06]" }`,
             children: [
               /* @__PURE__ */ jsxs(
                 "div",
                 {
-                  className: `relative w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${darkMode ? "bg-gradient-to-br from-amber-400/20 via-orange-500/15 to-rose-500/10 ring-1 ring-amber-300/20" : "bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100 ring-1 ring-amber-200/70"}`,
+                  className: `relative w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${"bg-gradient-to-br from-amber-400/20 via-orange-500/15 to-rose-500/10 ring-1 ring-amber-300/20" }`,
                   children: [
                     /* @__PURE__ */ jsx(
                       "img",
@@ -1502,7 +1501,7 @@ ${official.text}` : parcelContext,
                     /* @__PURE__ */ jsx(
                       "span",
                       {
-                        className: `absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ${darkMode ? "bg-emerald-400 ring-[#0b0f15]" : "bg-emerald-500 ring-white"}`
+                        className: `absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ${"bg-emerald-400 ring-[#0b0f15]" }`
                       }
                     )
                   ]
@@ -1512,14 +1511,14 @@ ${official.text}` : parcelContext,
                 /* @__PURE__ */ jsx(
                   "div",
                   {
-                    className: `text-[13px] font-semibold leading-tight ${darkMode ? "text-white" : "text-gray-900"}`,
+                    className: `text-[13px] font-semibold leading-tight ${"text-white" }`,
                     children: "Claire"
                   }
                 ),
                 /* @__PURE__ */ jsx(
                   "div",
                   {
-                    className: `text-[10.5px] font-medium uppercase tracking-[0.1em] mt-0.5 truncate ${darkMode ? "text-amber-200/70" : "text-amber-700/80"}`,
+                    className: `text-[10.5px] font-medium uppercase tracking-[0.1em] mt-0.5 truncate ${"text-amber-200/70" }`,
                     children: subtitle
                   }
                 )
@@ -1530,7 +1529,7 @@ ${official.text}` : parcelContext,
                   type: "button",
                   onClick: () => setOpen(false),
                   "aria-label": "Close Claire",
-                  className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${darkMode ? "text-gray-400 hover:text-white hover:bg-white/[0.08]" : "text-gray-400 hover:text-gray-700 hover:bg-gray-100"}`,
+                  className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${"text-gray-400 hover:text-white hover:bg-white/[0.08]" }`,
                   children: /* @__PURE__ */ jsx(X, { size: 16 })
                 }
               )
@@ -1547,7 +1546,7 @@ ${official.text}` : parcelContext,
               messages.length === 0 && historyLoading && /* @__PURE__ */ jsxs(
                 "div",
                 {
-                  className: `flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] ${darkMode ? "bg-white/[0.025] text-gray-400 ring-1 ring-white/[0.04]" : "bg-gray-50 text-gray-500 ring-1 ring-gray-200/70"}`,
+                  className: `flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] ${"bg-white/[0.025] text-gray-400 ring-1 ring-white/[0.04]" }`,
                   children: [
                     /* @__PURE__ */ jsx(Loader2, { size: 13, className: "animate-spin shrink-0" }),
                     "Restoring your conversation about this parcel\u2026"
@@ -1557,7 +1556,7 @@ ${official.text}` : parcelContext,
               messages.length === 0 && !historyLoading && /* @__PURE__ */ jsx(
                 "div",
                 {
-                  className: `rounded-xl px-3 py-2.5 text-[12px] leading-relaxed ${darkMode ? "bg-white/[0.025] text-gray-300 ring-1 ring-white/[0.04]" : "bg-gray-50 text-gray-600 ring-1 ring-gray-200/70"}`,
+                  className: `rounded-xl px-3 py-2.5 text-[12px] leading-relaxed ${"bg-white/[0.025] text-gray-300 ring-1 ring-white/[0.04]" }`,
                   children: "Hi, I\u2019m Claire. Ask me anything about this parcel \u2014 zoning, value, what can be built, comparable properties, or hidden risks. My answers are scoped to the selection on the map."
                 }
               ),
@@ -1565,14 +1564,14 @@ ${official.text}` : parcelContext,
                 (msg) => msg.role === "user" ? /* @__PURE__ */ jsx("div", { className: "flex justify-end", children: /* @__PURE__ */ jsx(
                   "div",
                   {
-                    className: `max-w-[88%] rounded-2xl rounded-tr-md px-3 py-2 text-[12.5px] leading-relaxed whitespace-pre-wrap ${darkMode ? "bg-amber-400/15 text-amber-50 ring-1 ring-amber-300/20" : "bg-amber-50 text-amber-900 ring-1 ring-amber-200/80"}`,
+                    className: `max-w-[88%] rounded-2xl rounded-tr-md px-3 py-2 text-[12.5px] leading-relaxed whitespace-pre-wrap ${"bg-amber-400/15 text-amber-50 ring-1 ring-amber-300/20" }`,
                     children: msg.content
                   }
                 ) }, msg.id) : /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-2", children: [
                   /* @__PURE__ */ jsx(
                     "div",
                     {
-                      className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${darkMode ? "bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" : "bg-gradient-to-br from-amber-100 to-rose-100 ring-1 ring-amber-200/70"}`,
+                      className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
                       children: /* @__PURE__ */ jsx(
                         "img",
                         {
@@ -1586,7 +1585,7 @@ ${official.text}` : parcelContext,
                   /* @__PURE__ */ jsx(
                     "div",
                     {
-                      className: `max-w-[88%] rounded-2xl rounded-tl-md px-3 py-2 text-[12.5px] leading-relaxed ${darkMode ? "bg-white/[0.04] text-gray-100 ring-1 ring-white/[0.05]" : "bg-gray-50 text-gray-800 ring-1 ring-gray-200/70"}`,
+                      className: `max-w-[88%] rounded-2xl rounded-tl-md px-3 py-2 text-[12.5px] leading-relaxed ${"bg-white/[0.04] text-gray-100 ring-1 ring-white/[0.05]" }`,
                       children: renderAssistantText(msg.content)
                     }
                   )
@@ -1596,7 +1595,7 @@ ${official.text}` : parcelContext,
                 /* @__PURE__ */ jsx(
                   "div",
                   {
-                    className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${darkMode ? "bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" : "bg-gradient-to-br from-amber-100 to-rose-100 ring-1 ring-amber-200/70"}`,
+                    className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
                     children: /* @__PURE__ */ jsx(
                       "img",
                       {
@@ -1610,7 +1609,7 @@ ${official.text}` : parcelContext,
                 /* @__PURE__ */ jsxs(
                   "div",
                   {
-                    className: `rounded-2xl rounded-tl-md px-3 py-2.5 flex items-center gap-1.5 ${darkMode ? "bg-white/[0.04] ring-1 ring-white/[0.05]" : "bg-gray-50 ring-1 ring-gray-200/70"}`,
+                    className: `rounded-2xl rounded-tl-md px-3 py-2.5 flex items-center gap-1.5 ${"bg-white/[0.04] ring-1 ring-white/[0.05]" }`,
                     "aria-label": "Claire is typing",
                     children: [
                       /* @__PURE__ */ jsx("span", { className: "chat-dot" }),
@@ -1623,7 +1622,7 @@ ${official.text}` : parcelContext,
               error && /* @__PURE__ */ jsxs(
                 "div",
                 {
-                  className: `flex items-start gap-2 rounded-xl px-3 py-2 text-[12px] ${darkMode ? "bg-rose-500/10 text-rose-200 ring-1 ring-rose-400/20" : "bg-rose-50 text-rose-700 ring-1 ring-rose-200"}`,
+                  className: `flex items-start gap-2 rounded-xl px-3 py-2 text-[12px] ${"bg-rose-500/10 text-rose-200 ring-1 ring-rose-400/20" }`,
                   children: [
                     /* @__PURE__ */ jsx(AlertCircle, { size: 13, className: "shrink-0 mt-0.5" }),
                     /* @__PURE__ */ jsx("span", { children: error })
@@ -1636,7 +1635,7 @@ ${official.text}` : parcelContext,
         /* @__PURE__ */ jsxs(
           "div",
           {
-            className: `shrink-0 px-3.5 pt-2.5 pb-3 ${darkMode ? "border-t border-white/[0.06] bg-gradient-to-t from-white/[0.025] to-transparent" : "border-t border-gray-200/70 bg-gradient-to-t from-gray-50/70 to-transparent"}`,
+            className: `shrink-0 px-3.5 pt-2.5 pb-3 ${"border-t border-white/[0.06] bg-gradient-to-t from-white/[0.025] to-transparent" }`,
             children: [
               showQuickPrompts && /* @__PURE__ */ jsx("div", { className: "mb-2.5 flex flex-wrap gap-1.5", children: QUICK_PROMPTS.map((q) => /* @__PURE__ */ jsx(
                 "button",
@@ -1644,7 +1643,7 @@ ${official.text}` : parcelContext,
                   type: "button",
                   onClick: () => onQuickPrompt(q.prompt),
                   title: q.prompt,
-                  className: `text-[11px] font-medium px-2.5 py-1 rounded-full transition-all duration-150 ${darkMode ? "bg-white/[0.04] text-gray-200 ring-1 ring-white/[0.06] hover:bg-amber-400/10 hover:text-amber-200 hover:ring-amber-300/30" : "bg-white text-gray-700 ring-1 ring-gray-200/80 hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-200"}`,
+                  className: `text-[11px] font-medium px-2.5 py-1 rounded-full transition-all duration-150 ${"bg-white/[0.04] text-gray-200 ring-1 ring-white/[0.06] hover:bg-amber-400/10 hover:text-amber-200 hover:ring-amber-300/30" }`,
                   children: q.label
                 },
                 q.label
@@ -1653,7 +1652,7 @@ ${official.text}` : parcelContext,
                 /* @__PURE__ */ jsxs(
                   "div",
                   {
-                    className: `flex items-end gap-1.5 rounded-xl px-2.5 py-1.5 transition-all duration-150 focus-within:ring-2 ${darkMode ? "bg-white/[0.04] ring-1 ring-white/[0.06] focus-within:ring-amber-400/40" : "bg-white ring-1 ring-gray-200/80 focus-within:ring-amber-300"}`,
+                    className: `flex items-end gap-1.5 rounded-xl px-2.5 py-1.5 transition-all duration-150 focus-within:ring-2 ${"bg-white/[0.04] ring-1 ring-white/[0.06] focus-within:ring-amber-400/40" }`,
                     children: [
                       /* @__PURE__ */ jsx(
                         "textarea",
@@ -1664,7 +1663,7 @@ ${official.text}` : parcelContext,
                           onKeyDown,
                           placeholder: "Ask Claire about this parcel...",
                           rows: 1,
-                          className: `flex-1 resize-none bg-transparent outline-none text-[12.5px] leading-snug py-1.5 max-h-24 ${darkMode ? "text-gray-100 placeholder:text-gray-500" : "text-gray-900 placeholder:text-gray-400"}`
+                          className: `flex-1 resize-none bg-transparent outline-none text-[12.5px] leading-snug py-1.5 max-h-24 ${"text-gray-100 placeholder:text-gray-500" }`
                         }
                       ),
                       /* @__PURE__ */ jsx(
@@ -1673,7 +1672,7 @@ ${official.text}` : parcelContext,
                           type: "submit",
                           disabled: sendDisabled,
                           "aria-label": "Send message",
-                          className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 ${sendDisabled ? darkMode ? "bg-white/[0.04] text-gray-600 cursor-not-allowed" : "bg-gray-100 text-gray-300 cursor-not-allowed" : "bg-gradient-to-br from-amber-400 to-orange-500 text-white hover:brightness-105 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.5)]"}`,
+                          className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 ${sendDisabled ? "bg-white/[0.04] text-gray-600 cursor-not-allowed"  : "bg-gradient-to-br from-amber-400 to-orange-500 text-white hover:brightness-105 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.5)]"}`,
                           children: loading ? /* @__PURE__ */ jsx(Loader2, { size: 14, className: "animate-spin" }) : /* @__PURE__ */ jsx(Send, { size: 13 })
                         }
                       )
@@ -1683,7 +1682,7 @@ ${official.text}` : parcelContext,
                 /* @__PURE__ */ jsx(
                   "div",
                   {
-                    className: `mt-1.5 text-[10px] tracking-wide ${darkMode ? "text-gray-500" : "text-gray-400"}`,
+                    className: `mt-1.5 text-[10px] tracking-wide ${"text-gray-500" }`,
                     children: "Enter to send \xB7 Shift+Enter for newline"
                   }
                 )
@@ -1701,14 +1700,14 @@ ${official.text}` : parcelContext,
         .chat-scroll::-webkit-scrollbar { width: 3px; }
         .chat-scroll::-webkit-scrollbar-track { background: transparent; }
         .chat-scroll::-webkit-scrollbar-thumb {
-          background: ${darkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"};
+          background: ${"rgba(255,255,255,0.08)" };
           border-radius: 4px;
         }
         .chat-dot {
           width: 5px;
           height: 5px;
           border-radius: 9999px;
-          background: ${darkMode ? "rgba(251,191,36,0.85)" : "rgba(217,119,6,0.7)"};
+          background: ${"rgba(251,191,36,0.85)" };
           display: inline-block;
           animation: chatDot 1.1s infinite ease-in-out;
         }

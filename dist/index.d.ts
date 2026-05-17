@@ -176,7 +176,12 @@ interface ClaireAssistantProps {
     geminiApiKey?: string;
     /** Optional Gemini model override (defaults to gemini-3.1-flash-lite). */
     geminiModel?: string;
-    darkMode: boolean;
+    /**
+     * @deprecated Accepted for backward compatibility but ignored. Claire now
+     * renders one fixed look suite-wide (valoo's dark theme) so the widget is
+     * visually consistent across every app, regardless of the host's theme.
+     */
+    darkMode?: boolean;
     properties: Record<string, unknown>;
     enrichment?: Record<string, unknown> | null;
     lngLat: {
@@ -200,7 +205,7 @@ interface ClaireAssistantProps {
  *  - be wrapped in this package's <AuthProvider>.
  * The avatar is inlined — no per-app public/ asset is needed.
  */
-declare const ClaireAssistant: ({ appName, geminiApiKey, geminiModel, darkMode, properties, enrichment, lngLat, lv95, headerAddress, }: ClaireAssistantProps) => react.ReactPortal;
+declare const ClaireAssistant: ({ appName, geminiApiKey, geminiModel, properties, enrichment, lngLat, lv95, headerAddress, }: ClaireAssistantProps) => react.ReactPortal;
 
 interface ChatTurn {
     role: 'user' | 'assistant';
