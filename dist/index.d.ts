@@ -168,4 +168,119 @@ declare function urlHasAuthParams(url?: URL): boolean;
 /** Strips OIDC callback query params from the address bar. */
 declare function stripAuthParams(): void;
 
-export { type AuthContextValue, AuthProvider, type AuthStatus, type ChangeItem, type ChangeKind, KIND_META, type Locale, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, getAuthToken, getExistingUser, getReleaseNotesStrings, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+interface ClaireAssistantProps {
+    /** App mounting Claire — feeds telemetry, persistence, and the prompt. */
+    appName: string;
+    /** Gemini API key, read by the app from its own VITE_GEMINI_API_KEY. */
+    geminiApiKey?: string;
+    /** Optional Gemini model override (defaults to gemini-3.1-flash-lite). */
+    geminiModel?: string;
+    darkMode: boolean;
+    properties: Record<string, unknown>;
+    enrichment?: Record<string, unknown> | null;
+    lngLat: {
+        lng: number;
+        lat: number;
+    };
+    lv95?: {
+        E: number;
+        N: number;
+    } | null;
+    headerAddress?: string;
+}
+/**
+ * Claire — the SwissNovo AI parcel assistant. A floating launcher bubble that
+ * expands into a chat card scoped to the selected parcel. Conversations are
+ * persisted per signed-in user per parcel on the RES API.
+ *
+ * Each consuming app must:
+ *  - serve `public/claire.png`,
+ *  - expose an `/api/signal-collect` proxy,
+ *  - pass its `VITE_GEMINI_API_KEY` as `geminiApiKey`,
+ *  - be wrapped in this package's <AuthProvider>.
+ */
+declare const ClaireAssistant: ({ appName, geminiApiKey, geminiModel, darkMode, properties, enrichment, lngLat, lv95, headerAddress, }: ClaireAssistantProps) => react.ReactPortal;
+
+interface ChatTurn {
+    role: 'user' | 'assistant';
+    content: string;
+}
+interface ParcelContextInput {
+    properties: Record<string, unknown>;
+    enrichment?: Record<string, unknown> | null;
+    lngLat: {
+        lng: number;
+        lat: number;
+    };
+    lv95?: {
+        E: number;
+        N: number;
+    } | null;
+}
+declare function buildParcelContextSummary(input: ParcelContextInput): string;
+interface GeminiCallOptions {
+    /** Gemini API key — supplied by the consuming app from its Vite env. */
+    apiKey: string;
+    /** Model id; defaults to gemini-3.1-flash-lite. */
+    model?: string;
+    /** App name woven into the system prompt (e.g. "Valoo"). */
+    appName?: string;
+    parcelContext: string;
+    history: ChatTurn[];
+    signal?: AbortSignal;
+}
+declare class GeminiConfigError extends Error {
+    constructor();
+}
+declare function generateParcelChatReply({ apiKey, model, appName, parcelContext, history, signal, }: GeminiCallOptions): Promise<string>;
+
+interface ClaireTurn {
+    role: 'user' | 'assistant';
+    content: string;
+}
+/**
+ * Loads the stored conversation for a parcel. Returns [] when the visitor is
+ * signed out, the parcel has no history, or the request fails — Claire then
+ * starts fresh. Never throws.
+ */
+declare function loadClaireConversation(parcelId: string, accessToken: string | undefined): Promise<ClaireTurn[]>;
+interface SaveClaireConversationParams {
+    parcelId: string;
+    messages: ClaireTurn[];
+    accessToken: string | undefined;
+    /** App the conversation happened on — stored as app_name. */
+    appName: string;
+    /** Parcel address — stored so the future history view reads nicely. */
+    address?: string;
+    lat?: number;
+    lng?: number;
+}
+/**
+ * Fire-and-forget: upserts the full conversation for a parcel. No-ops for
+ * signed-out visitors. Never throws — persistence must not break the chat.
+ */
+declare function saveClaireConversation({ parcelId, messages, accessToken, appName, address, lat, lng, }: SaveClaireConversationParams): Promise<void>;
+
+interface ClaireMessageSignal {
+    /** App emitting the signal — recorded as app_name. */
+    appName: string;
+    /** WGS84 latitude of the parcel the conversation is scoped to. */
+    lat: number;
+    /** WGS84 longitude of the parcel the conversation is scoped to. */
+    lng: number;
+    /** Stable parcel identifier, when the map tile provides one. */
+    parcelId?: string | null;
+    /** Human-readable parcel address, when known. */
+    address?: string;
+    /** Where the message originated — typed vs. a quick-prompt chip. */
+    source?: 'composer' | 'quick_prompt';
+}
+/**
+ * Fire-and-forget: reports one message sent to Claire, scoped to the parcel
+ * under discussion. Each call is one message, so the admin signal dashboard
+ * can count Claire interactions per parcel. Never throws — telemetry must
+ * not interfere with the chat.
+ */
+declare function sendClaireMessageSignal({ appName, lat, lng, parcelId, address, source, }: ClaireMessageSignal): Promise<void>;
+
+export { type AuthContextValue, AuthProvider, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, buildParcelContextSummary, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };

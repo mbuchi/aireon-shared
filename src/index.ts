@@ -17,3 +17,22 @@ export {
   stripAuthParams,
   SSO_ATTEMPTED_KEY,
 } from './auth/userManager';
+
+export { default as ClaireAssistant } from './claire/ClaireAssistant';
+export type { ClaireAssistantProps } from './claire/ClaireAssistant';
+export {
+  buildParcelContextSummary,
+  generateParcelChatReply,
+  GeminiConfigError,
+} from './claire/geminiClient';
+export type {
+  ChatTurn,
+  ParcelContextInput,
+  GeminiCallOptions,
+} from './claire/geminiClient';
+export {
+  loadClaireConversation,
+  saveClaireConversation,
+} from './claire/claireConversation';
+export type { ClaireTurn } from './claire/claireConversation';
+export { sendClaireMessageSignal } from './claire/signal';

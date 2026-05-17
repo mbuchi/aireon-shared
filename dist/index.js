@@ -1,6 +1,6 @@
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown } from 'lucide-react';
+import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Loader2, AlertCircle, Send } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 
@@ -743,4 +743,785 @@ function useAuth() {
   return ctx;
 }
 
-export { AuthProvider, KIND_META, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, getAuthToken, getExistingUser, getReleaseNotesStrings, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+// src/claire/geminiClient.ts
+var DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite";
+var GEMINI_ENDPOINT = (model, key) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
+  key
+)}`;
+var FIELD_LABELS = {
+  estimated_price_m2: "Estimated price per m\xB2 (CHF)",
+  estimated_price: "Estimated total value (CHF)",
+  price_m2: "Market price per m\xB2 (CHF)",
+  price: "Market price (CHF)",
+  area_m2: "Plot area (m\xB2)",
+  parcel_area: "Plot area (m\xB2)",
+  flaeche: "Plot area (m\xB2)",
+  grundflaeche: "Ground area (m\xB2)",
+  bldg_count: "Building count",
+  building_count: "Building count",
+  bldg_size: "Building footprint (m\xB2)",
+  bldg_floors: "Building floors",
+  bldg_height_mean: "Mean building height (m)",
+  bldg_constr_year: "Construction year",
+  construction_year: "Construction year",
+  baujahr: "Construction year",
+  rooms: "Rooms",
+  zimmer: "Rooms",
+  floors: "Floors",
+  geschosse: "Floors",
+  cz_local: "Local construction zone",
+  cz_harmonized: "Harmonized zone type",
+  construction_zone: "Construction zone",
+  bauzone: "Construction zone",
+  nutzungszone: "Usage zone",
+  address: "Address",
+  street: "Street",
+  strasse: "Street",
+  streetname: "Street",
+  cityname: "City",
+  city: "City",
+  ort: "City",
+  gemeinde: "Municipality",
+  municipality: "Municipality",
+  fso_name_2021: "Municipality (FSO)",
+  districtname: "District",
+  plz: "Postal code",
+  zip: "Postal code",
+  canton: "Canton",
+  kanton: "Canton",
+  cz_canton_name: "Canton",
+  parcel_id: "Parcel ID",
+  parcel_local_id: "Parcel local ID",
+  gwr_egid: "GWR EGID",
+  grundstueck_nr: "Plot number",
+  parzelle: "Parcel number",
+  nummer: "Number",
+  owner: "Owner",
+  is_sell: "Listed for sale"
+};
+function formatValue(key, raw) {
+  if (raw === null || raw === void 0 || raw === "") return null;
+  if (typeof raw === "boolean") return raw ? "yes" : "no";
+  if (typeof raw === "number") {
+    if (!Number.isFinite(raw)) return null;
+    if (key.includes("price") || key.endsWith("_chf")) {
+      return Math.round(raw).toLocaleString("en-US");
+    }
+    if (Number.isInteger(raw)) return raw.toString();
+    return raw.toFixed(2);
+  }
+  return String(raw);
+}
+function buildParcelContextSummary(input) {
+  const lines = [];
+  const seen = /* @__PURE__ */ new Set();
+  const props = { ...input.properties ?? {} };
+  if (input.enrichment) {
+    for (const [k, v] of Object.entries(input.enrichment)) {
+      const lower = k.toLowerCase();
+      if (props[lower] === void 0) props[lower] = v;
+    }
+  }
+  for (const [rawKey, value] of Object.entries(props)) {
+    const key = rawKey.toLowerCase();
+    const label = FIELD_LABELS[key];
+    if (!label) continue;
+    if (seen.has(label)) continue;
+    const formatted = formatValue(key, value);
+    if (formatted === null) continue;
+    seen.add(label);
+    lines.push(`- ${label}: ${formatted}`);
+  }
+  const { lng, lat } = input.lngLat;
+  lines.push(`- WGS84 coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+  if (input.lv95) {
+    lines.push(`- Swiss LV95 coordinates: E ${input.lv95.E}, N ${input.lv95.N}`);
+  }
+  return lines.join("\n");
+}
+function systemInstruction(appName) {
+  const where = appName ? `${appName}, a SwissNovo real-estate analytics app` : "a SwissNovo real-estate analytics app";
+  return `You are "Claire", the AI parcel assistant embedded inside ${where}. You help investors, developers and property owners understand a single selected parcel.
+
+Tone and format:
+- Concise, expert, and grounded in the parcel context provided. Avoid filler.
+- Use short paragraphs and tight bullet lists when listing items.
+- Prices are in CHF. Areas in m\xB2. Use Swiss thousand separators when natural.
+- Answer in the same language as the user's question (default English).
+
+Rules:
+- Always stay focused on the currently selected parcel below. If the user asks for nearby comparisons, market trends, or legal advice, give helpful general guidance grounded in the parcel context and clearly mark estimates as such.
+- Never invent specific cadastral, legal, or pricing figures that aren't supplied. If data is missing, say so briefly and suggest what would be needed.
+- Mention regulatory caveats for Switzerland where relevant (e.g. zoning law, Lex Koller, planning permissions) at a high level.
+- Do not output disclaimers longer than one short sentence.`;
+}
+var GeminiConfigError = class extends Error {
+  constructor() {
+    super(
+      "Gemini API key missing. Set VITE_GEMINI_API_KEY in the app\u2019s .env file."
+    );
+    this.name = "GeminiConfigError";
+  }
+};
+async function generateParcelChatReply({
+  apiKey,
+  model,
+  appName,
+  parcelContext,
+  history,
+  signal
+}) {
+  if (!apiKey) throw new GeminiConfigError();
+  if (history.length === 0)
+    throw new Error("history must contain at least one user message");
+  const systemText = `${systemInstruction(appName)}
+
+Selected parcel context:
+${parcelContext}`;
+  const contents = history.map((turn) => ({
+    role: turn.role === "assistant" ? "model" : "user",
+    parts: [{ text: turn.content }]
+  }));
+  const res = await fetch(
+    GEMINI_ENDPOINT(model || DEFAULT_GEMINI_MODEL, apiKey),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { role: "system", parts: [{ text: systemText }] },
+        contents,
+        generationConfig: {
+          temperature: 0.55,
+          topP: 0.9,
+          maxOutputTokens: 800
+        },
+        safetySettings: []
+      }),
+      signal
+    }
+  );
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Gemini request failed (${res.status})`);
+  }
+  if (!res.ok) {
+    const msg = data?.error?.message ?? `Gemini request failed (${res.status})`;
+    throw new Error(msg);
+  }
+  if (data.promptFeedback?.blockReason) {
+    throw new Error(`Response blocked: ${data.promptFeedback.blockReason}`);
+  }
+  const text = data.candidates?.flatMap((c) => c.content?.parts ?? []).map((p) => p.text ?? "").join("").trim();
+  if (!text) throw new Error("Empty response from Gemini.");
+  return text;
+}
+
+// src/claire/signal.ts
+var SIGNAL_ENDPOINT = "/api/signal-collect";
+async function sendClaireMessageSignal({
+  appName,
+  lat,
+  lng,
+  parcelId,
+  address,
+  source
+}) {
+  try {
+    await fetch(SIGNAL_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        app_name: appName,
+        user_action: "Claire Assistant Message",
+        // A stable id lets the RES API skip its SwissTopo parcel lookup.
+        parcel_id: parcelId ?? void 0,
+        lat,
+        lng,
+        target_address: address,
+        target_lat: lat,
+        target_lng: lng,
+        meta_data: source ? { source } : void 0
+      })
+    });
+  } catch (err) {
+    console.error("Signal collection error:", err);
+  }
+}
+
+// src/claire/claireConversation.ts
+var CLAIRE_API_BASE = "https://res.zeroo.ch/res_api/claire";
+async function loadClaireConversation(parcelId, accessToken) {
+  if (!accessToken || !parcelId) return [];
+  try {
+    const url = `${CLAIRE_API_BASE}/conversation?parcel_id=${encodeURIComponent(
+      parcelId
+    )}`;
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" }
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return sanitizeTurns(data?.messages);
+  } catch {
+    return [];
+  }
+}
+async function saveClaireConversation({
+  parcelId,
+  messages,
+  accessToken,
+  appName,
+  address,
+  lat,
+  lng
+}) {
+  if (!accessToken || !parcelId) return;
+  try {
+    await fetch(`${CLAIRE_API_BASE}/conversation`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        parcel_id: parcelId,
+        app_name: appName,
+        messages: messages.map(({ role, content }) => ({ role, content })),
+        target_address: address,
+        target_lat: lat,
+        target_lng: lng
+      })
+    });
+  } catch {
+  }
+}
+function sanitizeTurns(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (t) => !!t && typeof t === "object" && (t.role === "user" || t.role === "assistant") && typeof t.content === "string"
+  ).map(({ role, content }) => ({ role, content }));
+}
+var CLAIRE_AVATAR = "/claire.png";
+var QUICK_PROMPTS = [
+  {
+    label: "Investment potential",
+    prompt: "What is the estimated investment potential of this parcel?"
+  },
+  {
+    label: "Zoning restrictions",
+    prompt: "Summarize zoning restrictions for this property."
+  },
+  {
+    label: "What can be built?",
+    prompt: "What can legally be built here?"
+  },
+  {
+    label: "Compare nearby",
+    prompt: "Compare this parcel with nearby properties."
+  },
+  {
+    label: "Risks to know",
+    prompt: "What risks should I know about?"
+  },
+  {
+    label: "Redevelopment",
+    prompt: "Estimate redevelopment opportunities."
+  },
+  {
+    label: "Market insights",
+    prompt: "Show market insights for this area."
+  }
+];
+function newId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+function resolveParcelId(props) {
+  for (const key of ["parcel_id", "egrid", "id_parcel", "id"]) {
+    const v = props[key];
+    if (v !== void 0 && v !== null && v !== "") return String(v);
+  }
+  return null;
+}
+function renderAssistantText(text) {
+  const paragraphs = text.split(/\n{2,}/);
+  return paragraphs.map((para, pi) => /* @__PURE__ */ jsx("p", { className: pi === 0 ? "" : "mt-2", children: para.split(/\n/).map((line, li, arr) => /* @__PURE__ */ jsxs("span", { children: [
+    renderInlineBold(line),
+    li < arr.length - 1 ? /* @__PURE__ */ jsx("br", {}) : null
+  ] }, li)) }, pi));
+}
+function renderInlineBold(line) {
+  const parts = line.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((p, i) => {
+    if (/^\*\*[^*]+\*\*$/.test(p)) {
+      return /* @__PURE__ */ jsx("strong", { className: "font-semibold", children: p.slice(2, -2) }, i);
+    }
+    return /* @__PURE__ */ jsx("span", { children: p }, i);
+  });
+}
+var ClaireAssistant = ({
+  appName,
+  geminiApiKey,
+  geminiModel,
+  darkMode,
+  properties,
+  enrichment,
+  lngLat,
+  lv95,
+  headerAddress
+}) => {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const scrollRef = useRef(null);
+  const inputRef = useRef(null);
+  const abortRef = useRef(null);
+  const { isAuthenticated, getAccessToken } = useAuth();
+  const configured = useMemo(() => Boolean(geminiApiKey), [geminiApiKey]);
+  const parcelId = useMemo(() => resolveParcelId(properties), [properties]);
+  const parcelContext = useMemo(
+    () => buildParcelContextSummary({
+      properties,
+      enrichment: enrichment ?? null,
+      lngLat,
+      lv95: lv95 ?? null
+    }),
+    [properties, enrichment, lngLat, lv95]
+  );
+  useEffect(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setMessages([]);
+    setInput("");
+    setError(null);
+    setLoading(false);
+  }, [lngLat.lng, lngLat.lat]);
+  useEffect(() => {
+    if (!parcelId || !isAuthenticated) return;
+    const token = getAccessToken();
+    if (!token) return;
+    let cancelled = false;
+    setHistoryLoading(true);
+    void loadClaireConversation(parcelId, token).then((turns) => {
+      if (cancelled || turns.length === 0) return;
+      setMessages(
+        turns.map((t) => ({ id: newId(), role: t.role, content: t.content }))
+      );
+    }).finally(() => {
+      if (!cancelled) setHistoryLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [parcelId, isAuthenticated, getAccessToken]);
+  useEffect(() => {
+    if (!open || !scrollRef.current) return;
+    scrollRef.current.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: "smooth"
+    });
+  }, [messages, loading, open]);
+  useEffect(() => () => abortRef.current?.abort(), []);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 220);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.clearTimeout(focusTimer);
+    };
+  }, [open]);
+  const sendMessage = useCallback(
+    async (text, source = "composer") => {
+      const trimmed = text.trim();
+      if (!trimmed || loading) return;
+      if (!configured) {
+        setError(
+          "Gemini API key missing. Set VITE_GEMINI_API_KEY in the app\u2019s .env file."
+        );
+        return;
+      }
+      const userMsg = {
+        id: newId(),
+        role: "user",
+        content: trimmed
+      };
+      const nextHistory = [
+        ...messages.map(({ role, content }) => ({ role, content })),
+        { role: "user", content: trimmed }
+      ];
+      setMessages((prev) => [...prev, userMsg]);
+      setInput("");
+      setError(null);
+      setLoading(true);
+      void sendClaireMessageSignal({
+        appName,
+        lat: lngLat.lat,
+        lng: lngLat.lng,
+        parcelId,
+        address: headerAddress,
+        source
+      });
+      const controller = new AbortController();
+      abortRef.current = controller;
+      try {
+        const reply = await generateParcelChatReply({
+          apiKey: geminiApiKey ?? "",
+          model: geminiModel,
+          appName,
+          parcelContext,
+          history: nextHistory,
+          signal: controller.signal
+        });
+        setMessages((prev) => [
+          ...prev,
+          { id: newId(), role: "assistant", content: reply }
+        ]);
+        if (parcelId) {
+          void saveClaireConversation({
+            parcelId,
+            messages: [...nextHistory, { role: "assistant", content: reply }],
+            accessToken: getAccessToken(),
+            appName,
+            address: headerAddress,
+            lat: lngLat.lat,
+            lng: lngLat.lng
+          });
+        }
+      } catch (err) {
+        if (err?.name === "AbortError") return;
+        const message = err instanceof GeminiConfigError ? err.message : err instanceof Error ? err.message : "Something went wrong.";
+        setError(message);
+      } finally {
+        setLoading(false);
+        abortRef.current = null;
+      }
+    },
+    [
+      configured,
+      loading,
+      messages,
+      parcelContext,
+      lngLat.lat,
+      lngLat.lng,
+      parcelId,
+      headerAddress,
+      getAccessToken,
+      appName,
+      geminiApiKey,
+      geminiModel
+    ]
+  );
+  const onSubmit = (e) => {
+    e.preventDefault();
+    void sendMessage(input);
+  };
+  const onKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void sendMessage(input);
+    }
+  };
+  const onQuickPrompt = (prompt) => {
+    void sendMessage(prompt, "quick_prompt");
+    inputRef.current?.focus();
+  };
+  const sendDisabled = !input.trim() || loading;
+  const showQuickPrompts = messages.length === 0 && !loading && !historyLoading;
+  const subtitle = headerAddress ? `About ${headerAddress}` : "Powered by Gemini";
+  const launcherPos = "right-6 bottom-6";
+  const cardPos = "inset-x-3 top-20 bottom-3 md:inset-x-auto md:top-auto md:bottom-6 md:right-6 md:left-auto md:w-[23rem] md:h-auto md:max-h-[min(78vh,560px)]";
+  const launcher = /* @__PURE__ */ jsxs(
+    "button",
+    {
+      type: "button",
+      onClick: () => setOpen(true),
+      "aria-label": "Open Claire, the AI parcel assistant",
+      title: "Ask Claire about this parcel",
+      className: `fixed z-[60] ${launcherPos} group flex items-center justify-center w-14 h-14 rounded-full transition-all duration-200 active:scale-95 ${darkMode ? "bg-gradient-to-br from-amber-400 to-orange-500 text-[#1a0f00] shadow-[0_10px_30px_-8px_rgba(251,191,36,0.55)] hover:brightness-110" : "bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-[0_10px_30px_-8px_rgba(251,146,60,0.6)] hover:brightness-105"}`,
+      children: [
+        /* @__PURE__ */ jsx("span", { className: "absolute inset-0 rounded-full bg-amber-400/50 chat-launch-ping" }),
+        /* @__PURE__ */ jsx(
+          "img",
+          {
+            src: CLAIRE_AVATAR,
+            alt: "",
+            className: "relative w-full h-full rounded-full object-cover"
+          }
+        )
+      ]
+    }
+  );
+  const card = /* @__PURE__ */ jsxs(
+    "div",
+    {
+      role: "dialog",
+      "aria-label": "Claire \u2014 AI Parcel Assistant",
+      className: `fixed z-[60] ${cardPos} chat-card-pop flex flex-col overflow-hidden rounded-2xl ${darkMode ? "bg-[#0b0f15] ring-1 ring-white/[0.08] shadow-[0_24px_60px_-20px_rgba(0,0,0,0.85)]" : "bg-white ring-1 ring-gray-200/90 shadow-[0_24px_60px_-20px_rgba(15,23,42,0.4)]"}`,
+      children: [
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            className: `flex items-center gap-3 px-3.5 py-3 shrink-0 ${darkMode ? "bg-gradient-to-b from-white/[0.04] to-transparent border-b border-white/[0.06]" : "bg-gradient-to-b from-gray-50/80 to-transparent border-b border-gray-200/70"}`,
+            children: [
+              /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  className: `relative w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${darkMode ? "bg-gradient-to-br from-amber-400/20 via-orange-500/15 to-rose-500/10 ring-1 ring-amber-300/20" : "bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100 ring-1 ring-amber-200/70"}`,
+                  children: [
+                    /* @__PURE__ */ jsx(
+                      "img",
+                      {
+                        src: CLAIRE_AVATAR,
+                        alt: "Claire",
+                        className: "w-full h-full rounded-xl object-cover"
+                      }
+                    ),
+                    /* @__PURE__ */ jsx(
+                      "span",
+                      {
+                        className: `absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ${darkMode ? "bg-emerald-400 ring-[#0b0f15]" : "bg-emerald-500 ring-white"}`
+                      }
+                    )
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
+                /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    className: `text-[13px] font-semibold leading-tight ${darkMode ? "text-white" : "text-gray-900"}`,
+                    children: "Claire"
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    className: `text-[10.5px] font-medium uppercase tracking-[0.1em] mt-0.5 truncate ${darkMode ? "text-amber-200/70" : "text-amber-700/80"}`,
+                    children: subtitle
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => setOpen(false),
+                  "aria-label": "Close Claire",
+                  className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${darkMode ? "text-gray-400 hover:text-white hover:bg-white/[0.08]" : "text-gray-400 hover:text-gray-700 hover:bg-gray-100"}`,
+                  children: /* @__PURE__ */ jsx(X, { size: 16 })
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            ref: scrollRef,
+            className: "chat-scroll flex-1 md:flex-none md:max-h-[340px] overflow-y-auto px-3.5 py-3 space-y-2",
+            "aria-live": "polite",
+            children: [
+              messages.length === 0 && historyLoading && /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  className: `flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] ${darkMode ? "bg-white/[0.025] text-gray-400 ring-1 ring-white/[0.04]" : "bg-gray-50 text-gray-500 ring-1 ring-gray-200/70"}`,
+                  children: [
+                    /* @__PURE__ */ jsx(Loader2, { size: 13, className: "animate-spin shrink-0" }),
+                    "Restoring your conversation about this parcel\u2026"
+                  ]
+                }
+              ),
+              messages.length === 0 && !historyLoading && /* @__PURE__ */ jsx(
+                "div",
+                {
+                  className: `rounded-xl px-3 py-2.5 text-[12px] leading-relaxed ${darkMode ? "bg-white/[0.025] text-gray-300 ring-1 ring-white/[0.04]" : "bg-gray-50 text-gray-600 ring-1 ring-gray-200/70"}`,
+                  children: "Hi, I\u2019m Claire. Ask me anything about this parcel \u2014 zoning, value, what can be built, comparable properties, or hidden risks. My answers are scoped to the selection on the map."
+                }
+              ),
+              messages.map(
+                (msg) => msg.role === "user" ? /* @__PURE__ */ jsx("div", { className: "flex justify-end", children: /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    className: `max-w-[88%] rounded-2xl rounded-tr-md px-3 py-2 text-[12.5px] leading-relaxed whitespace-pre-wrap ${darkMode ? "bg-amber-400/15 text-amber-50 ring-1 ring-amber-300/20" : "bg-amber-50 text-amber-900 ring-1 ring-amber-200/80"}`,
+                    children: msg.content
+                  }
+                ) }, msg.id) : /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-2", children: [
+                  /* @__PURE__ */ jsx(
+                    "div",
+                    {
+                      className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${darkMode ? "bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" : "bg-gradient-to-br from-amber-100 to-rose-100 ring-1 ring-amber-200/70"}`,
+                      children: /* @__PURE__ */ jsx(
+                        "img",
+                        {
+                          src: CLAIRE_AVATAR,
+                          alt: "",
+                          className: "w-full h-full rounded-lg object-cover"
+                        }
+                      )
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    "div",
+                    {
+                      className: `max-w-[88%] rounded-2xl rounded-tl-md px-3 py-2 text-[12.5px] leading-relaxed ${darkMode ? "bg-white/[0.04] text-gray-100 ring-1 ring-white/[0.05]" : "bg-gray-50 text-gray-800 ring-1 ring-gray-200/70"}`,
+                      children: renderAssistantText(msg.content)
+                    }
+                  )
+                ] }, msg.id)
+              ),
+              loading && /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-2", children: [
+                /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${darkMode ? "bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" : "bg-gradient-to-br from-amber-100 to-rose-100 ring-1 ring-amber-200/70"}`,
+                    children: /* @__PURE__ */ jsx(
+                      "img",
+                      {
+                        src: CLAIRE_AVATAR,
+                        alt: "",
+                        className: "w-full h-full rounded-lg object-cover animate-pulse"
+                      }
+                    )
+                  }
+                ),
+                /* @__PURE__ */ jsxs(
+                  "div",
+                  {
+                    className: `rounded-2xl rounded-tl-md px-3 py-2.5 flex items-center gap-1.5 ${darkMode ? "bg-white/[0.04] ring-1 ring-white/[0.05]" : "bg-gray-50 ring-1 ring-gray-200/70"}`,
+                    "aria-label": "Claire is typing",
+                    children: [
+                      /* @__PURE__ */ jsx("span", { className: "chat-dot" }),
+                      /* @__PURE__ */ jsx("span", { className: "chat-dot", style: { animationDelay: "0.15s" } }),
+                      /* @__PURE__ */ jsx("span", { className: "chat-dot", style: { animationDelay: "0.3s" } })
+                    ]
+                  }
+                )
+              ] }),
+              error && /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  className: `flex items-start gap-2 rounded-xl px-3 py-2 text-[12px] ${darkMode ? "bg-rose-500/10 text-rose-200 ring-1 ring-rose-400/20" : "bg-rose-50 text-rose-700 ring-1 ring-rose-200"}`,
+                  children: [
+                    /* @__PURE__ */ jsx(AlertCircle, { size: 13, className: "shrink-0 mt-0.5" }),
+                    /* @__PURE__ */ jsx("span", { children: error })
+                  ]
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            className: `shrink-0 px-3.5 pt-2.5 pb-3 ${darkMode ? "border-t border-white/[0.06] bg-gradient-to-t from-white/[0.025] to-transparent" : "border-t border-gray-200/70 bg-gradient-to-t from-gray-50/70 to-transparent"}`,
+            children: [
+              showQuickPrompts && /* @__PURE__ */ jsx("div", { className: "mb-2.5 flex flex-wrap gap-1.5", children: QUICK_PROMPTS.map((q) => /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => onQuickPrompt(q.prompt),
+                  title: q.prompt,
+                  className: `text-[11px] font-medium px-2.5 py-1 rounded-full transition-all duration-150 ${darkMode ? "bg-white/[0.04] text-gray-200 ring-1 ring-white/[0.06] hover:bg-amber-400/10 hover:text-amber-200 hover:ring-amber-300/30" : "bg-white text-gray-700 ring-1 ring-gray-200/80 hover:bg-amber-50 hover:text-amber-700 hover:ring-amber-200"}`,
+                  children: q.label
+                },
+                q.label
+              )) }),
+              /* @__PURE__ */ jsxs("form", { onSubmit, children: [
+                /* @__PURE__ */ jsxs(
+                  "div",
+                  {
+                    className: `flex items-end gap-1.5 rounded-xl px-2.5 py-1.5 transition-all duration-150 focus-within:ring-2 ${darkMode ? "bg-white/[0.04] ring-1 ring-white/[0.06] focus-within:ring-amber-400/40" : "bg-white ring-1 ring-gray-200/80 focus-within:ring-amber-300"}`,
+                    children: [
+                      /* @__PURE__ */ jsx(
+                        "textarea",
+                        {
+                          ref: inputRef,
+                          value: input,
+                          onChange: (e) => setInput(e.target.value),
+                          onKeyDown,
+                          placeholder: "Ask Claire about this parcel...",
+                          rows: 1,
+                          className: `flex-1 resize-none bg-transparent outline-none text-[12.5px] leading-snug py-1.5 max-h-24 ${darkMode ? "text-gray-100 placeholder:text-gray-500" : "text-gray-900 placeholder:text-gray-400"}`
+                        }
+                      ),
+                      /* @__PURE__ */ jsx(
+                        "button",
+                        {
+                          type: "submit",
+                          disabled: sendDisabled,
+                          "aria-label": "Send message",
+                          className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-150 ${sendDisabled ? darkMode ? "bg-white/[0.04] text-gray-600 cursor-not-allowed" : "bg-gray-100 text-gray-300 cursor-not-allowed" : "bg-gradient-to-br from-amber-400 to-orange-500 text-white hover:brightness-105 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.5)]"}`,
+                          children: loading ? /* @__PURE__ */ jsx(Loader2, { size: 14, className: "animate-spin" }) : /* @__PURE__ */ jsx(Send, { size: 13 })
+                        }
+                      )
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    className: `mt-1.5 text-[10px] tracking-wide ${darkMode ? "text-gray-500" : "text-gray-400"}`,
+                    children: "Enter to send \xB7 Shift+Enter for newline"
+                  }
+                )
+              ] })
+            ]
+          }
+        )
+      ]
+    }
+  );
+  return createPortal(
+    /* @__PURE__ */ jsxs(Fragment, { children: [
+      open ? card : launcher,
+      /* @__PURE__ */ jsx("style", { children: `
+        .chat-scroll::-webkit-scrollbar { width: 3px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb {
+          background: ${darkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"};
+          border-radius: 4px;
+        }
+        .chat-dot {
+          width: 5px;
+          height: 5px;
+          border-radius: 9999px;
+          background: ${darkMode ? "rgba(251,191,36,0.85)" : "rgba(217,119,6,0.7)"};
+          display: inline-block;
+          animation: chatDot 1.1s infinite ease-in-out;
+        }
+        @keyframes chatDot {
+          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+          40% { transform: translateY(-3px); opacity: 1; }
+        }
+        .chat-launch-ping {
+          animation: chatLaunchPing 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes chatLaunchPing {
+          0% { transform: scale(1); opacity: 0.6; }
+          70%, 100% { transform: scale(2); opacity: 0; }
+        }
+        .chat-card-pop {
+          animation: chatCardPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+          transform-origin: bottom right;
+        }
+        @keyframes chatCardPop {
+          from { opacity: 0; transform: translateY(12px) scale(0.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      ` })
+    ] }),
+    document.body
+  );
+};
+var ClaireAssistant_default = ClaireAssistant;
+
+export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, buildParcelContextSummary, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
