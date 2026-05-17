@@ -24,10 +24,17 @@ export interface ResApiClientOptions {
   /** Base URL of the RES API (or of an app's proxy). Defaults to production. */
   baseUrl?: string;
   /**
-   * RES API token, sent as the `token` header. Provide for server-side use
-   * only — never ship it to the browser.
+   * RES API token, sent as the `token` header — the auth scheme used by the
+   * parcel, score, OEREB and legacy-image endpoints. Provide for server-side
+   * use only; never ship it to the browser.
    */
   token?: string;
+  /**
+   * Bearer token, sent as `Authorization: Bearer <bearerToken>` — the auth
+   * scheme used by the `/res_api/signal/*` endpoints (static API token) and
+   * the `/image/swissnovo/*` endpoints (Zitadel JWT). Server-side only.
+   */
+  bearerToken?: string;
   /** Optional `fetch` implementation, e.g. for tests or non-browser runtimes. */
   fetch?: typeof globalThis.fetch;
 }
@@ -46,7 +53,7 @@ export type ResApiClient = Client<paths>;
  * });
  */
 export function createResApiClient(options: ResApiClientOptions = {}): ResApiClient {
-  const { baseUrl = RES_API_BASE_URL, token, fetch } = options;
+  const { baseUrl = RES_API_BASE_URL, token, bearerToken, fetch } = options;
 
   const headers: Record<string, string> = {
     // Opt in to the corrected error contract — see project_RES openapi.json.
@@ -54,6 +61,11 @@ export function createResApiClient(options: ResApiClientOptions = {}): ResApiCli
   };
   if (token) {
     headers.token = token;
+  }
+  if (bearerToken) {
+    headers.Authorization = bearerToken.startsWith('Bearer ')
+      ? bearerToken
+      : `Bearer ${bearerToken}`;
   }
 
   return createClient<paths>({

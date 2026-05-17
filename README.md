@@ -67,11 +67,26 @@ A fully typed client for the [RES API](https://res.zeroo.ch/api-docs), generated
 OpenAPI 3.1 contract. Replaces ad-hoc `fetch` calls with one typed surface, and always sends
 `X-RES-API-Version: 2` so callers get proper `4xx`/`5xx` status codes + JSON error bodies.
 
-**Use it server-side** (Vercel functions, Node) — pass the `token`. In the browser, point
-`baseUrl` at your app's own `/api/*` proxy and omit `token`, so the RES token stays server-side.
+**Import it from the `/api` subpath** in server-side code (Vercel functions, Node, edge):
 
 ```ts
-import { createResApiClient } from '@swissnovo/shared';
+import { createResApiClient } from '@swissnovo/shared/api';
+```
+
+The `/api` subpath is server-safe — it omits the browser-only modules (the auth module
+touches `window` at load), so it works in Vercel edge/serverless functions. The same export
+is also re-exported from the package root for browser code.
+
+**Authentication** — both options are server-side only; never ship a token to the browser:
+
+- `token` — sent as the `token` header. Used by the parcel, score, OEREB and legacy-image endpoints.
+- `bearerToken` — sent as `Authorization: Bearer …`. Used by the `/res_api/signal/*` endpoints
+  and the `/image/swissnovo/*` endpoints.
+
+In the browser, point `baseUrl` at your app's own `/api/*` proxy and pass no token.
+
+```ts
+import { createResApiClient } from '@swissnovo/shared/api';
 
 const res = createResApiClient({ token: process.env.RES_TOKEN });
 
