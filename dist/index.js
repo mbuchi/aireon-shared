@@ -1187,7 +1187,25 @@ function sanitizeTurns(raw) {
     (t) => !!t && typeof t === "object" && (t.role === "user" || t.role === "assistant") && typeof t.content === "string"
   ).map(({ role, content }) => ({ role, content }));
 }
-var CLAIRE_AVATAR = "/claire.png";
+var CLAIRE_SVG = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .open-eyes { animation: openBlink 2.2s infinite; transform-origin: center; }
+    .closed-eyes { animation: closedBlink 2.2s infinite; opacity: 0; }
+    @keyframes openBlink { 0%, 78%, 100% { opacity: 1; } 82%, 88% { opacity: 0; } }
+    @keyframes closedBlink { 0%, 78%, 100% { opacity: 0; } 82%, 88% { opacity: 1; } }
+  </style>
+  <path d="M91 98 C84 105 74 109 63 109 C38 109 18 89 18 64 C18 39 38 19 63 19 C88 19 108 39 108 64 L108 93 C108 102 112 107 118 108" fill="none" stroke="#141414" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"></path>
+  <g class="open-eyes" fill="#141414">
+    <circle cx="51" cy="58" r="4"></circle>
+    <circle cx="77" cy="58" r="4"></circle>
+  </g>
+  <g class="closed-eyes" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round">
+    <path d="M46 58 Q51 62 56 58"></path>
+    <path d="M72 58 Q77 62 82 58"></path>
+  </g>
+  <path d="M56 75 Q64 82 72 75" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round"></path>
+</svg>`;
+var CLAIRE_AVATAR = `data:image/svg+xml,${encodeURIComponent(CLAIRE_SVG)}`;
 var QUICK_PROMPTS = [
   {
     label: "Investment potential",
