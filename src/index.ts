@@ -38,3 +38,19 @@ export type { ClaireTurn } from './claire/claireConversation';
 export { sendClaireMessageSignal } from './claire/signal';
 export { fetchClaireContext } from './claire/claireContext';
 export type { ClaireContext } from './claire/claireContext';
+
+export { createResApiClient, RES_API_BASE_URL } from './api';
+export type {
+  ResApiClient,
+  ResApiClientOptions,
+  paths,
+  components,
+  operations,
+  JsonError,
+  ParcelTree,
+  GeoJSONFeatureCollection,
+  PoiDetail,
+  SignalRecord,
+  SwissnovoImage,
+  Coordinates,
+} from './api';

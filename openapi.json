@@ -1,0 +1,1266 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RES API",
+    "version": "1.0.0",
+    "summary": "Real Estate Scoring API — canonical contract for the SwissNovo suite.",
+    "description": "Canonical OpenAPI 3.1 contract for the RES (Real Estate Scoring) API that powers the SwissNovo suite of apps.\n\nThis document **describes the API exactly as it behaves today** — it is documentation, not a redesign. No endpoint, parameter, response shape, or auth rule was changed by introducing this file, so every existing client keeps working unchanged.\n\n### Error contract — opt in to corrected status codes\n\nThe legacy parcel and OEREB endpoints historically returned authentication and validation errors as **HTTP 200 with a plain-text body** (for example `Missing Token`, `Wrong Token`, `coordinate missing`). To correct this without breaking existing callers, the fixed behaviour is **opt-in** via a request header:\n\n- Send **`X-RES-API-Version: 2`** to receive a proper `4xx`/`5xx` status code with a JSON `{ \"error\": ... }` body.\n- Omit the header to get the unchanged legacy behaviour (HTTP 200 + plain text).\n\n**New integrations should always send `X-RES-API-Version: 2`.** Once every caller is migrated the default will be flipped. The `/score/*`, `/res_api/signal/*`, `/res_api/building_data`, `/res_api/bldg_vol_bbox`, and `/image/swissnovo/*` endpoints already use proper status codes regardless of the header. Note: `GET /res_api/parcel_image` is used directly in `<img>` tags, which cannot send the header — it therefore always uses legacy behaviour.\n\n### Scope\n\nThis first revision covers the core app-facing surface: parcel data, scoring (POI), OEREB links, building data, images, and signal collection. The `/res_api/swissnovo_user`, `/res_api/claire`, `/roolez_api`, and `/reporter` routers are intentionally out of scope for this revision and will be added in a follow-up.",
+    "contact": { "name": "SwissNovo", "email": "swissnovo@zeroo.ch" },
+    "license": { "name": "Proprietary — SwissNovo internal use" }
+  },
+  "servers": [
+    { "url": "https://res.zeroo.ch", "description": "Production (Contabo)" }
+  ],
+  "tags": [
+    { "name": "Parcel", "description": "Parcel data, geometry, imagery and building information." },
+    { "name": "Score", "description": "Points-of-interest scoring around a location." },
+    { "name": "OEREB", "description": "Official cadastral public-law restriction (OEREB) extract links." },
+    { "name": "Image", "description": "Image upload and retrieval." },
+    { "name": "Signal", "description": "User-activity signal collection and dashboard analytics." },
+    { "name": "Meta", "description": "Health and service metadata." }
+  ],
+  "paths": {
+    "/res_api": {
+      "get": {
+        "tags": ["Meta"],
+        "operationId": "getResApiHealth",
+        "summary": "Health check",
+        "description": "Returns a static greeting confirming the RES API router is reachable.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service is up.",
+            "content": {
+              "text/html": {
+                "schema": { "type": "string", "example": "Hello from RES API 1" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/res_api/parcel_data": {
+      "post": {
+        "tags": ["Parcel"],
+        "operationId": "getParcelData",
+        "summary": "Get parcel data by coordinate or EGRID",
+        "description": "Returns full parcel data for a Swiss parcel, located either by WGS84 coordinate (`lat`/`lng`) or by parcel `egrid`.\n\nWith `structure: \"default\"` the response is the raw GeoServer GeoJSON `FeatureCollection`, enriched with `owner`, `isSignal`, `image_urls` and `OEREB_url` on the first feature's properties. With `structure: \"tree\"` the response is a grouped, human-readable object.",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ParcelLocationRequest" },
+              "examples": {
+                "byCoordinate": { "summary": "By lat/lng", "value": { "lat": 47.3769, "lng": 8.5417, "structure": "tree" } },
+                "byEgrid": { "summary": "By EGRID", "value": { "egrid": "CH807318035875", "structure": "default" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Parcel data. Shape depends on the `structure` field. Note: a missing/invalid token or missing location produces a plain-text 200 body (see `description`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    { "$ref": "#/components/schemas/GeoJSONFeatureCollection" },
+                    { "$ref": "#/components/schemas/ParcelTree" }
+                  ]
+                }
+              },
+              "text/html": {
+                "schema": { "type": "string", "example": "Missing Token" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/res_api/parcel_boundary_data": {
+      "post": {
+        "tags": ["Parcel"],
+        "operationId": "getParcelBoundaryData",
+        "summary": "Get parcel boundary geometry as DXF",
+        "description": "Returns the parcel boundary as an AutoCAD DXF document, located by `lat`/`lng` or `egrid`.",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ParcelLocationRequestNoStructure" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "DXF document, or a plain-text error body on missing token/location.",
+            "content": {
+              "application/dxf": { "schema": { "type": "string", "format": "binary" } },
+              "text/html": { "schema": { "type": "string", "example": "Missing Token" } }
+            }
+          }
+        }
+      }
+    },
+    "/res_api/parcel_data_neighbor": {
+      "post": {
+        "tags": ["Parcel"],
+        "operationId": "getParcelDataNeighbor",
+        "summary": "Get a parcel and its neighbouring parcels",
+        "description": "Returns the raw GeoServer GeoJSON `FeatureCollection` for a parcel located by `lat`/`lng` or `egrid` (currently the same query as `/res_api/parcel_data`; a bounding-box neighbour filter is planned).",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ParcelLocationRequestNoStructure" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "GeoJSON FeatureCollection, or a plain-text error body.",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/GeoJSONFeatureCollection" } },
+              "text/html": { "schema": { "type": "string", "example": "Missing Token" } }
+            }
+          }
+        }
+      }
+    },
+    "/res_api/parcel_image": {
+      "post": {
+        "tags": ["Parcel"],
+        "operationId": "getParcelImagePost",
+        "summary": "Render a parcel image (PNG) — JSON body variant",
+        "description": "Renders a styled PNG of the parcel from the GeoServer WMS. Location is given by `lat`/`lng` or by `x_3857`/`y_3857` (Web Mercator).",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ParcelImageRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "PNG image, or a plain-text error body.",
+            "content": {
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "text/html": { "schema": { "type": "string", "example": "Wrong Token" } }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Parcel"],
+        "operationId": "getParcelImageGet",
+        "summary": "Render a parcel image (PNG) — query-string variant",
+        "description": "Same as the POST variant but driven entirely by query parameters. Used for `<img src>` URLs. The auth token is passed as the `token` query parameter, not a header.",
+        "security": [{ "ResApiTokenQuery": [] }],
+        "parameters": [
+          { "name": "token", "in": "query", "required": true, "schema": { "type": "string" }, "description": "RES API token." },
+          { "name": "lat", "in": "query", "schema": { "type": "number" }, "description": "WGS84 latitude. Provide lat+lng or x_3857+y_3857." },
+          { "name": "lng", "in": "query", "schema": { "type": "number" }, "description": "WGS84 longitude." },
+          { "name": "x_3857", "in": "query", "schema": { "type": "number" }, "description": "Web Mercator X. Provide lat+lng or x_3857+y_3857." },
+          { "name": "y_3857", "in": "query", "schema": { "type": "number" }, "description": "Web Mercator Y." },
+          { "name": "img_size", "in": "query", "schema": { "type": "integer", "default": 512 }, "description": "Output image width/height in pixels." },
+          { "name": "bounding_dist", "in": "query", "schema": { "type": "number", "default": 200 }, "description": "Half-extent of the rendered bounding box, in metres." },
+          { "name": "style", "in": "query", "schema": { "type": "string", "enum": ["ratio_v_free", "score", "red", "green"], "default": "ratio_v_free" }, "description": "Render style." }
+        ],
+        "responses": {
+          "200": {
+            "description": "PNG image, or a plain-text error body.",
+            "content": {
+              "image/png": { "schema": { "type": "string", "format": "binary" } },
+              "text/html": { "schema": { "type": "string", "example": "coordinate missing" } }
+            }
+          }
+        }
+      }
+    },
+    "/res_api/buildingModel": {
+      "post": {
+        "tags": ["Parcel"],
+        "operationId": "requestBuildingModel",
+        "summary": "Request a 3D building model (async, delivered by email)",
+        "description": "Queues generation of a 3D building model. The model link is emailed to `target_email` asynchronously; the HTTP response only confirms the request was received.",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["target_email", "x_2056", "y_2056", "parcel_id"],
+                "properties": {
+                  "target_email": { "type": "string", "format": "email", "description": "Address the 3D model link is sent to." },
+                  "x_2056": { "type": "number", "description": "LV95 (EPSG:2056) X coordinate." },
+                  "y_2056": { "type": "number", "description": "LV95 (EPSG:2056) Y coordinate." },
+                  "parcel_id": { "type": "string", "description": "Parcel EGRID." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request acknowledged, or a plain-text error body.",
+            "content": {
+              "text/html": { "schema": { "type": "string", "example": "Request recieved. The 3D building link will be sent to user@example.com." } }
+            }
+          }
+        }
+      }
+    },
+    "/res_api/contour_data": {
+      "post": {
+        "tags": ["Parcel"],
+        "operationId": "requestContourData",
+        "summary": "Request contour (Contoor) data (async, delivered by email)",
+        "description": "Queues generation of contour data for a parcel. The result is emailed to `target_email` asynchronously; the HTTP response only confirms the request was received.",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["target_email", "parcel_id"],
+                "properties": {
+                  "target_email": { "type": "string", "format": "email", "description": "Address the contour result is sent to." },
+                  "parcel_id": { "type": "string", "description": "Parcel EGRID." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request acknowledged, or a plain-text error body.",
+            "content": {
+              "text/html": { "schema": { "type": "string", "example": "Request recieved... The Contoor will be sent to user@example.com" } }
+            }
+          }
+        }
+      }
+    },
+    "/res_api/building_data": {
+      "post": {
+        "tags": ["Parcel"],
+        "operationId": "getBuildingData",
+        "summary": "Get building height and volume at a location",
+        "description": "Returns building height and volume statistics for buildings at or near a coordinate, anywhere in Switzerland.",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["lat", "lng"],
+                "properties": {
+                  "lat": { "type": "number", "description": "WGS84 latitude." },
+                  "lng": { "type": "number", "description": "WGS84 longitude." },
+                  "radiusMeters": { "type": "number", "default": 3.0, "description": "Search radius for the target building, in metres." },
+                  "buffer_m": { "type": "number", "default": 10.0, "description": "Geometry buffer, in metres." },
+                  "strategy": { "type": "string", "default": "auto", "description": "Selection strategy for the upstream building service." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Building height/volume data passed through from the upstream building service.",
+            "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+          },
+          "500": {
+            "description": "Failed to fetch building data.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JsonError" } } }
+          }
+        }
+      }
+    },
+    "/res_api/bldg_vol_bbox": {
+      "post": {
+        "tags": ["Parcel"],
+        "operationId": "getBuildingVolumeBbox",
+        "summary": "Building volume statistics within a bounding box",
+        "description": "Aggregates building footprint count, volume and density within a circular bounding box around a coordinate.",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["lat", "lng"],
+                "properties": {
+                  "lat": { "type": "number", "description": "WGS84 latitude." },
+                  "lng": { "type": "number", "description": "WGS84 longitude." },
+                  "bbox_radius": { "type": "number", "default": 100, "description": "Bounding-box radius, in metres. Must be positive." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Building volume statistics.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "input": {
+                      "type": "object",
+                      "properties": {
+                        "lat": { "type": "number" },
+                        "lng": { "type": "number" },
+                        "bbox_radius_m": { "type": "number" }
+                      }
+                    },
+                    "statistics": {
+                      "type": "object",
+                      "properties": {
+                        "total_building_count": { "type": "integer" },
+                        "buildings_with_volume": { "type": "integer" },
+                        "buildings_without_volume": { "type": "integer" },
+                        "total_volume_m3": { "type": "number" },
+                        "avg_volume_m3": { "type": ["number", "null"] },
+                        "min_volume_m3": { "type": ["number", "null"] },
+                        "max_volume_m3": { "type": ["number", "null"] },
+                        "total_footprint_area_m2": { "type": "number" }
+                      }
+                    },
+                    "density": {
+                      "type": "object",
+                      "properties": {
+                        "bbox_area_m2": { "type": "number" },
+                        "volume_density_bbox_m3_per_m2": { "type": "number" },
+                        "volume_density_footprint_m3_per_m2": { "type": "number" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid token / parameters.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JsonError" } } }
+          },
+          "401": {
+            "description": "Wrong token.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JsonError" } } }
+          },
+          "500": {
+            "description": "Server error.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JsonError" } } }
+          }
+        }
+      }
+    },
+    "/res_api/airquality": {
+      "get": {
+        "tags": ["Parcel"],
+        "operationId": "getAirQuality",
+        "summary": "Current air quality at a location",
+        "description": "Returns current air-quality conditions for a coordinate, proxied from the Google Air Quality API.",
+        "security": [{ "ResApiToken": [] }],
+        "parameters": [
+          { "name": "lat", "in": "query", "required": true, "schema": { "type": "number" }, "description": "WGS84 latitude." },
+          { "name": "lng", "in": "query", "required": true, "schema": { "type": "number" }, "description": "WGS84 longitude." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Air-quality data passed through from Google Air Quality, or a plain-text error body.",
+            "content": {
+              "application/json": { "schema": { "type": "object", "additionalProperties": true } },
+              "text/html": { "schema": { "type": "string", "example": "missing 'lat'" } }
+            }
+          }
+        }
+      }
+    },
+    "/res_api/fso-docs/{fsoNum}": {
+      "get": {
+        "tags": ["Parcel"],
+        "operationId": "getFsoDocs",
+        "summary": "Get OEREBlex documents for a municipality (FSO number)",
+        "description": "Returns OEREBlex legal documents associated with a Swiss municipality, identified by its Federal Statistical Office (FSO) number.",
+        "security": [{ "ResApiToken": [] }],
+        "parameters": [
+          { "name": "fsoNum", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Municipality FSO number." },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 10 }, "description": "Maximum number of documents to return." }
+        ],
+        "responses": {
+          "200": {
+            "description": "OEREBlex documents.",
+            "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+          },
+          "500": {
+            "description": "Upstream OEREBlex request failed.",
+            "content": { "text/plain": { "schema": { "type": "string" } } }
+          }
+        }
+      }
+    },
+    "/res_api/signal_data": {
+      "get": {
+        "tags": ["Signal"],
+        "operationId": "getSignalData",
+        "summary": "List parcels that have signals (with coordinates)",
+        "description": "Returns parcels that have associated activity signals, including aggregated counts.",
+        "security": [{ "ResApiToken": [] }],
+        "responses": {
+          "200": {
+            "description": "Array of parcels with signal counts, or a plain-text error body.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+              },
+              "text/html": { "schema": { "type": "string", "example": "Missing Token" } }
+            }
+          }
+        }
+      }
+    },
+    "/res_api/signal_data_all": {
+      "get": {
+        "tags": ["Signal"],
+        "operationId": "getSignalDataAll",
+        "summary": "Full signal dataset",
+        "description": "Returns the complete cached signal dataset. Also reachable at `/res_api/signal_data_full`.",
+        "security": [{ "ResApiToken": [] }],
+        "responses": {
+          "200": {
+            "description": "Full signal dataset, or a plain-text error body.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+              },
+              "text/html": { "schema": { "type": "string", "example": "Wrong Token" } }
+            }
+          }
+        }
+      }
+    },
+    "/res_api/fb_water": {
+      "post": {
+        "tags": ["Parcel"],
+        "operationId": "getWaterScenarioData",
+        "summary": "Water-scenario data for a parcel",
+        "description": "Returns water-balance scenario values (runoff, infiltration, evaporation, costs) for a given scenario number and parcel column.",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["scenario_num", "parcel_num"],
+                "properties": {
+                  "scenario_num": { "type": "string", "description": "Scenario identifier (used to build `S<n>_*` keys)." },
+                  "parcel_num": { "type": "string", "description": "Parcel column name to read values from." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Water-scenario rows, or a plain-text error body.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+              },
+              "text/html": { "schema": { "type": "string", "example": "Missing Token" } }
+            }
+          }
+        }
+      }
+    },
+    "/score/poi-num": {
+      "get": {
+        "tags": ["Score"],
+        "operationId": "getPoiCounts",
+        "summary": "Count of points of interest around a location",
+        "description": "Returns POI counts within `search_area` metres of a coordinate. With `res_group=true` the counts are grouped into SwissNovo amenity clusters.",
+        "security": [{ "ResApiToken": [] }],
+        "parameters": [
+          { "name": "search_area", "in": "query", "required": true, "schema": { "type": "integer" }, "description": "Search radius, in metres." },
+          { "name": "lat", "in": "query", "required": true, "schema": { "type": "number" }, "description": "WGS84 latitude." },
+          { "name": "lng", "in": "query", "required": true, "schema": { "type": "number" }, "description": "WGS84 longitude." },
+          { "name": "res_group", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] }, "description": "When `true`, group counts into amenity clusters." }
+        ],
+        "responses": {
+          "200": {
+            "description": "POI counts (raw ORS stats, or per-cluster counts when grouped).",
+            "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+          },
+          "400": { "$ref": "#/components/responses/JsonBadRequest" },
+          "401": { "$ref": "#/components/responses/MissingTokenText" },
+          "403": { "$ref": "#/components/responses/WrongTokenText" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/score/poi-details": {
+      "get": {
+        "tags": ["Score"],
+        "operationId": "getPoiDetails",
+        "summary": "Detailed points of interest around a location",
+        "description": "Returns individual POIs within `search_area` metres of a coordinate, grouped into SwissNovo amenity clusters, each with name, distance, category and position.",
+        "security": [{ "ResApiToken": [] }],
+        "parameters": [
+          { "name": "search_area", "in": "query", "required": true, "schema": { "type": "integer" }, "description": "Search radius, in metres." },
+          { "name": "lat", "in": "query", "required": true, "schema": { "type": "number" }, "description": "WGS84 latitude." },
+          { "name": "lng", "in": "query", "required": true, "schema": { "type": "number" }, "description": "WGS84 longitude." },
+          { "name": "res_group", "in": "query", "schema": { "type": "string", "enum": ["true", "false"] }, "description": "Reserved; details are always grouped by cluster." }
+        ],
+        "responses": {
+          "200": {
+            "description": "POIs grouped by amenity cluster.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/PoiDetail" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/JsonBadRequest" },
+          "401": { "$ref": "#/components/responses/MissingTokenText" },
+          "403": { "$ref": "#/components/responses/WrongTokenText" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/score/poi-details-driving-distance": {
+      "get": {
+        "tags": ["Score"],
+        "operationId": "getPoiDetailsDrivingDistance",
+        "summary": "Detailed points of interest within a travel-time isochrone",
+        "description": "Returns individual POIs reachable within `range` (seconds of travel time) of a coordinate for the given travel `profile`, grouped into SwissNovo amenity clusters.",
+        "security": [{ "ResApiToken": [] }],
+        "parameters": [
+          { "name": "lat", "in": "query", "required": true, "schema": { "type": "number" }, "description": "WGS84 latitude." },
+          { "name": "lng", "in": "query", "required": true, "schema": { "type": "number" }, "description": "WGS84 longitude." },
+          { "name": "range", "in": "query", "required": true, "schema": { "type": "integer" }, "description": "Isochrone range, in seconds of travel time." },
+          { "name": "profile", "in": "query", "schema": { "type": "string", "default": "driving-car" }, "description": "OpenRouteService travel profile (e.g. `driving-car`, `cycling-regular`, `foot-walking`)." }
+        ],
+        "responses": {
+          "200": {
+            "description": "POIs grouped by amenity cluster.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": { "$ref": "#/components/schemas/PoiDetail" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/JsonBadRequest" },
+          "401": { "$ref": "#/components/responses/MissingTokenText" },
+          "403": { "$ref": "#/components/responses/WrongTokenText" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/oereb_url": {
+      "post": {
+        "tags": ["OEREB"],
+        "operationId": "getOerebExtractUrl",
+        "summary": "Get the OEREB extract PDF URL for a parcel",
+        "description": "Resolves a parcel (by `lat`/`lng` or `egrid`) and returns the cantonal OEREB extract PDF download URL as a plain-text body.",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ParcelLocationRequestNoStructure" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OEREB extract URL, `no result...`, or a plain-text error body.",
+            "content": {
+              "text/html": { "schema": { "type": "string", "example": "https://maps.zh.ch/oereb/v2/extract/pdf/?EGRID=CH807318035875" } }
+            }
+          }
+        }
+      }
+    },
+    "/image/upload": {
+      "post": {
+        "tags": ["Image"],
+        "operationId": "uploadImage",
+        "summary": "Upload an image (legacy, token-authenticated)",
+        "description": "Uploads an image file and records it in the `images` table. Authenticated with the RES API token.",
+        "security": [{ "ResApiToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["image", "image_name", "user_id"],
+                "properties": {
+                  "image": { "type": "string", "format": "binary", "description": "Image file (.png/.jpg/.jpeg, max 10 MB)." },
+                  "image_name": { "type": "string", "description": "Display name for the image." },
+                  "user_id": { "type": "string", "description": "Identifier of the owning user." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Image uploaded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "image_id": { "type": "integer" },
+                    "file_name": { "type": "string" },
+                    "access_url": { "type": "string", "format": "uri" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/JsonBadRequest" },
+          "401": { "$ref": "#/components/responses/MissingTokenText" },
+          "403": { "$ref": "#/components/responses/WrongTokenText" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/image/{imageId}": {
+      "get": {
+        "tags": ["Image"],
+        "operationId": "getImageById",
+        "summary": "Retrieve a legacy image file by ID",
+        "description": "Streams the image file for a record in the `images` table. Authentication is currently disabled on this endpoint.",
+        "security": [],
+        "parameters": [
+          { "name": "imageId", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "Image record ID." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The image file.",
+            "content": { "image/*": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "404": { "$ref": "#/components/responses/JsonNotFound" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/image/user/{userId}": {
+      "get": {
+        "tags": ["Image"],
+        "operationId": "listUserImages",
+        "summary": "List legacy images for a user",
+        "description": "Lists image records belonging to a user, newest first.",
+        "security": [{ "ResApiToken": [] }],
+        "parameters": [
+          { "name": "userId", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Owning user identifier." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Image records for the user.",
+            "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+          },
+          "401": { "$ref": "#/components/responses/MissingTokenText" },
+          "403": { "$ref": "#/components/responses/WrongTokenText" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/image/swissnovo/upload": {
+      "post": {
+        "tags": ["Image"],
+        "operationId": "uploadSwissnovoImage",
+        "summary": "Save a user image from a SwissNovo app",
+        "description": "Saves a result image on behalf of the signed-in SwissNovo user. Authenticated with a Zitadel JWT bearer token; the user is taken from the `sub` claim.",
+        "security": [{ "ZitadelJWT": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "app_source"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary", "description": "Image file (.png/.jpg/.jpeg/.webp, max 10 MB)." },
+                  "app_source": { "type": "string", "description": "Slug of the SwissNovo app saving the image (e.g. `scoore`)." },
+                  "prm_id": { "type": "string", "description": "Optional linked parcel ID; must belong to the same user." },
+                  "custom_metadata": { "type": "string", "description": "Optional JSON object of extra metadata, sent as a string." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Image saved.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SwissnovoImage" } } }
+          },
+          "400": { "$ref": "#/components/responses/JsonBadRequest" },
+          "401": { "$ref": "#/components/responses/JsonUnauthorized" },
+          "403": { "$ref": "#/components/responses/JsonForbidden" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/image/swissnovo/list": {
+      "get": {
+        "tags": ["Image"],
+        "operationId": "listSwissnovoImages",
+        "summary": "List the current user's SwissNovo images",
+        "description": "Lists images saved by the signed-in user, newest first, optionally filtered by app or linked parcel.",
+        "security": [{ "ZitadelJWT": [] }],
+        "parameters": [
+          { "name": "app_source", "in": "query", "schema": { "type": "string" }, "description": "Filter by app slug." },
+          { "name": "prm_id", "in": "query", "schema": { "type": "string" }, "description": "Filter by linked parcel ID." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user's saved images.",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/SwissnovoImage" } }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/JsonUnauthorized" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/image/swissnovo/{id}": {
+      "get": {
+        "tags": ["Image"],
+        "operationId": "getSwissnovoImage",
+        "summary": "Get one of the current user's SwissNovo images",
+        "description": "Returns a single saved image record. Only the owning user may read it.",
+        "security": [{ "ZitadelJWT": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Image record ID." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The image record.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SwissnovoImage" } } }
+          },
+          "401": { "$ref": "#/components/responses/JsonUnauthorized" },
+          "404": { "$ref": "#/components/responses/JsonNotFound" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      },
+      "delete": {
+        "tags": ["Image"],
+        "operationId": "deleteSwissnovoImage",
+        "summary": "Delete one of the current user's SwissNovo images",
+        "description": "Deletes a saved image record and best-effort removes the file from disk. Only the owning user may delete it.",
+        "security": [{ "ZitadelJWT": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Image record ID." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Image deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "id": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/JsonUnauthorized" },
+          "404": { "$ref": "#/components/responses/JsonNotFound" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/res_api/signal/collect": {
+      "post": {
+        "tags": ["Signal"],
+        "operationId": "collectSignal",
+        "summary": "Record a user-activity signal",
+        "description": "Records a user-activity signal from a SwissNovo app. If `parcel_id` is omitted but `target_lat`/`target_lng` are present, the parcel ID is resolved via SwissTopo. Authenticated with the API bearer token or an active session.",
+        "security": [{ "BearerToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["app_name", "user_action"],
+                "properties": {
+                  "app_name": { "type": "string", "description": "Slug of the originating SwissNovo app." },
+                  "user_action": { "type": "string", "description": "Action being recorded (e.g. `address_search`)." },
+                  "parcel_id": { "type": "string", "description": "Parcel EGRID, if already known." },
+                  "lat": { "type": "number", "description": "User's WGS84 latitude." },
+                  "lng": { "type": "number", "description": "User's WGS84 longitude." },
+                  "target_address": { "type": "string", "description": "Address the action targeted." },
+                  "target_lat": { "type": "number", "description": "Target WGS84 latitude (used for parcel lookup)." },
+                  "target_lng": { "type": "number", "description": "Target WGS84 longitude (used for parcel lookup)." },
+                  "meta_data": { "type": "object", "additionalProperties": true, "description": "Free-form additional metadata." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Signal recorded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/JsonBadRequest" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/res_api/signal/list": {
+      "get": {
+        "tags": ["Signal"],
+        "operationId": "listSignals",
+        "summary": "List collected signals",
+        "description": "Returns collected signals with pagination, filterable by app, country and date range.",
+        "security": [{ "BearerToken": [] }],
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 }, "description": "Page size." },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 }, "description": "Page offset." },
+          { "name": "app_name", "in": "query", "schema": { "type": "string" }, "description": "Filter by app slug." },
+          { "name": "country", "in": "query", "schema": { "type": "string" }, "description": "Filter by user country code." },
+          { "name": "start_date", "in": "query", "schema": { "type": "string", "format": "date-time" }, "description": "Inclusive lower bound on `created_at`." },
+          { "name": "end_date", "in": "query", "schema": { "type": "string", "format": "date-time" }, "description": "Inclusive upper bound on `created_at`." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated signals.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/SignalRecord" } },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/res_api/signal/parcel/{parcel_id}": {
+      "get": {
+        "tags": ["Signal"],
+        "operationId": "listSignalsByParcel",
+        "summary": "List signals for a specific parcel",
+        "description": "Returns collected signals targeting a given parcel, with pagination and the same filters as `/res_api/signal/list`.",
+        "security": [{ "BearerToken": [] }],
+        "parameters": [
+          { "name": "parcel_id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Target parcel EGRID." },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 }, "description": "Page size." },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 }, "description": "Page offset." },
+          { "name": "app_name", "in": "query", "schema": { "type": "string" }, "description": "Filter by app slug." },
+          { "name": "country", "in": "query", "schema": { "type": "string" }, "description": "Filter by user country code." },
+          { "name": "start_date", "in": "query", "schema": { "type": "string", "format": "date-time" }, "description": "Inclusive lower bound on `created_at`." },
+          { "name": "end_date", "in": "query", "schema": { "type": "string", "format": "date-time" }, "description": "Inclusive upper bound on `created_at`." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated signals for the parcel.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/SignalRecord" } },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" },
+                    "parcel_id": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/res_api/signal/stats": {
+      "get": {
+        "tags": ["Signal"],
+        "operationId": "getSignalStats",
+        "summary": "Aggregated signal statistics",
+        "description": "Returns signal counts aggregated by app, by country, and by day, optionally limited to a date range.",
+        "security": [{ "BearerToken": [] }],
+        "parameters": [
+          { "name": "start_date", "in": "query", "schema": { "type": "string", "format": "date-time" }, "description": "Inclusive lower bound (used together with `end_date`)." },
+          { "name": "end_date", "in": "query", "schema": { "type": "string", "format": "date-time" }, "description": "Inclusive upper bound (used together with `start_date`)." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated statistics.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "by_app": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "app_name": { "type": "string" },
+                          "count": { "type": "string", "description": "Count as returned by PostgreSQL (string)." }
+                        }
+                      }
+                    },
+                    "by_country": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "user_country": { "type": ["string", "null"] },
+                          "count": { "type": "string" }
+                        }
+                      }
+                    },
+                    "daily_activity": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": { "type": "string", "format": "date-time" },
+                          "count": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    },
+    "/res_api/signal/delete/{id}": {
+      "delete": {
+        "tags": ["Signal"],
+        "operationId": "deleteSignal",
+        "summary": "Delete a collected signal",
+        "description": "Deletes a single signal record by its numeric ID.",
+        "security": [{ "BearerToken": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" }, "description": "Signal record ID." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Signal deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/JsonNotFound" },
+          "500": { "$ref": "#/components/responses/JsonServerError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ResApiToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "token",
+        "description": "Shared RES API token, sent in the `token` request header."
+      },
+      "ResApiTokenQuery": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "token",
+        "description": "Shared RES API token, sent as the `token` query parameter. Used only by `GET /res_api/parcel_image` so the URL can be used directly in an `<img src>`."
+      },
+      "BearerToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Static API bearer token (`Authorization: Bearer <token>`). An active browser session is also accepted on these endpoints."
+      },
+      "ZitadelJWT": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Zitadel-issued JWT (`Authorization: Bearer <jwt>`). The user identity is taken from the `sub` claim."
+      }
+    },
+    "responses": {
+      "MissingTokenText": {
+        "description": "Authentication token missing (plain-text body).",
+        "content": { "text/plain": { "schema": { "type": "string", "example": "Missing Token" } } }
+      },
+      "WrongTokenText": {
+        "description": "Authentication token invalid (plain-text body).",
+        "content": { "text/plain": { "schema": { "type": "string", "example": "Wrong Token" } } }
+      },
+      "JsonBadRequest": {
+        "description": "Invalid request.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JsonError" } } }
+      },
+      "JsonUnauthorized": {
+        "description": "Authentication missing or invalid.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JsonError" } } }
+      },
+      "JsonForbidden": {
+        "description": "Authenticated but not permitted.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JsonError" } } }
+      },
+      "JsonNotFound": {
+        "description": "Resource not found.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JsonError" } } }
+      },
+      "JsonServerError": {
+        "description": "Server error.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/JsonError" } } }
+      }
+    },
+    "schemas": {
+      "JsonError": {
+        "type": "object",
+        "description": "Standard JSON error body used by the newer endpoints.",
+        "properties": {
+          "error": { "type": "string", "description": "Human-readable error description." },
+          "message": { "type": "string", "description": "Optional underlying error message." }
+        },
+        "required": ["error"]
+      },
+      "ParcelLocationRequest": {
+        "type": "object",
+        "description": "Locates a parcel by WGS84 coordinate (`lat`+`lng`) or by `egrid`. Provide one of the two.",
+        "properties": {
+          "lat": { "type": "number", "description": "WGS84 latitude." },
+          "lng": { "type": "number", "description": "WGS84 longitude." },
+          "egrid": { "type": "string", "description": "Parcel EGRID identifier." },
+          "structure": {
+            "type": "string",
+            "enum": ["default", "tree"],
+            "default": "default",
+            "description": "`default` returns the raw GeoJSON FeatureCollection; `tree` returns a grouped, human-readable object."
+          }
+        }
+      },
+      "ParcelLocationRequestNoStructure": {
+        "type": "object",
+        "description": "Locates a parcel by WGS84 coordinate (`lat`+`lng`) or by `egrid`. Provide one of the two.",
+        "properties": {
+          "lat": { "type": "number", "description": "WGS84 latitude." },
+          "lng": { "type": "number", "description": "WGS84 longitude." },
+          "egrid": { "type": "string", "description": "Parcel EGRID identifier." }
+        }
+      },
+      "ParcelImageRequest": {
+        "type": "object",
+        "description": "Locates the parcel by `lat`+`lng` or by `x_3857`+`y_3857` (Web Mercator). Provide one pair.",
+        "properties": {
+          "lat": { "type": "number", "description": "WGS84 latitude." },
+          "lng": { "type": "number", "description": "WGS84 longitude." },
+          "x_3857": { "type": "number", "description": "Web Mercator X coordinate." },
+          "y_3857": { "type": "number", "description": "Web Mercator Y coordinate." },
+          "img_size": { "type": "integer", "default": 512, "description": "Output image width/height, in pixels." },
+          "bounding_dist": { "type": "number", "default": 200, "description": "Half-extent of the rendered bounding box, in metres." },
+          "style": {
+            "type": "string",
+            "enum": ["ratio_v_free", "score", "red", "green"],
+            "default": "ratio_v_free",
+            "description": "Render style."
+          }
+        }
+      },
+      "Coordinates": {
+        "type": "object",
+        "properties": {
+          "x": { "type": "number", "description": "Web Mercator (EPSG:3857) X." },
+          "y": { "type": "number", "description": "Web Mercator (EPSG:3857) Y." },
+          "x_2056": { "type": "number", "description": "LV95 (EPSG:2056) X." },
+          "y_2056": { "type": "number", "description": "LV95 (EPSG:2056) Y." },
+          "lat": { "type": "number", "description": "WGS84 latitude." },
+          "lng": { "type": "number", "description": "WGS84 longitude." }
+        }
+      },
+      "GeoJSONFeatureCollection": {
+        "type": "object",
+        "description": "GeoJSON FeatureCollection from GeoServer. With `/res_api/parcel_data`, the first feature's `properties` is enriched with `owner`, `isSignal`, `image_urls` and `OEREB_url`.",
+        "properties": {
+          "type": { "type": "string", "const": "FeatureCollection" },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string", "const": "Feature" },
+                "id": { "type": "string" },
+                "geometry": { "type": "object", "additionalProperties": true },
+                "properties": { "type": "object", "additionalProperties": true }
+              }
+            }
+          }
+        }
+      },
+      "ParcelTree": {
+        "type": "object",
+        "description": "Grouped, human-readable parcel representation returned when `structure: \"tree\"`.",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "owner": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "site_score": { "type": ["number", "null"] },
+          "res_id": { "type": ["string", "number", "null"] },
+          "uuid": { "type": "string", "description": "UUIDv5 derived from the parcel EGRID." },
+          "score": {
+            "type": "object",
+            "properties": {
+              "score_drive": { "type": ["number", "null"] },
+              "score_walk": { "type": ["number", "null"] },
+              "score_bike": { "type": ["number", "null"] }
+            }
+          },
+          "address": {
+            "type": "object",
+            "properties": {
+              "street": { "type": ["string", "null"] },
+              "city": { "type": ["string", "null"] },
+              "canton": { "type": ["string", "null"] },
+              "zip": { "type": ["string", "number", "null"] },
+              "parcel_id": { "type": "string" },
+              "coordinates": { "$ref": "#/components/schemas/Coordinates" }
+            }
+          },
+          "building": { "type": "object", "additionalProperties": true, "description": "Building attributes (construction year, flats, floors, size, volume, heights)." },
+          "plot": { "type": "object", "additionalProperties": true, "description": "Plot attributes (area, ratios, GFA, max footprint/volume)." },
+          "construction_zone": { "type": "object", "additionalProperties": true, "description": "Construction-zone attributes." },
+          "noise": { "type": "object", "additionalProperties": true, "description": "Rail and street noise levels (day/night, min/mean/max)." },
+          "travel": { "type": "object", "additionalProperties": true, "description": "Travel times to the nearest agglomeration." },
+          "vacancies": { "type": "object", "additionalProperties": true, "description": "District vacancy figures." },
+          "tax": { "type": "object", "additionalProperties": true, "description": "Tax attributes." },
+          "image_urls": {
+            "type": "object",
+            "properties": {
+              "parcel_image": { "type": "string", "format": "uri" },
+              "satellite_image": { "type": "string", "format": "uri" },
+              "world_topo_image": { "type": "string", "format": "uri" }
+            }
+          },
+          "OEREB_url": { "type": "string", "description": "OEREB extract URL, or `not available`." }
+        }
+      },
+      "PoiDetail": {
+        "type": "object",
+        "description": "A single point of interest within a scoring cluster.",
+        "properties": {
+          "name": { "type": "string" },
+          "distance": { "type": "number", "description": "Distance from the query location, in metres." },
+          "category_name": { "type": "string" },
+          "category_group": { "type": "string" },
+          "location_index": { "type": "integer", "description": "Sequential index across all clusters in the response." },
+          "position": {
+            "type": "object",
+            "properties": {
+              "lat": { "type": "number" },
+              "lng": { "type": "number" }
+            }
+          }
+        }
+      },
+      "SignalRecord": {
+        "type": "object",
+        "description": "A stored user-activity signal row.",
+        "properties": {
+          "id": { "type": "integer" },
+          "app_name": { "type": "string" },
+          "user_ip": { "type": ["string", "null"] },
+          "user_country": { "type": ["string", "null"] },
+          "user_lat": { "type": ["number", "null"] },
+          "user_lng": { "type": ["number", "null"] },
+          "target_address": { "type": ["string", "null"] },
+          "target_parcel_id": { "type": ["string", "null"] },
+          "target_lat": { "type": ["number", "null"] },
+          "target_lng": { "type": ["number", "null"] },
+          "metadata": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer", "description": "Total matching rows." },
+          "limit": { "type": "integer", "description": "Page size." },
+          "offset": { "type": "integer", "description": "Page offset." }
+        }
+      },
+      "SwissnovoImage": {
+        "type": "object",
+        "description": "A user-saved SwissNovo image record (`images_zitadel` table).",
+        "properties": {
+          "id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "prm_id": { "type": ["string", "null"], "description": "Linked parcel ID, if any." },
+          "app_source": { "type": "string" },
+          "original_filename": { "type": "string" },
+          "file_path": { "type": "string" },
+          "public_url": { "type": "string", "format": "uri" },
+          "mime_type": { "type": "string" },
+          "file_size": { "type": "integer" },
+          "width": { "type": ["integer", "null"] },
+          "height": { "type": ["integer", "null"] },
+          "custom_metadata": { "type": "object", "additionalProperties": true },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

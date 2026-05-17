@@ -61,6 +61,33 @@ export const CURRENT_VERSION = RELEASES[0].version;
 export const REPO_URL = 'https://github.com/mbuchi/<app>';
 ```
 
+### `createResApiClient` — typed RES API client
+
+A fully typed client for the [RES API](https://res.zeroo.ch/api-docs), generated from its
+OpenAPI 3.1 contract. Replaces ad-hoc `fetch` calls with one typed surface, and always sends
+`X-RES-API-Version: 2` so callers get proper `4xx`/`5xx` status codes + JSON error bodies.
+
+**Use it server-side** (Vercel functions, Node) — pass the `token`. In the browser, point
+`baseUrl` at your app's own `/api/*` proxy and omit `token`, so the RES token stays server-side.
+
+```ts
+import { createResApiClient } from '@swissnovo/shared';
+
+const res = createResApiClient({ token: process.env.RES_TOKEN });
+
+const { data, error, response } = await res.POST('/res_api/parcel_data', {
+  body: { lat: 47.3769, lng: 8.5417, structure: 'tree' },
+});
+if (error) throw new Error(error.error);     // typed JsonError
+// `data` is typed from the OpenAPI contract
+```
+
+Binary / plain-text endpoints (`parcel_image`, `parcel_boundary_data`, the `/res_api` health
+check) need an explicit `parseAs`, e.g. `res.GET('/res_api/parcel_image', { params, parseAs: 'blob' })`.
+
+The contract is vendored as `openapi.json`; regenerate the types after it changes with
+`npm run generate:api`.
+
 ## Developing this package
 
 ```sh
