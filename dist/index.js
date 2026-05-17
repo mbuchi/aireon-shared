@@ -924,7 +924,6 @@ async function sendClaireMessageSignal({
   appName,
   lat,
   lng,
-  parcelId,
   address,
   source
 }) {
@@ -935,8 +934,10 @@ async function sendClaireMessageSignal({
       body: JSON.stringify({
         app_name: appName,
         user_action: "Claire Assistant Message",
-        // A stable id lets the RES API skip its SwissTopo parcel lookup.
-        parcel_id: parcelId ?? void 0,
+        // No parcel_id is sent: the RES API resolves the canonical parcel
+        // (SwissTopo EGRID) from target_lat/lng, so the Claire signal stays
+        // consistent with the address-search signal instead of recording an
+        // app-internal tile id.
         lat,
         lng,
         target_address: address,
@@ -1079,19 +1080,28 @@ async function fetchClaireContext(lng, lat, signal) {
   let results;
   try {
     const res = await fetch(`${IDENTIFY_API}?${params}`, { signal });
-    if (!res.ok) return "";
+    if (!res.ok) return { text: "" };
     const data = await res.json();
     results = data.results ?? [];
   } catch {
-    return "";
+    return { text: "" };
   }
   const sections = [];
+  let address;
   const gwr = results.find((r) => r.layerBodId === GWR_LAYER);
   if (gwr) {
-    const lines = gwrLines(gwr.properties ?? gwr.attributes ?? {});
+    const p = gwr.properties ?? gwr.attributes ?? {};
+    const lines = gwrLines(p);
     if (lines.length > 0) {
       sections.push(`Federal Register of Buildings and Dwellings (GWR):
 ${lines.join("\n")}`);
+    }
+    const street = str(p.strname_deinr);
+    if (street) {
+      const city = str(p.ggdename) ?? str(p.dplzname);
+      const zip = str(p.dplz4) ?? str(p.plz_plz6);
+      const place = [zip, city].filter(Boolean).join(" ");
+      address = place ? `${street}, ${place}` : street;
     }
   }
   const zone = results.find((r) => r.layerBodId === BAUZONEN_LAYER);
@@ -1116,10 +1126,10 @@ ${lines.join("\n")}`);
     sections.push(`Official zoning & locality (swisstopo / ARE):
 ${misc.join("\n")}`);
   }
-  if (sections.length === 0) return "";
-  return `Authoritative Swiss federal records for this location:
+  const text = sections.length === 0 ? "" : `Authoritative Swiss federal records for this location:
 
 ${sections.join("\n\n")}`;
+  return { text, address };
 }
 
 // src/claire/claireConversation.ts
@@ -1265,19 +1275,21 @@ var ClaireAssistant = ({
     }),
     [properties, enrichment, lngLat, lv95]
   );
-  const [officialContext, setOfficialContext] = useState("");
+  const [official, setOfficial] = useState({
+    text: ""
+  });
   useEffect(() => {
     const controller = new AbortController();
-    setOfficialContext("");
-    void fetchClaireContext(lngLat.lng, lngLat.lat, controller.signal).then((ctx) => setOfficialContext(ctx)).catch(() => {
+    setOfficial({ text: "" });
+    void fetchClaireContext(lngLat.lng, lngLat.lat, controller.signal).then((res) => setOfficial(res)).catch(() => {
     });
     return () => controller.abort();
   }, [lngLat.lng, lngLat.lat]);
   const fullContext = useMemo(
-    () => officialContext ? `${parcelContext}
+    () => official.text ? `${parcelContext}
 
-${officialContext}` : parcelContext,
-    [parcelContext, officialContext]
+${official.text}` : parcelContext,
+    [parcelContext, official.text]
   );
   useEffect(() => {
     abortRef.current?.abort();
@@ -1348,12 +1360,12 @@ ${officialContext}` : parcelContext,
       setInput("");
       setError(null);
       setLoading(true);
+      const address = headerAddress || official.address;
       void sendClaireMessageSignal({
         appName,
         lat: lngLat.lat,
         lng: lngLat.lng,
-        parcelId,
-        address: headerAddress,
+        address,
         source
       });
       const controller = new AbortController();
@@ -1377,7 +1389,7 @@ ${officialContext}` : parcelContext,
             messages: [...nextHistory, { role: "assistant", content: reply }],
             accessToken: getAccessToken(),
             appName,
-            address: headerAddress,
+            address,
             lat: lngLat.lat,
             lng: lngLat.lng
           });
@@ -1400,6 +1412,7 @@ ${officialContext}` : parcelContext,
       lngLat.lng,
       parcelId,
       headerAddress,
+      official.address,
       getAccessToken,
       appName,
       geminiApiKey,

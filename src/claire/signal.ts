@@ -14,8 +14,6 @@ interface ClaireMessageSignal {
   lat: number;
   /** WGS84 longitude of the parcel the conversation is scoped to. */
   lng: number;
-  /** Stable parcel identifier, when the map tile provides one. */
-  parcelId?: string | null;
   /** Human-readable parcel address, when known. */
   address?: string;
   /** Where the message originated — typed vs. a quick-prompt chip. */
@@ -32,7 +30,6 @@ export async function sendClaireMessageSignal({
   appName,
   lat,
   lng,
-  parcelId,
   address,
   source,
 }: ClaireMessageSignal): Promise<void> {
@@ -43,8 +40,10 @@ export async function sendClaireMessageSignal({
       body: JSON.stringify({
         app_name: appName,
         user_action: 'Claire Assistant Message',
-        // A stable id lets the RES API skip its SwissTopo parcel lookup.
-        parcel_id: parcelId ?? undefined,
+        // No parcel_id is sent: the RES API resolves the canonical parcel
+        // (SwissTopo EGRID) from target_lat/lng, so the Claire signal stays
+        // consistent with the address-search signal instead of recording an
+        // app-internal tile id.
         lat,
         lng,
         target_address: address,
