@@ -15,7 +15,7 @@ const IDENTIFY_API =
   'https://api3.geo.admin.ch/rest/services/api/MapServer/identify';
 
 const GWR_LAYER = 'ch.bfs.gebaeude_wohnungs_register';
-const BAUZONEN_LAYER = 'ch.are.bauzonen_harmonisiert_v2';
+const BAUZONEN_LAYER = 'ch.are.bauzonen';
 const PLZ_LAYER = 'ch.swisstopo-vd.ortschaftenverzeichnis_plz';
 
 // GWR code catalogues (BFS Merkmalskatalog) — only the fields a property
@@ -216,12 +216,8 @@ export async function fetchClaireContext(
   const zone = results.find((r) => r.layerBodId === BAUZONEN_LAYER);
   const zoneName = zone
     ? firstString(zone.properties ?? zone.attributes ?? {}, [
-        'ch_bezeichnung',
-        'ch_typ_text',
-        'typ_kt_text',
-        'typ_text',
-        'bezeichnung_de',
-        'bezeichnung',
+        'ch_bez_d',
+        'ch_bez_f',
       ])
     : undefined;
 
