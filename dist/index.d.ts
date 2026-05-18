@@ -113,6 +113,33 @@ interface ReleaseNotesButtonProps {
 }
 declare function ReleaseNotesButton({ releases, locale, storageKey, repoUrl, brandPrefix, brandSuffix, brandNode, zIndex, className, }: ReleaseNotesButtonProps): react_jsx_runtime.JSX.Element;
 
+interface LoginModalFeature {
+    /** Optional leading icon. */
+    icon?: LucideIcon;
+    label: string;
+    /** Dim the row and show a "Pro" badge. */
+    locked?: boolean;
+}
+interface LoginModalProps {
+    open: boolean;
+    /** Called by any dismiss path (backdrop / Esc / link). Ignored when blocking. */
+    onClose: () => void;
+    /** App name shown in the headline; any `oo` substring renders in brand red. */
+    appName: string;
+    description?: string;
+    features?: LoginModalFeature[];
+    /** When true, no dismiss path is rendered. */
+    blocking?: boolean;
+    login: () => void;
+    register: () => void;
+}
+/**
+ * Suite-standard login popup. Branded with the SWISSNOVO wordmark, it offers
+ * "Create free account" and "Sign in". Presentational only — it reads no
+ * context, so it can be driven by {@link AuthProvider} or used standalone.
+ */
+declare function LoginModal({ open, onClose, appName, description, features, blocking, login, register, }: LoginModalProps): react_jsx_runtime.JSX.Element | null;
+
 type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 interface AuthContextValue {
     /** The raw OIDC user, or null when anonymous. */
@@ -138,15 +165,32 @@ interface AuthContextValue {
     initials: string;
     /** Profile picture URL, or null. */
     picture: string | null;
+    /** Open the standard login modal. */
+    promptLogin: () => void;
+    /** Returns `isAuthenticated`; opens the login modal as a side effect when false. */
+    requireAuth: () => boolean;
+    /** Close the login modal (no-op while a blocking modal is shown). */
+    closeLogin: () => void;
+    /** True while the login modal is visible. */
+    isLoginModalOpen: boolean;
+}
+interface AuthProviderProps {
+    children: ReactNode;
+    /** App name for the login modal. When omitted, no modal is rendered. */
+    appName?: string;
+    loginDescription?: string;
+    loginFeatures?: LoginModalFeature[];
+    /** Hard gate: modal is open and non-dismissible whenever the user is anonymous. */
+    loginBlocking?: boolean;
+    /** Auto-open the modal once for an anonymous first-time visitor. */
+    loginPromptOnFirstVisit?: boolean;
 }
 /**
  * Wraps the app, runs the suite-standard hidden-iframe silent SSO on mount,
  * and exposes auth state via {@link useAuth}. Apps must also ship a
  * `public/silent-callback.html` (served at `/silent-callback.html`).
  */
-declare function AuthProvider({ children }: {
-    children: ReactNode;
-}): react_jsx_runtime.JSX.Element;
+declare function AuthProvider({ children, appName, loginDescription, loginFeatures, loginBlocking, loginPromptOnFirstVisit, }: AuthProviderProps): react_jsx_runtime.JSX.Element;
 /** Auth state + actions. Must be called inside an {@link AuthProvider}. */
 declare function useAuth(): AuthContextValue;
 
@@ -300,4 +344,4 @@ interface ClaireContext {
  */
 declare function fetchClaireContext(lng: number, lat: number, signal?: AbortSignal): Promise<ClaireContext>;
 
-export { type AuthContextValue, AuthProvider, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, LoginModal, type LoginModalFeature, type LoginModalProps, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };

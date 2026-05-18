@@ -15,8 +15,11 @@ import {
   urlHasAuthParams,
   userManager,
 } from './userManager';
+import LoginModal, { type LoginModalFeature } from './LoginModal';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
+
+const LOGIN_DISMISSED_KEY = 'swissnovo:login-prompt-dismissed';
 
 export interface AuthContextValue {
   /** The raw OIDC user, or null when anonymous. */
@@ -42,6 +45,26 @@ export interface AuthContextValue {
   initials: string;
   /** Profile picture URL, or null. */
   picture: string | null;
+  /** Open the standard login modal. */
+  promptLogin: () => void;
+  /** Returns `isAuthenticated`; opens the login modal as a side effect when false. */
+  requireAuth: () => boolean;
+  /** Close the login modal (no-op while a blocking modal is shown). */
+  closeLogin: () => void;
+  /** True while the login modal is visible. */
+  isLoginModalOpen: boolean;
+}
+
+export interface AuthProviderProps {
+  children: ReactNode;
+  /** App name for the login modal. When omitted, no modal is rendered. */
+  appName?: string;
+  loginDescription?: string;
+  loginFeatures?: LoginModalFeature[];
+  /** Hard gate: modal is open and non-dismissible whenever the user is anonymous. */
+  loginBlocking?: boolean;
+  /** Auto-open the modal once for an anonymous first-time visitor. */
+  loginPromptOnFirstVisit?: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -62,10 +85,19 @@ function computeInitials(name: string, email: string): string {
  * and exposes auth state via {@link useAuth}. Apps must also ship a
  * `public/silent-callback.html` (served at `/silent-callback.html`).
  */
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+  children,
+  appName,
+  loginDescription,
+  loginFeatures,
+  loginBlocking = false,
+  loginPromptOnFirstVisit = false,
+}: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const initStarted = useRef(false);
+  const [loginRequested, setLoginRequested] = useState(false);
+  const firstVisitDecided = useRef(false);
 
   useEffect(() => {
     if (initStarted.current) return;
@@ -150,6 +182,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const isAuthenticatedNow = !!user && !user.expired;
+
+  // Auto-open the modal once for an anonymous first-time visitor, after the
+  // silent-SSO attempt settles. Suppressed if dismissed before or if the URL
+  // carries a ?lat=&lng= deep link (the suite parcel deep-link convention).
+  useEffect(() => {
+    if (!loginPromptOnFirstVisit || isLoading || firstVisitDecided.current) return;
+    firstVisitDecided.current = true;
+    if (isAuthenticatedNow) return;
+    if (sessionStorage.getItem(LOGIN_DISMISSED_KEY)) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('lat') && params.has('lng')) return;
+    setLoginRequested(true);
+  }, [loginPromptOnFirstVisit, isLoading, isAuthenticatedNow]);
+
   const login = useCallback(async () => {
     sessionStorage.removeItem(SSO_ATTEMPTED_KEY);
     await userManager.signinRedirect();
@@ -171,6 +218,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getAccessToken = useCallback(() => user?.access_token, [user]);
+
+  const promptLogin = useCallback(() => setLoginRequested(true), []);
+  const closeLogin = useCallback(() => {
+    sessionStorage.setItem(LOGIN_DISMISSED_KEY, '1');
+    setLoginRequested(false);
+  }, []);
 
   const value = useMemo<AuthContextValue>(() => {
     const profile = user?.profile;
@@ -195,10 +248,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       initials: computeInitials(displayName, email),
       picture,
+      promptLogin,
+      requireAuth: () => {
+        if (!isAuthenticated) setLoginRequested(true);
+        return isAuthenticated;
+      },
+      closeLogin,
+      isLoginModalOpen:
+        !isAuthenticated && (loginRequested || (loginBlocking && !isLoading)),
     };
-  }, [user, isLoading, login, register, logout, getAccessToken]);
+  }, [
+    user,
+    isLoading,
+    login,
+    register,
+    logout,
+    getAccessToken,
+    promptLogin,
+    closeLogin,
+    loginRequested,
+    loginBlocking,
+  ]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {appName && (
+        <LoginModal
+          open={value.isLoginModalOpen}
+          onClose={closeLogin}
+          appName={appName}
+          description={loginDescription}
+          features={loginFeatures}
+          blocking={loginBlocking}
+          login={login}
+          register={register}
+        />
+      )}
+    </AuthContext.Provider>
+  );
 }
 
 /** Auth state + actions. Must be called inside an {@link AuthProvider}. */

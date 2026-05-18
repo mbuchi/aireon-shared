@@ -1,7 +1,7 @@
 export { RES_API_BASE_URL, createResApiClient } from './chunk-LGHK7RPJ.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Loader2, AlertCircle, Send } from 'lucide-react';
+import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, Loader2, AlertCircle, Send } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 
@@ -611,6 +611,127 @@ function stripAuthParams() {
   );
   window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
 }
+function StyledAppName({ name }) {
+  return /* @__PURE__ */ jsx(Fragment, { children: name.split(/(oo)/gi).map(
+    (part, i) => part.toLowerCase() === "oo" ? /* @__PURE__ */ jsx("span", { className: "text-red-600", children: part }, i) : /* @__PURE__ */ jsx("span", { children: part }, i)
+  ) });
+}
+function LoginModal({
+  open,
+  onClose,
+  appName,
+  description,
+  features,
+  blocking = false,
+  login,
+  register
+}) {
+  useEffect(() => {
+    if (!open || blocking) return;
+    const onEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, [open, blocking, onClose]);
+  if (!open) return null;
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: "fixed inset-0 z-[200] flex items-center justify-center p-4",
+      role: "dialog",
+      "aria-modal": "true",
+      children: [
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            className: "absolute inset-0 bg-black/50 backdrop-blur-sm",
+            onClick: blocking ? void 0 : onClose
+          }
+        ),
+        /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden", children: [
+          /* @__PURE__ */ jsx("div", { className: "h-1.5 bg-gradient-to-r from-red-500 via-red-600 to-rose-700" }),
+          /* @__PURE__ */ jsxs("div", { className: "px-8 pt-7 pb-6", children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center text-center", children: [
+              /* @__PURE__ */ jsxs(
+                "p",
+                {
+                  className: "text-2xl sm:text-3xl font-normal leading-none select-none",
+                  style: { fontFamily: "'Varela Round', sans-serif" },
+                  "aria-label": "SWISSNOVO",
+                  children: [
+                    /* @__PURE__ */ jsx("span", { className: "text-gray-900 dark:text-white", children: "SWISSN" }),
+                    /* @__PURE__ */ jsx("span", { className: "text-red-600", children: "O" }),
+                    /* @__PURE__ */ jsx("span", { className: "text-gray-900 dark:text-white", children: "V" }),
+                    /* @__PURE__ */ jsx("span", { className: "text-red-600", children: "O" })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsxs("h2", { className: "mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100", children: [
+                "Sign in to",
+                " ",
+                /* @__PURE__ */ jsx("span", { style: { fontFamily: "'Varela Round', sans-serif" }, children: /* @__PURE__ */ jsx(StyledAppName, { name: appName }) })
+              ] }),
+              description && /* @__PURE__ */ jsx("p", { className: "mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed", children: description })
+            ] }),
+            features && features.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-6 space-y-2", children: features.map((f, i) => /* @__PURE__ */ jsx(FeatureRow, { feature: f }, i)) }),
+            /* @__PURE__ */ jsxs("div", { className: "mt-6 flex flex-col gap-3", children: [
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: register,
+                  className: "w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-sm font-semibold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900",
+                  children: "Create free account"
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  onClick: login,
+                  className: "w-full py-2.5 px-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400",
+                  children: "Sign in"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "mt-5 flex items-center justify-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500", children: [
+              /* @__PURE__ */ jsx(Lock, { size: 11 }),
+              /* @__PURE__ */ jsx("span", { children: "Secured with single sign-on via Zitadel" })
+            ] }),
+            !blocking && /* @__PURE__ */ jsx("div", { className: "mt-3 text-center", children: /* @__PURE__ */ jsx(
+              "button",
+              {
+                onClick: onClose,
+                className: "text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors underline-offset-2 hover:underline",
+                children: "Continue without signing in"
+              }
+            ) })
+          ] })
+        ] })
+      ]
+    }
+  );
+}
+function FeatureRow({ feature }) {
+  const { icon: Icon, label, locked } = feature;
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: `flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${locked ? "text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800/50" : "text-gray-700 dark:text-gray-300 bg-red-50/60 dark:bg-red-900/10"}`,
+      children: [
+        Icon && /* @__PURE__ */ jsx(
+          "span",
+          {
+            className: locked ? "text-gray-400 dark:text-gray-500" : "text-red-500 dark:text-red-400",
+            children: /* @__PURE__ */ jsx(Icon, { size: 15 })
+          }
+        ),
+        /* @__PURE__ */ jsx("span", { className: "flex-1", children: label }),
+        locked && /* @__PURE__ */ jsx("span", { className: "text-[10px] font-semibold uppercase tracking-wide text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded", children: "Pro" })
+      ]
+    }
+  );
+}
+var LOGIN_DISMISSED_KEY = "swissnovo:login-prompt-dismissed";
 var AuthContext = createContext(void 0);
 function computeInitials(name, email) {
   const source = name.trim() || email.trim();
@@ -619,10 +740,19 @@ function computeInitials(name, email) {
   const parts = source.split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map((p) => p[0].toUpperCase()).join("") || source[0].toUpperCase();
 }
-function AuthProvider({ children }) {
+function AuthProvider({
+  children,
+  appName,
+  loginDescription,
+  loginFeatures,
+  loginBlocking = false,
+  loginPromptOnFirstVisit = false
+}) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const initStarted = useRef(false);
+  const [loginRequested, setLoginRequested] = useState(false);
+  const firstVisitDecided = useRef(false);
   useEffect(() => {
     if (initStarted.current) return;
     initStarted.current = true;
@@ -694,6 +824,16 @@ function AuthProvider({ children }) {
       userManager.events.removeAccessTokenExpired(onExpired);
     };
   }, []);
+  const isAuthenticatedNow = !!user && !user.expired;
+  useEffect(() => {
+    if (!loginPromptOnFirstVisit || isLoading || firstVisitDecided.current) return;
+    firstVisitDecided.current = true;
+    if (isAuthenticatedNow) return;
+    if (sessionStorage.getItem(LOGIN_DISMISSED_KEY)) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("lat") && params.has("lng")) return;
+    setLoginRequested(true);
+  }, [loginPromptOnFirstVisit, isLoading, isAuthenticatedNow]);
   const login = useCallback(async () => {
     sessionStorage.removeItem(SSO_ATTEMPTED_KEY);
     await userManager.signinRedirect();
@@ -713,6 +853,11 @@ function AuthProvider({ children }) {
     }
   }, []);
   const getAccessToken = useCallback(() => user?.access_token, [user]);
+  const promptLogin = useCallback(() => setLoginRequested(true), []);
+  const closeLogin = useCallback(() => {
+    sessionStorage.setItem(LOGIN_DISMISSED_KEY, "1");
+    setLoginRequested(false);
+  }, []);
   const value = useMemo(() => {
     const profile = user?.profile;
     const displayName = profile?.name || [profile?.given_name, profile?.family_name].filter(Boolean).join(" ") || "";
@@ -731,10 +876,43 @@ function AuthProvider({ children }) {
       displayName: displayName || email || "User",
       email,
       initials: computeInitials(displayName, email),
-      picture
+      picture,
+      promptLogin,
+      requireAuth: () => {
+        if (!isAuthenticated) setLoginRequested(true);
+        return isAuthenticated;
+      },
+      closeLogin,
+      isLoginModalOpen: !isAuthenticated && (loginRequested || loginBlocking && !isLoading)
     };
-  }, [user, isLoading, login, register, logout, getAccessToken]);
-  return /* @__PURE__ */ jsx(AuthContext.Provider, { value, children });
+  }, [
+    user,
+    isLoading,
+    login,
+    register,
+    logout,
+    getAccessToken,
+    promptLogin,
+    closeLogin,
+    loginRequested,
+    loginBlocking
+  ]);
+  return /* @__PURE__ */ jsxs(AuthContext.Provider, { value, children: [
+    children,
+    appName && /* @__PURE__ */ jsx(
+      LoginModal,
+      {
+        open: value.isLoginModalOpen,
+        onClose: closeLogin,
+        appName,
+        description: loginDescription,
+        features: loginFeatures,
+        blocking: loginBlocking,
+        login,
+        register
+      }
+    )
+  ] });
 }
 function useAuth() {
   const ctx = useContext(AuthContext);
@@ -1735,4 +1913,4 @@ ${official.text}` : parcelContext,
 };
 var ClaireAssistant_default = ClaireAssistant;
 
-export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, LoginModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };

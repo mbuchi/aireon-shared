@@ -8,7 +8,13 @@ export { RELEASE_NOTES_STRINGS, getReleaseNotesStrings } from './releaseNotes/i1
 export type { Locale, ReleaseNotesStrings } from './releaseNotes/i18n';
 
 export { AuthProvider, useAuth } from './auth/AuthProvider';
-export type { AuthContextValue, AuthStatus } from './auth/AuthProvider';
+export type {
+  AuthContextValue,
+  AuthStatus,
+  AuthProviderProps,
+} from './auth/AuthProvider';
+export { default as LoginModal } from './auth/LoginModal';
+export type { LoginModalProps, LoginModalFeature } from './auth/LoginModal';
 export {
   userManager,
   getExistingUser,
