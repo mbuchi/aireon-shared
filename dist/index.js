@@ -667,12 +667,15 @@ function LoginModal({
                   ]
                 }
               ),
-              /* @__PURE__ */ jsxs("h2", { className: "mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100", children: [
-                "Sign in to",
-                " ",
-                /* @__PURE__ */ jsx("span", { style: { fontFamily: "'Varela Round', sans-serif" }, children: /* @__PURE__ */ jsx(StyledAppName, { name: appName }) })
-              ] }),
-              description && /* @__PURE__ */ jsx("p", { className: "mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed", children: description })
+              /* @__PURE__ */ jsx(
+                "h2",
+                {
+                  className: "mt-1 text-xl sm:text-2xl font-normal leading-none text-gray-900 dark:text-gray-100",
+                  style: { fontFamily: "'Varela Round', sans-serif" },
+                  children: /* @__PURE__ */ jsx(StyledAppName, { name: appName })
+                }
+              ),
+              description && /* @__PURE__ */ jsx("p", { className: "mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed", children: description })
             ] }),
             features && features.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-6 space-y-2", children: features.map((f, i) => /* @__PURE__ */ jsx(FeatureRow, { feature: f }, i)) }),
             /* @__PURE__ */ jsxs("div", { className: "mt-6 flex flex-col gap-3", children: [

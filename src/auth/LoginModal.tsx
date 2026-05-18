@@ -92,14 +92,14 @@ export default function LoginModal({
               <span className="text-gray-900 dark:text-white">V</span>
               <span className="text-red-600">O</span>
             </p>
-            <h2 className="mt-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Sign in to{' '}
-              <span style={{ fontFamily: "'Varela Round', sans-serif" }}>
-                <StyledAppName name={appName} />
-              </span>
+            <h2
+              className="mt-1 text-xl sm:text-2xl font-normal leading-none text-gray-900 dark:text-gray-100"
+              style={{ fontFamily: "'Varela Round', sans-serif" }}
+            >
+              <StyledAppName name={appName} />
             </h2>
             {description && (
-              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                 {description}
               </p>
             )}
