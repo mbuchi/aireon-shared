@@ -1102,7 +1102,8 @@ ${parcelContext}`;
 // src/signal/client.ts
 var DEFAULT_ENDPOINT = "/api/signal-collect";
 function createSignalClient(options) {
-  const { appName, endpoint = DEFAULT_ENDPOINT } = options;
+  const appName = options.appName.toLowerCase();
+  const endpoint = options.endpoint ?? DEFAULT_ENDPOINT;
   return {
     async send(userAction, target) {
       try {
