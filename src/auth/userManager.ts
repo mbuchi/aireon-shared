@@ -23,6 +23,11 @@ const settings: UserManagerSettings = {
   loadUserInfo: true,
   automaticSilentRenew: true,
   monitorSession: false,
+  // Bound the hidden-iframe silent SSO. oidc-client-ts defaults to 10s, so a
+  // visitor with no Zitadel session waits the full 10s before the app settles
+  // to anonymous. A logged-in check resolves in well under a second; 5s leaves
+  // ample room for a slow network while capping the worst case.
+  silentRequestTimeoutInSeconds: 5,
   userStore: new WebStorageStateStore({ store: window.localStorage }),
   stateStore: new WebStorageStateStore({ store: window.localStorage }),
 };
