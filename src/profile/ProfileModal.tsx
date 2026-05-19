@@ -96,17 +96,18 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
         {/* Suite accent strip — matches LoginModal */}
         <div className="h-1.5 shrink-0 bg-gradient-to-r from-red-500 via-red-600 to-rose-700" />
 
-        <div className="relative flex-1 overflow-y-auto px-5 pb-5 pt-6">
-          {/* Close */}
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
-            aria-label="Close"
-          >
-            <X size={16} />
-          </button>
+        {/* Close — anchored to the card, not the scroll region, so it stays
+            pinned while a tall body scrolls. */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+          aria-label="Close"
+        >
+          <X size={16} />
+        </button>
 
+        <div className="flex-1 overflow-y-auto px-5 pb-5 pt-6">
           {/* Identity */}
           <div className="flex flex-col items-center">
             <span className="rounded-full ring-2 ring-gray-100 dark:ring-gray-800">
@@ -161,11 +162,14 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
                   >
                     <img
                       src={avatarUrl(opt)}
-                      alt={opt.label}
+                      alt=""
                       className="h-full w-full object-contain"
                     />
                     {selected && (
-                      <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow">
+                      <span
+                        aria-hidden="true"
+                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow"
+                      >
                         <Check size={12} />
                       </span>
                     )}
@@ -178,10 +182,14 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
           {/* Details */}
           <div className="mt-5 space-y-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="swn-profile-gender"
+                className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300"
+              >
                 Gender
               </label>
               <select
+                id="swn-profile-gender"
                 value={draft.gender}
                 onChange={(e) => setDraft((d) => ({ ...d, gender: e.target.value as Gender }))}
                 className={FIELD_CLASS}
@@ -194,10 +202,14 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="swn-profile-age"
+                className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300"
+              >
                 Age
               </label>
               <input
+                id="swn-profile-age"
                 type="number"
                 min={0}
                 max={120}
@@ -214,10 +226,14 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="swn-profile-about"
+                className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300"
+              >
                 About
               </label>
               <textarea
+                id="swn-profile-about"
                 rows={3}
                 value={draft.about}
                 onChange={(e) => setDraft((d) => ({ ...d, about: e.target.value }))}
