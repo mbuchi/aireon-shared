@@ -6,6 +6,7 @@
 // the avatar shown here and in every app header is always the same one.
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
 import type { User } from 'oidc-client-ts';
 import { Avatar } from './Avatar';
@@ -71,7 +72,7 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
     onClose();
   }
 
-  return (
+  return createPortal(
     <div
       className={`${dark ? 'dark ' : ''}fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm`}
       onClick={onClose}
@@ -233,6 +234,7 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
         </div>
       </div>
       <style>{`@keyframes swn-profile-in{from{opacity:0;transform:scale(0.9) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}`}</style>
-    </div>
+    </div>,
+    document.body,
   );
 }

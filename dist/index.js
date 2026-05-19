@@ -636,83 +636,86 @@ function LoginModal({
     return () => document.removeEventListener("keydown", onEsc);
   }, [open, blocking, onClose]);
   if (!open) return null;
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      className: "fixed inset-0 z-[200] flex items-center justify-center p-4",
-      role: "dialog",
-      "aria-modal": "true",
-      children: [
-        /* @__PURE__ */ jsx(
-          "div",
-          {
-            className: "absolute inset-0 bg-black/50 backdrop-blur-sm",
-            onClick: blocking ? void 0 : onClose
-          }
-        ),
-        /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden", children: [
-          /* @__PURE__ */ jsx("div", { className: "h-1.5 bg-gradient-to-r from-red-500 via-red-600 to-rose-700" }),
-          /* @__PURE__ */ jsxs("div", { className: "px-8 pt-7 pb-6", children: [
-            /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center text-center", children: [
-              /* @__PURE__ */ jsxs(
-                "p",
-                {
-                  className: "text-2xl sm:text-3xl font-normal leading-none select-none",
-                  style: { fontFamily: "'Varela Round', sans-serif" },
-                  "aria-label": "SWISSNOVO",
-                  children: [
-                    /* @__PURE__ */ jsx("span", { className: "text-gray-900 dark:text-white", children: "SWISSN" }),
-                    /* @__PURE__ */ jsx("span", { className: "text-red-600", children: "O" }),
-                    /* @__PURE__ */ jsx("span", { className: "text-gray-900 dark:text-white", children: "V" }),
-                    /* @__PURE__ */ jsx("span", { className: "text-red-600", children: "O" })
-                  ]
-                }
-              ),
-              /* @__PURE__ */ jsx(
-                "h2",
-                {
-                  className: "mt-1 text-xl sm:text-2xl font-normal leading-none text-gray-900 dark:text-gray-100",
-                  style: { fontFamily: "'Varela Round', sans-serif" },
-                  children: /* @__PURE__ */ jsx(StyledAppName, { name: appName })
-                }
-              ),
-              description && /* @__PURE__ */ jsx("p", { className: "mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed", children: description })
-            ] }),
-            features && features.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-6 space-y-2", children: features.map((f, i) => /* @__PURE__ */ jsx(FeatureRow, { feature: f }, i)) }),
-            /* @__PURE__ */ jsxs("div", { className: "mt-6 flex flex-col gap-3", children: [
-              /* @__PURE__ */ jsx(
+  return createPortal(
+    /* @__PURE__ */ jsxs(
+      "div",
+      {
+        className: "fixed inset-0 z-[200] flex items-center justify-center p-4",
+        role: "dialog",
+        "aria-modal": "true",
+        children: [
+          /* @__PURE__ */ jsx(
+            "div",
+            {
+              className: "absolute inset-0 bg-black/50 backdrop-blur-sm",
+              onClick: blocking ? void 0 : onClose
+            }
+          ),
+          /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden", children: [
+            /* @__PURE__ */ jsx("div", { className: "h-1.5 bg-gradient-to-r from-red-500 via-red-600 to-rose-700" }),
+            /* @__PURE__ */ jsxs("div", { className: "px-8 pt-7 pb-6", children: [
+              /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center text-center", children: [
+                /* @__PURE__ */ jsxs(
+                  "p",
+                  {
+                    className: "text-2xl sm:text-3xl font-normal leading-none select-none",
+                    style: { fontFamily: "'Varela Round', sans-serif" },
+                    "aria-label": "SWISSNOVO",
+                    children: [
+                      /* @__PURE__ */ jsx("span", { className: "text-gray-900 dark:text-white", children: "SWISSN" }),
+                      /* @__PURE__ */ jsx("span", { className: "text-red-600", children: "O" }),
+                      /* @__PURE__ */ jsx("span", { className: "text-gray-900 dark:text-white", children: "V" }),
+                      /* @__PURE__ */ jsx("span", { className: "text-red-600", children: "O" })
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "h2",
+                  {
+                    className: "mt-1 text-xl sm:text-2xl font-normal leading-none text-gray-900 dark:text-gray-100",
+                    style: { fontFamily: "'Varela Round', sans-serif" },
+                    children: /* @__PURE__ */ jsx(StyledAppName, { name: appName })
+                  }
+                ),
+                description && /* @__PURE__ */ jsx("p", { className: "mt-3 text-sm text-gray-500 dark:text-gray-400 leading-relaxed", children: description })
+              ] }),
+              features && features.length > 0 && /* @__PURE__ */ jsx("div", { className: "mt-6 space-y-2", children: features.map((f, i) => /* @__PURE__ */ jsx(FeatureRow, { feature: f }, i)) }),
+              /* @__PURE__ */ jsxs("div", { className: "mt-6 flex flex-col gap-3", children: [
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    onClick: register,
+                    className: "w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-sm font-semibold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900",
+                    children: "Create free account"
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    onClick: login,
+                    className: "w-full py-2.5 px-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400",
+                    children: "Sign in"
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxs("div", { className: "mt-5 flex items-center justify-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500", children: [
+                /* @__PURE__ */ jsx(Lock, { size: 11 }),
+                /* @__PURE__ */ jsx("span", { children: "Secured with single sign-on via Zitadel" })
+              ] }),
+              !blocking && /* @__PURE__ */ jsx("div", { className: "mt-3 text-center", children: /* @__PURE__ */ jsx(
                 "button",
                 {
-                  onClick: register,
-                  className: "w-full py-2.5 px-4 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-sm font-semibold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900",
-                  children: "Create free account"
+                  onClick: onClose,
+                  className: "text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors underline-offset-2 hover:underline",
+                  children: "Continue without signing in"
                 }
-              ),
-              /* @__PURE__ */ jsx(
-                "button",
-                {
-                  onClick: login,
-                  className: "w-full py-2.5 px-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400",
-                  children: "Sign in"
-                }
-              )
-            ] }),
-            /* @__PURE__ */ jsxs("div", { className: "mt-5 flex items-center justify-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500", children: [
-              /* @__PURE__ */ jsx(Lock, { size: 11 }),
-              /* @__PURE__ */ jsx("span", { children: "Secured with single sign-on via Zitadel" })
-            ] }),
-            !blocking && /* @__PURE__ */ jsx("div", { className: "mt-3 text-center", children: /* @__PURE__ */ jsx(
-              "button",
-              {
-                onClick: onClose,
-                className: "text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors underline-offset-2 hover:underline",
-                children: "Continue without signing in"
-              }
-            ) })
+              ) })
+            ] })
           ] })
-        ] })
-      ]
-    }
+        ]
+      }
+    ),
+    document.body
   );
 }
 function FeatureRow({ feature }) {
@@ -2295,146 +2298,149 @@ function ProfileModal({ user, onClose, dark = false }) {
     updateProfile2(draft);
     onClose();
   }
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      className: `${dark ? "dark " : ""}fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm`,
-      onClick: onClose,
-      role: "dialog",
-      "aria-modal": "true",
-      "aria-label": "Profile",
-      children: [
-        /* @__PURE__ */ jsxs(
-          "div",
-          {
-            className: "relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800",
-            onClick: (e) => e.stopPropagation(),
-            style: { animation: "swn-profile-in 0.22s cubic-bezier(0.34,1.56,0.64,1) both" },
-            children: [
-              /* @__PURE__ */ jsx("div", { className: "relative h-24 shrink-0 bg-gradient-to-br from-blue-500 to-cyan-500", children: /* @__PURE__ */ jsx(
-                "button",
-                {
-                  type: "button",
-                  onClick: onClose,
-                  className: "absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30",
-                  "aria-label": "Close",
-                  children: /* @__PURE__ */ jsx(X, { size: 16 })
-                }
-              ) }),
-              /* @__PURE__ */ jsxs("div", { className: "-mt-12 flex-1 overflow-y-auto px-5 pb-5", children: [
-                /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center", children: [
-                  /* @__PURE__ */ jsx("span", { className: "rounded-full border-4 border-white bg-white dark:border-gray-800", children: /* @__PURE__ */ jsx(Avatar, { url: chosenUrl, initials, size: 88 }) }),
-                  /* @__PURE__ */ jsxs("div", { className: "mt-3 text-center", children: [
-                    /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-base font-semibold text-gray-900 dark:text-gray-100", children: name }),
-                    email && /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-xs text-gray-500 dark:text-gray-400", children: email }),
-                    /* @__PURE__ */ jsxs("div", { className: "mt-1.5 flex items-center justify-center gap-1.5", children: [
-                      /* @__PURE__ */ jsxs("span", { className: "relative flex h-2 w-2", children: [
-                        /* @__PURE__ */ jsx("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" }),
-                        /* @__PURE__ */ jsx("span", { className: "relative inline-flex h-2 w-2 rounded-full bg-green-500" })
-                      ] }),
-                      /* @__PURE__ */ jsx("span", { className: "text-[11px] font-medium text-green-600 dark:text-green-400", children: "Active session" })
+  return createPortal(
+    /* @__PURE__ */ jsxs(
+      "div",
+      {
+        className: `${dark ? "dark " : ""}fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm`,
+        onClick: onClose,
+        role: "dialog",
+        "aria-modal": "true",
+        "aria-label": "Profile",
+        children: [
+          /* @__PURE__ */ jsxs(
+            "div",
+            {
+              className: "relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800",
+              onClick: (e) => e.stopPropagation(),
+              style: { animation: "swn-profile-in 0.22s cubic-bezier(0.34,1.56,0.64,1) both" },
+              children: [
+                /* @__PURE__ */ jsx("div", { className: "relative h-24 shrink-0 bg-gradient-to-br from-blue-500 to-cyan-500", children: /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: onClose,
+                    className: "absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30",
+                    "aria-label": "Close",
+                    children: /* @__PURE__ */ jsx(X, { size: 16 })
+                  }
+                ) }),
+                /* @__PURE__ */ jsxs("div", { className: "-mt-12 flex-1 overflow-y-auto px-5 pb-5", children: [
+                  /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center", children: [
+                    /* @__PURE__ */ jsx("span", { className: "rounded-full border-4 border-white bg-white dark:border-gray-800", children: /* @__PURE__ */ jsx(Avatar, { url: chosenUrl, initials, size: 88 }) }),
+                    /* @__PURE__ */ jsxs("div", { className: "mt-3 text-center", children: [
+                      /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-base font-semibold text-gray-900 dark:text-gray-100", children: name }),
+                      email && /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-xs text-gray-500 dark:text-gray-400", children: email }),
+                      /* @__PURE__ */ jsxs("div", { className: "mt-1.5 flex items-center justify-center gap-1.5", children: [
+                        /* @__PURE__ */ jsxs("span", { className: "relative flex h-2 w-2", children: [
+                          /* @__PURE__ */ jsx("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" }),
+                          /* @__PURE__ */ jsx("span", { className: "relative inline-flex h-2 w-2 rounded-full bg-green-500" })
+                        ] }),
+                        /* @__PURE__ */ jsx("span", { className: "text-[11px] font-medium text-green-600 dark:text-green-400", children: "Active session" })
+                      ] })
                     ] })
-                  ] })
-                ] }),
-                /* @__PURE__ */ jsxs("div", { className: "mt-5", children: [
-                  /* @__PURE__ */ jsx("div", { className: "mb-2 text-xs font-medium text-gray-700 dark:text-gray-300", children: "Choose your avatar" }),
-                  /* @__PURE__ */ jsx("p", { className: "mb-3 text-[11px] text-gray-500 dark:text-gray-400", children: "Your pick follows you across every Swissnovo app." }),
-                  /* @__PURE__ */ jsx("div", { className: "grid grid-cols-4 gap-2.5", children: avatarOptions.map((opt) => {
-                    const selected = opt.id === avatarId;
-                    return /* @__PURE__ */ jsxs(
+                  ] }),
+                  /* @__PURE__ */ jsxs("div", { className: "mt-5", children: [
+                    /* @__PURE__ */ jsx("div", { className: "mb-2 text-xs font-medium text-gray-700 dark:text-gray-300", children: "Choose your avatar" }),
+                    /* @__PURE__ */ jsx("p", { className: "mb-3 text-[11px] text-gray-500 dark:text-gray-400", children: "Your pick follows you across every Swissnovo app." }),
+                    /* @__PURE__ */ jsx("div", { className: "grid grid-cols-4 gap-2.5", children: avatarOptions.map((opt) => {
+                      const selected = opt.id === avatarId;
+                      return /* @__PURE__ */ jsxs(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: () => setAvatarId(opt.id),
+                          title: opt.label,
+                          "aria-label": opt.label,
+                          "aria-pressed": selected,
+                          className: `relative aspect-square rounded-xl border-2 transition-all ${selected ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200 bg-gray-50 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900/40 dark:hover:border-gray-500"}`,
+                          children: [
+                            /* @__PURE__ */ jsx("img", { src: avatarUrl(opt), alt: opt.label, className: "h-full w-full rounded-lg" }),
+                            selected && /* @__PURE__ */ jsx("span", { className: "absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white shadow", children: /* @__PURE__ */ jsx(Check, { size: 12 }) })
+                          ]
+                        },
+                        opt.id
+                      );
+                    }) })
+                  ] }),
+                  /* @__PURE__ */ jsxs("div", { className: "mt-5 space-y-3", children: [
+                    /* @__PURE__ */ jsxs("div", { children: [
+                      /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "Gender" }),
+                      /* @__PURE__ */ jsx(
+                        "select",
+                        {
+                          value: draft.gender,
+                          onChange: (e) => setDraft((d) => ({ ...d, gender: e.target.value })),
+                          className: "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100",
+                          children: GENDER_OPTIONS.map((opt) => /* @__PURE__ */ jsx("option", { value: opt.value, children: opt.label }, opt.value))
+                        }
+                      )
+                    ] }),
+                    /* @__PURE__ */ jsxs("div", { children: [
+                      /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "Age" }),
+                      /* @__PURE__ */ jsx(
+                        "input",
+                        {
+                          type: "number",
+                          min: 0,
+                          max: 120,
+                          value: draft.age ?? "",
+                          onChange: (e) => {
+                            const v = e.target.value;
+                            setDraft((d) => ({
+                              ...d,
+                              age: v === "" ? null : Math.max(0, Math.min(120, Number(v)))
+                            }));
+                          },
+                          placeholder: "\u2014",
+                          className: "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                        }
+                      )
+                    ] }),
+                    /* @__PURE__ */ jsxs("div", { children: [
+                      /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "About" }),
+                      /* @__PURE__ */ jsx(
+                        "textarea",
+                        {
+                          rows: 3,
+                          value: draft.about,
+                          onChange: (e) => setDraft((d) => ({ ...d, about: e.target.value })),
+                          placeholder: "A short bio (optional)",
+                          className: "w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                        }
+                      )
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsxs("div", { className: "mt-5 flex items-center justify-end gap-2", children: [
+                    /* @__PURE__ */ jsx(
                       "button",
                       {
                         type: "button",
-                        onClick: () => setAvatarId(opt.id),
-                        title: opt.label,
-                        "aria-label": opt.label,
-                        "aria-pressed": selected,
-                        className: `relative aspect-square rounded-xl border-2 transition-all ${selected ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200 bg-gray-50 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900/40 dark:hover:border-gray-500"}`,
-                        children: [
-                          /* @__PURE__ */ jsx("img", { src: avatarUrl(opt), alt: opt.label, className: "h-full w-full rounded-lg" }),
-                          selected && /* @__PURE__ */ jsx("span", { className: "absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white shadow", children: /* @__PURE__ */ jsx(Check, { size: 12 }) })
-                        ]
-                      },
-                      opt.id
-                    );
-                  }) })
-                ] }),
-                /* @__PURE__ */ jsxs("div", { className: "mt-5 space-y-3", children: [
-                  /* @__PURE__ */ jsxs("div", { children: [
-                    /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "Gender" }),
-                    /* @__PURE__ */ jsx(
-                      "select",
-                      {
-                        value: draft.gender,
-                        onChange: (e) => setDraft((d) => ({ ...d, gender: e.target.value })),
-                        className: "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100",
-                        children: GENDER_OPTIONS.map((opt) => /* @__PURE__ */ jsx("option", { value: opt.value, children: opt.label }, opt.value))
+                        onClick: onClose,
+                        className: "rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700",
+                        children: "Close"
                       }
-                    )
-                  ] }),
-                  /* @__PURE__ */ jsxs("div", { children: [
-                    /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "Age" }),
+                    ),
                     /* @__PURE__ */ jsx(
-                      "input",
+                      "button",
                       {
-                        type: "number",
-                        min: 0,
-                        max: 120,
-                        value: draft.age ?? "",
-                        onChange: (e) => {
-                          const v = e.target.value;
-                          setDraft((d) => ({
-                            ...d,
-                            age: v === "" ? null : Math.max(0, Math.min(120, Number(v)))
-                          }));
-                        },
-                        placeholder: "\u2014",
-                        className: "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-                      }
-                    )
-                  ] }),
-                  /* @__PURE__ */ jsxs("div", { children: [
-                    /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "About" }),
-                    /* @__PURE__ */ jsx(
-                      "textarea",
-                      {
-                        rows: 3,
-                        value: draft.about,
-                        onChange: (e) => setDraft((d) => ({ ...d, about: e.target.value })),
-                        placeholder: "A short bio (optional)",
-                        className: "w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                        type: "button",
+                        onClick: handleSave,
+                        disabled: !dirty,
+                        className: "rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40",
+                        children: "Save changes"
                       }
                     )
                   ] })
-                ] }),
-                /* @__PURE__ */ jsxs("div", { className: "mt-5 flex items-center justify-end gap-2", children: [
-                  /* @__PURE__ */ jsx(
-                    "button",
-                    {
-                      type: "button",
-                      onClick: onClose,
-                      className: "rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700",
-                      children: "Close"
-                    }
-                  ),
-                  /* @__PURE__ */ jsx(
-                    "button",
-                    {
-                      type: "button",
-                      onClick: handleSave,
-                      disabled: !dirty,
-                      className: "rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40",
-                      children: "Save changes"
-                    }
-                  )
                 ] })
-              ] })
-            ]
-          }
-        ),
-        /* @__PURE__ */ jsx("style", { children: `@keyframes swn-profile-in{from{opacity:0;transform:scale(0.9) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}` })
-      ]
-    }
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsx("style", { children: `@keyframes swn-profile-in{from{opacity:0;transform:scale(0.9) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}` })
+        ]
+      }
+    ),
+    document.body
   );
 }
 

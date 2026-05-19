@@ -138,7 +138,7 @@ interface LoginModalProps {
  * "Create free account" and "Sign in". Presentational only — it reads no
  * context, so it can be driven by {@link AuthProvider} or used standalone.
  */
-declare function LoginModal({ open, onClose, appName, description, features, blocking, login, register, }: LoginModalProps): react_jsx_runtime.JSX.Element | null;
+declare function LoginModal({ open, onClose, appName, description, features, blocking, login, register, }: LoginModalProps): react.ReactPortal | null;
 
 type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 interface AuthContextValue {
@@ -435,7 +435,7 @@ interface ProfileModalProps {
     dark?: boolean;
 }
 /** The standard SwissNovo profile modal. Render it only while open. */
-declare function ProfileModal({ user, onClose, dark }: ProfileModalProps): react_jsx_runtime.JSX.Element;
+declare function ProfileModal({ user, onClose, dark }: ProfileModalProps): react.ReactPortal;
 
 interface AvatarProps {
     /** Avatar image URL, or `null` to show the initials fallback. */
