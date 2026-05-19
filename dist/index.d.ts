@@ -344,4 +344,40 @@ interface ClaireContext {
  */
 declare function fetchClaireContext(lng: number, lat: number, signal?: AbortSignal): Promise<ClaireContext>;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, LoginModal, type LoginModalFeature, type LoginModalProps, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+/** The thing a signal is about — typically the selected parcel / address. */
+interface SignalTarget {
+    /** Human-readable address. */
+    address?: string;
+    /** WGS84 latitude. */
+    lat?: number;
+    /** WGS84 longitude. */
+    lng?: number;
+    /** Free-form extra context, stored as the signal's `meta_data`. */
+    metaData?: Record<string, unknown>;
+}
+interface SignalClientOptions {
+    /** App name recorded as `app_name` on every signal (e.g. "valoo"). */
+    appName: string;
+    /**
+     * Endpoint to POST to. Defaults to the app's own `/api/signal-collect`
+     * proxy — override only for tests or a non-standard deployment.
+     */
+    endpoint?: string;
+}
+interface SignalClient {
+    /**
+     * Fire-and-forget: report one user action, optionally scoped to a target.
+     * Never throws — telemetry must not interfere with the host app.
+     */
+    send(userAction: string, target?: SignalTarget): Promise<void>;
+}
+/**
+ * Create a signal client bound to one app name.
+ *
+ * @example
+ * const signal = createSignalClient({ appName: 'valoo' });
+ * signal.send('Search for Address', { address, lat, lng });
+ */
+declare function createSignalClient(options: SignalClientOptions): SignalClient;
+
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, LoginModal, type LoginModalFeature, type LoginModalProps, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, type SignalClient, type SignalClientOptions, type SignalTarget, buildParcelContextSummary, createSignalClient, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };

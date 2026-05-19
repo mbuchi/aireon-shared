@@ -45,6 +45,13 @@ export { sendClaireMessageSignal } from './claire/signal';
 export { fetchClaireContext } from './claire/claireContext';
 export type { ClaireContext } from './claire/claireContext';
 
+export { createSignalClient } from './signal/client';
+export type {
+  SignalClient,
+  SignalClientOptions,
+  SignalTarget,
+} from './signal/client';
+
 export { createResApiClient, RES_API_BASE_URL } from './api';
 export type {
   ResApiClient,

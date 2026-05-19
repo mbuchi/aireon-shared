@@ -1,4 +1,5 @@
-export { RES_API_BASE_URL, createResApiClient } from './chunk-LGHK7RPJ.js';
+import './chunk-6YKTLPIC.js';
+export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, Loader2, AlertCircle, Send } from 'lucide-react';
@@ -1098,8 +1099,38 @@ ${parcelContext}`;
   return text;
 }
 
+// src/signal/client.ts
+var DEFAULT_ENDPOINT = "/api/signal-collect";
+function createSignalClient(options) {
+  const { appName, endpoint = DEFAULT_ENDPOINT } = options;
+  return {
+    async send(userAction, target) {
+      try {
+        await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            app_name: appName,
+            user_action: userAction,
+            // The suite convention sends the target coordinates as both the
+            // user `lat`/`lng` and the `target_*` fields; the RES API
+            // resolves the canonical parcel from `target_lat`/`target_lng`.
+            lat: target?.lat,
+            lng: target?.lng,
+            target_address: target?.address,
+            target_lat: target?.lat,
+            target_lng: target?.lng,
+            meta_data: target?.metaData
+          })
+        });
+      } catch (err) {
+        console.error("Signal collection error:", err);
+      }
+    }
+  };
+}
+
 // src/claire/signal.ts
-var SIGNAL_ENDPOINT = "/api/signal-collect";
 async function sendClaireMessageSignal({
   appName,
   lat,
@@ -1107,28 +1138,12 @@ async function sendClaireMessageSignal({
   address,
   source
 }) {
-  try {
-    await fetch(SIGNAL_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        app_name: appName,
-        user_action: "Claire Assistant Message",
-        // No parcel_id is sent: the RES API resolves the canonical parcel
-        // (SwissTopo EGRID) from target_lat/lng, so the Claire signal stays
-        // consistent with the address-search signal instead of recording an
-        // app-internal tile id.
-        lat,
-        lng,
-        target_address: address,
-        target_lat: lat,
-        target_lng: lng,
-        meta_data: source ? { source } : void 0
-      })
-    });
-  } catch (err) {
-    console.error("Signal collection error:", err);
-  }
+  await createSignalClient({ appName }).send("Claire Assistant Message", {
+    address,
+    lat,
+    lng,
+    metaData: source ? { source } : void 0
+  });
 }
 
 // src/claire/claireContext.ts
@@ -1916,4 +1931,4 @@ ${official.text}` : parcelContext,
 };
 var ClaireAssistant_default = ClaireAssistant;
 
-export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, LoginModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, buildParcelContextSummary, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, LoginModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, buildParcelContextSummary, createSignalClient, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
