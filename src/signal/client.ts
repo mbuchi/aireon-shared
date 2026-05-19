@@ -48,7 +48,11 @@ export interface SignalClient {
  * signal.send('Search for Address', { address, lat, lng });
  */
 export function createSignalClient(options: SignalClientOptions): SignalClient {
-  const { appName, endpoint = DEFAULT_ENDPOINT } = options;
+  // SwissNovo branding — and every app identifier — is lowercase. Normalise
+  // the app name defensively so a stray capital can never fragment the RES
+  // signal dashboard's `by_app` aggregation.
+  const appName = options.appName.toLowerCase();
+  const endpoint = options.endpoint ?? DEFAULT_ENDPOINT;
 
   return {
     async send(userAction: string, target?: SignalTarget): Promise<void> {
