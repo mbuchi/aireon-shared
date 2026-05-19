@@ -15,7 +15,7 @@ export {
   avatarUrlById,
   avatarUrlFromSeed,
 } from './avatars';
-export type { AvatarOption, AvatarStyle } from './avatars';
+export type { AvatarOption } from './avatars';
 
 export {
   emailOf,

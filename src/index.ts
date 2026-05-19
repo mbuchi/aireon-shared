@@ -65,7 +65,6 @@ export type {
   AvatarProps,
   UseUserProfileResult,
   AvatarOption,
-  AvatarStyle,
   SwissnovoProfile,
   Gender,
 } from './profile';

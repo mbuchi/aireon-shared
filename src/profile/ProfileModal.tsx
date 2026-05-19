@@ -4,6 +4,9 @@
 // the avatar they actually chose, lets them change that avatar from the
 // catalogue, and edit a few profile details. Backed by `useUserProfile`, so
 // the avatar shown here and in every app header is always the same one.
+//
+// Styled as a sibling of the suite `LoginModal`: a near-black panel with the
+// thin red accent strip — never the old bright banner.
 
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -33,6 +36,11 @@ const GENDER_OPTIONS: Array<{ value: Gender; label: string }> = [
   { value: 'other', label: 'Other' },
   { value: 'unspecified', label: 'Prefer not to say' },
 ];
+
+const FIELD_CLASS =
+  'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ' +
+  'focus:outline-none focus:ring-2 focus:ring-red-500 ' +
+  'dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100';
 
 /** The standard SwissNovo profile modal. Render it only while open. */
 export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps) {
@@ -81,27 +89,29 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
       aria-label="Profile"
     >
       <div
-        className="relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800"
+        className="relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: 'swn-profile-in 0.22s cubic-bezier(0.34,1.56,0.64,1) both' }}
       >
-        {/* Header */}
-        <div className="relative h-24 shrink-0 bg-gradient-to-br from-blue-500 to-cyan-500">
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30"
-            aria-label="Close"
-          >
-            <X size={16} />
-          </button>
-        </div>
+        {/* Suite accent strip — matches LoginModal */}
+        <div className="h-1.5 shrink-0 bg-gradient-to-r from-red-500 via-red-600 to-rose-700" />
 
-        <div className="-mt-12 flex-1 overflow-y-auto px-5 pb-5">
+        {/* Close — anchored to the card, not the scroll region, so it stays
+            pinned while a tall body scrolls. */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+          aria-label="Close"
+        >
+          <X size={16} />
+        </button>
+
+        <div className="flex-1 overflow-y-auto px-5 pb-5 pt-6">
           {/* Identity */}
           <div className="flex flex-col items-center">
-            <span className="rounded-full border-4 border-white bg-white dark:border-gray-800">
-              <Avatar url={chosenUrl} initials={initials} size={88} />
+            <span className="rounded-full ring-2 ring-gray-100 dark:ring-gray-800">
+              <Avatar url={chosenUrl} initials={initials} size={80} />
             </span>
             <div className="mt-3 text-center">
               <div className="max-w-[16rem] truncate text-base font-semibold text-gray-900 dark:text-gray-100">
@@ -130,7 +140,7 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
               Choose your avatar
             </div>
             <p className="mb-3 text-[11px] text-gray-500 dark:text-gray-400">
-              Your pick follows you across every Swissnovo app.
+              Your pick follows you across every SwissNovo app.
             </p>
             <div className="grid grid-cols-4 gap-2.5">
               {avatarOptions.map((opt) => {
@@ -143,15 +153,23 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
                     title={opt.label}
                     aria-label={opt.label}
                     aria-pressed={selected}
-                    className={`relative aspect-square rounded-xl border-2 transition-all ${
+                    className={`relative aspect-square rounded-xl border-2 p-1.5 transition-all ${
                       selected
-                        ? 'border-blue-500 ring-2 ring-blue-500/30'
-                        : 'border-gray-200 bg-gray-50 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900/40 dark:hover:border-gray-500'
+                        ? 'border-red-500 ring-2 ring-red-500/30'
+                        : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
+                    style={{ backgroundColor: opt.tint }}
                   >
-                    <img src={avatarUrl(opt)} alt={opt.label} className="h-full w-full rounded-lg" />
+                    <img
+                      src={avatarUrl(opt)}
+                      alt=""
+                      className="h-full w-full object-contain"
+                    />
                     {selected && (
-                      <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white shadow">
+                      <span
+                        aria-hidden="true"
+                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow"
+                      >
                         <Check size={12} />
                       </span>
                     )}
@@ -164,13 +182,17 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
           {/* Details */}
           <div className="mt-5 space-y-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="swn-profile-gender"
+                className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300"
+              >
                 Gender
               </label>
               <select
+                id="swn-profile-gender"
                 value={draft.gender}
                 onChange={(e) => setDraft((d) => ({ ...d, gender: e.target.value as Gender }))}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                className={FIELD_CLASS}
               >
                 {GENDER_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -180,10 +202,14 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="swn-profile-age"
+                className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300"
+              >
                 Age
               </label>
               <input
+                id="swn-profile-age"
                 type="number"
                 min={0}
                 max={120}
@@ -196,19 +222,23 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
                   }));
                 }}
                 placeholder="—"
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                className={FIELD_CLASS}
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="swn-profile-about"
+                className="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300"
+              >
                 About
               </label>
               <textarea
+                id="swn-profile-about"
                 rows={3}
                 value={draft.about}
                 onChange={(e) => setDraft((d) => ({ ...d, about: e.target.value }))}
                 placeholder="A short bio (optional)"
-                className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                className={`${FIELD_CLASS} resize-none`}
               />
             </div>
           </div>
@@ -218,7 +248,7 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              className="rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Close
             </button>
@@ -226,7 +256,7 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
               type="button"
               onClick={handleSave}
               disabled={!dirty}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Save changes
             </button>
