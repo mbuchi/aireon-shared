@@ -2350,7 +2350,7 @@ function ProfileModal({ user, onClose, dark = false }) {
                   ] }),
                   /* @__PURE__ */ jsxs("div", { className: "mt-5", children: [
                     /* @__PURE__ */ jsx("div", { className: "mb-2 text-xs font-medium text-gray-700 dark:text-gray-300", children: "Choose your avatar" }),
-                    /* @__PURE__ */ jsx("p", { className: "mb-3 text-[11px] text-gray-500 dark:text-gray-400", children: "Your pick follows you across every Swissnovo app." }),
+                    /* @__PURE__ */ jsx("p", { className: "mb-3 text-[11px] text-gray-500 dark:text-gray-400", children: "Your pick follows you across every SwissNovo app." }),
                     /* @__PURE__ */ jsx("div", { className: "grid grid-cols-4 gap-2.5", children: avatarOptions.map((opt) => {
                       const selected = opt.id === avatarId;
                       return /* @__PURE__ */ jsxs(
