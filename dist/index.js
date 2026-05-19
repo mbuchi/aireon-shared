@@ -1,6 +1,6 @@
 import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
-import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext } from 'react';
+import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, Loader2, AlertCircle, Send } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
@@ -1931,5 +1931,84 @@ ${official.text}` : parcelContext,
   );
 };
 var ClaireAssistant_default = ClaireAssistant;
+var STYLE_ID = "swn-skeleton-styles";
+var STYLE_CONTENT = '.swn-skeleton{--swn-skeleton-color:rgba(15,23,42,0.09);border-radius:8px;background-color:var(--swn-skeleton-color);animation:swn-skeleton-blink 1.8s ease-in-out infinite}.swn-skeleton-group{display:flex;flex-direction:column}.dark .swn-skeleton,[data-theme="dark"] .swn-skeleton{--swn-skeleton-color:rgba(255,255,255,0.11)}@keyframes swn-skeleton-blink{0%,100%{opacity:1}50%{opacity:0.4}}@media (prefers-reduced-motion:reduce){.swn-skeleton{animation-duration:3s}}';
+function useSkeletonStyles() {
+  useInsertionEffect(() => {
+    if (typeof document === "undefined") return;
+    if (document.getElementById(STYLE_ID)) return;
+    const el = document.createElement("style");
+    el.id = STYLE_ID;
+    el.textContent = STYLE_CONTENT;
+    document.head.appendChild(el);
+  }, []);
+}
+var DARK_COLOR = "rgba(255,255,255,0.11)";
+var LIGHT_COLOR = "rgba(15,23,42,0.09)";
+function toDim(v) {
+  return typeof v === "number" ? `${v}px` : v;
+}
+function Skeleton({
+  width,
+  height,
+  radius,
+  circle,
+  dark,
+  delay,
+  className,
+  style,
+  as
+}) {
+  useSkeletonStyles();
+  const Tag2 = as ?? "div";
+  const css = {
+    width: toDim(width),
+    height: toDim(height) ?? (circle ? toDim(width) : void 0),
+    borderRadius: circle ? "9999px" : toDim(radius),
+    animationDelay: delay,
+    ...dark != null ? { "--swn-skeleton-color": dark ? DARK_COLOR : LIGHT_COLOR } : {},
+    ...style
+  };
+  return /* @__PURE__ */ jsx(
+    Tag2,
+    {
+      className: `swn-skeleton${className ? ` ${className}` : ""}`,
+      style: css,
+      "aria-hidden": "true"
+    }
+  );
+}
+function SkeletonText({
+  lines = 3,
+  gap = 8,
+  lineHeight = 12,
+  lastLineWidth = "60%",
+  dark,
+  className,
+  style
+}) {
+  useSkeletonStyles();
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      className: `swn-skeleton-group${className ? ` ${className}` : ""}`,
+      style: { gap: toDim(gap), ...style },
+      "aria-hidden": "true",
+      children: Array.from({ length: Math.max(1, lines) }).map((_, i) => /* @__PURE__ */ jsx(
+        Skeleton,
+        {
+          height: lineHeight,
+          dark,
+          delay: `${i * 90}ms`,
+          width: i === lines - 1 && lines > 1 ? lastLineWidth : "100%"
+        },
+        i
+      ))
+    }
+  );
+}
+function SkeletonGroup({ children }) {
+  return /* @__PURE__ */ jsx("div", { role: "status", "aria-busy": "true", "aria-live": "polite", children });
+}
 
-export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, LoginModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, buildParcelContextSummary, createSignalClient, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, LoginModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, Skeleton, SkeletonGroup, SkeletonText, buildParcelContextSummary, createSignalClient, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };

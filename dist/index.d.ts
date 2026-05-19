@@ -1,5 +1,5 @@
 import * as react from 'react';
-import { ReactNode, MutableRefObject } from 'react';
+import { ReactNode, MutableRefObject, CSSProperties, ElementType } from 'react';
 import { LucideIcon } from 'lucide-react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import { User, UserManager } from 'oidc-client-ts';
@@ -380,4 +380,47 @@ interface SignalClient {
  */
 declare function createSignalClient(options: SignalClientOptions): SignalClient;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, LoginModal, type LoginModalFeature, type LoginModalProps, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, type SignalClient, type SignalClientOptions, type SignalTarget, buildParcelContextSummary, createSignalClient, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+interface SkeletonProps {
+    /** Width — number is treated as px. */
+    width?: number | string;
+    /** Height — number is treated as px. */
+    height?: number | string;
+    /** Corner radius — number is px. Defaults to 8px. */
+    radius?: number | string;
+    /** Render a circle (avatar/icon placeholder). Uses `width` for both axes if `height` is omitted. */
+    circle?: boolean;
+    /** Force the dark base colour, for apps that theme via a boolean rather than a `.dark` class. */
+    dark?: boolean;
+    /** Stagger delay for cascading groups, e.g. "120ms". */
+    delay?: string;
+    /** Extra classes (Tailwind sizing/layout etc.). */
+    className?: string;
+    style?: CSSProperties;
+    /** Element tag. Defaults to 'div'. */
+    as?: ElementType;
+}
+/** A single skeleton block. Shape it with `width`/`height` or `className`. */
+declare function Skeleton({ width, height, radius, circle, dark, delay, className, style, as, }: SkeletonProps): JSX.Element;
+interface SkeletonTextProps {
+    /** Number of text lines. Defaults to 3. */
+    lines?: number;
+    /** Gap between lines — number is px. Defaults to 8px. */
+    gap?: number | string;
+    /** Height of each line — number is px. Defaults to 12px. */
+    lineHeight?: number | string;
+    /** Width of the final line (shorter, for a natural paragraph end). Defaults to "60%". */
+    lastLineWidth?: number | string;
+    /** Force the dark base colour. */
+    dark?: boolean;
+    className?: string;
+    style?: CSSProperties;
+}
+/** A stack of skeleton lines for paragraph-shaped content, with a cascading pulse. */
+declare function SkeletonText({ lines, gap, lineHeight, lastLineWidth, dark, className, style, }: SkeletonTextProps): JSX.Element;
+interface SkeletonProviderProps {
+    children: ReactNode;
+}
+/** Optional wrapper carrying an accessible "loading" label for a skeleton region. */
+declare function SkeletonGroup({ children }: SkeletonProviderProps): JSX.Element;
+
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, LoginModal, type LoginModalFeature, type LoginModalProps, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, buildParcelContextSummary, createSignalClient, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };

@@ -52,6 +52,13 @@ export type {
   SignalTarget,
 } from './signal/client';
 
+export { Skeleton, SkeletonText, SkeletonGroup } from './skeleton/Skeleton';
+export type {
+  SkeletonProps,
+  SkeletonTextProps,
+  SkeletonProviderProps,
+} from './skeleton/Skeleton';
+
 export { createResApiClient, RES_API_BASE_URL } from './api';
 export type {
   ResApiClient,
