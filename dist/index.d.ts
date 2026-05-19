@@ -496,15 +496,15 @@ interface UseUserProfileResult {
  */
 declare function useUserProfile(user: User | null | undefined): UseUserProfileResult;
 
-type AvatarStyle = 'fun-emoji' | 'bottts' | 'big-ears' | 'adventurer' | 'lorelei' | 'thumbs';
 interface AvatarOption {
     /** Stable identifier persisted in the user's profile. */
     id: string;
     /** Human-readable label, shown as a tooltip in the picker. */
     label: string;
-    style: AvatarStyle;
-    /** DiceBear seed — together with `style` this fixes the rendered image. */
-    seed: string;
+    /** Lowercase Unicode codepoint of the emoji — builds the Twemoji URL. */
+    codepoint: string;
+    /** Soft pastel background for the picker tile (reads on light + dark). */
+    tint: string;
 }
 /** The full set of avatars a user can pick from. Order is the picker order. */
 declare const avatarOptions: AvatarOption[];
@@ -513,8 +513,9 @@ declare function avatarUrl(opt: AvatarOption): string;
 /** Render URL for a catalogue avatar id, or `null` when the id is unknown. */
 declare function avatarUrlById(id: string | null | undefined): string | null;
 /**
- * Render URL for a free-form seed (legacy "generated" avatar). Used only as a
- * fallback for users who never picked a catalogue avatar.
+ * Render URL for a free-form seed (legacy "generated" avatar). Retained as a
+ * public package export for backward compatibility; it has no current
+ * consumer. Falls back to a DiceBear pixel-art avatar.
  */
 declare function avatarUrlFromSeed(seed: string): string;
 
@@ -529,4 +530,4 @@ declare function initialsOf(user: User | null | undefined): string;
 /** The provider-supplied profile picture URL, if any. */
 declare function pictureOf(user: User | null | undefined): string | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type AvatarStyle, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale, LoginModal, type LoginModalFeature, type LoginModalProps, type ParcelContextInput, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SwissnovoProfile, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createSignalClient, defaultProfile, emailOf, fetchClaireContext, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale, LoginModal, type LoginModalFeature, type LoginModalProps, type ParcelContextInput, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SwissnovoProfile, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createSignalClient, defaultProfile, emailOf, fetchClaireContext, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

@@ -2025,7 +2025,7 @@ function Avatar({ url, initials, size = 28, className = "" }) {
     return /* @__PURE__ */ jsx(
       "span",
       {
-        className: `inline-flex items-center justify-center rounded-full bg-blue-600 font-semibold text-white ${className}`,
+        className: `inline-flex items-center justify-center rounded-full bg-red-600 font-semibold text-white ${className}`,
         style: { width: size, height: size, fontSize: Math.round(size * 0.42) },
         children: initials
       }
@@ -2039,34 +2039,35 @@ function Avatar({ url, initials, size = 28, className = "" }) {
       width: size,
       height: size,
       onError: () => setErrored(true),
-      className: `rounded-full bg-white object-cover ${className}`,
+      className: `rounded-full bg-gray-100 object-contain p-0.5 dark:bg-gray-700 ${className}`,
       style: { width: size, height: size }
     }
   );
 }
 
 // src/profile/avatars.ts
-var DICEBEAR = "https://api.dicebear.com/9.x";
+var TWEMOJI_TAG = "15.1.0";
+var TWEMOJI_BASE = `https://cdn.jsdelivr.net/gh/jdecked/twemoji@${TWEMOJI_TAG}/assets/svg`;
 var avatarOptions = [
-  { id: "fox", label: "Fox", style: "fun-emoji", seed: "Felix" },
-  { id: "panda", label: "Panda", style: "fun-emoji", seed: "Aneka" },
-  { id: "tiger", label: "Tiger", style: "fun-emoji", seed: "Sasha" },
-  { id: "koala", label: "Koala", style: "fun-emoji", seed: "Bandit" },
-  { id: "owl", label: "Owl", style: "big-ears", seed: "Salem" },
-  { id: "rabbit", label: "Rabbit", style: "big-ears", seed: "Pixie" },
-  { id: "cat", label: "Cat", style: "big-ears", seed: "Mochi" },
-  { id: "dog", label: "Dog", style: "big-ears", seed: "Biscuit" },
-  { id: "bot-mint", label: "Mint Bot", style: "bottts", seed: "Sprout" },
-  { id: "bot-rose", label: "Rose Bot", style: "bottts", seed: "Cocoa" },
-  { id: "bot-sky", label: "Sky Bot", style: "bottts", seed: "Comet" },
-  { id: "bot-sun", label: "Sun Bot", style: "bottts", seed: "Honey" },
-  { id: "explorer", label: "Explorer", style: "adventurer", seed: "Atlas" },
-  { id: "voyager", label: "Voyager", style: "adventurer", seed: "River" },
-  { id: "lorelei", label: "Pal", style: "lorelei", seed: "Maple" },
-  { id: "thumbs", label: "Star", style: "thumbs", seed: "Nova" }
+  { id: "fox", label: "Fox", codepoint: "1f98a", tint: "#fde4d3" },
+  { id: "panda", label: "Panda", codepoint: "1f43c", tint: "#e8eef2" },
+  { id: "tiger", label: "Tiger", codepoint: "1f42f", tint: "#fdeecb" },
+  { id: "koala", label: "Koala", codepoint: "1f428", tint: "#e3e7ea" },
+  { id: "owl", label: "Owl", codepoint: "1f989", tint: "#ece1d2" },
+  { id: "rabbit", label: "Rabbit", codepoint: "1f430", tint: "#f6e7ee" },
+  { id: "cat", label: "Cat", codepoint: "1f431", tint: "#fbe6cf" },
+  { id: "dog", label: "Dog", codepoint: "1f436", tint: "#f0e4d4" },
+  { id: "bear", label: "Bear", codepoint: "1f43b", tint: "#e9ddcf" },
+  { id: "monkey", label: "Monkey", codepoint: "1f435", tint: "#ede0d1" },
+  { id: "penguin", label: "Penguin", codepoint: "1f427", tint: "#dde6ec" },
+  { id: "lion", label: "Lion", codepoint: "1f981", tint: "#fdeccb" },
+  { id: "frog", label: "Frog", codepoint: "1f438", tint: "#dff0d8" },
+  { id: "chick", label: "Chick", codepoint: "1f425", tint: "#fdf3cf" },
+  { id: "unicorn", label: "Unicorn", codepoint: "1f984", tint: "#f1e3f5" },
+  { id: "octopus", label: "Octopus", codepoint: "1f419", tint: "#f7dde0" }
 ];
 function avatarUrl(opt) {
-  return `${DICEBEAR}/${opt.style}/svg?seed=${encodeURIComponent(opt.seed)}&radius=50`;
+  return `${TWEMOJI_BASE}/${opt.codepoint}.svg`;
 }
 function avatarUrlById(id) {
   if (!id) return null;
@@ -2074,7 +2075,7 @@ function avatarUrlById(id) {
   return opt ? avatarUrl(opt) : null;
 }
 function avatarUrlFromSeed(seed) {
-  return `${DICEBEAR}/pixel-art/svg?seed=${encodeURIComponent(seed)}&radius=50`;
+  return `https://api.dicebear.com/9.x/pixel-art/svg?seed=${encodeURIComponent(seed)}&radius=50`;
 }
 
 // src/profile/identity.ts
@@ -2278,6 +2279,7 @@ var GENDER_OPTIONS = [
   { value: "other", label: "Other" },
   { value: "unspecified", label: "Prefer not to say" }
 ];
+var FIELD_CLASS = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 function ProfileModal({ user, onClose, dark = false }) {
   const { profile, avatarId, avatarUrl: chosenUrl, setAvatarId, updateProfile: updateProfile2 } = useUserProfile(user);
   const [draft, setDraft] = useState({
@@ -2316,23 +2318,24 @@ function ProfileModal({ user, onClose, dark = false }) {
           /* @__PURE__ */ jsxs(
             "div",
             {
-              className: "relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800",
+              className: "relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900",
               onClick: (e) => e.stopPropagation(),
               style: { animation: "swn-profile-in 0.22s cubic-bezier(0.34,1.56,0.64,1) both" },
               children: [
-                /* @__PURE__ */ jsx("div", { className: "relative h-24 shrink-0 bg-gradient-to-br from-blue-500 to-cyan-500", children: /* @__PURE__ */ jsx(
+                /* @__PURE__ */ jsx("div", { className: "h-1.5 shrink-0 bg-gradient-to-r from-red-500 via-red-600 to-rose-700" }),
+                /* @__PURE__ */ jsx(
                   "button",
                   {
                     type: "button",
                     onClick: onClose,
-                    className: "absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30",
+                    className: "absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300",
                     "aria-label": "Close",
                     children: /* @__PURE__ */ jsx(X, { size: 16 })
                   }
-                ) }),
-                /* @__PURE__ */ jsxs("div", { className: "-mt-12 flex-1 overflow-y-auto px-5 pb-5", children: [
+                ),
+                /* @__PURE__ */ jsxs("div", { className: "flex-1 overflow-y-auto px-5 pb-5 pt-6", children: [
                   /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center", children: [
-                    /* @__PURE__ */ jsx("span", { className: "rounded-full border-4 border-white bg-white dark:border-gray-800", children: /* @__PURE__ */ jsx(Avatar, { url: chosenUrl, initials, size: 88 }) }),
+                    /* @__PURE__ */ jsx("span", { className: "rounded-full ring-2 ring-gray-100 dark:ring-gray-800", children: /* @__PURE__ */ jsx(Avatar, { url: chosenUrl, initials, size: 80 }) }),
                     /* @__PURE__ */ jsxs("div", { className: "mt-3 text-center", children: [
                       /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-base font-semibold text-gray-900 dark:text-gray-100", children: name }),
                       email && /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-xs text-gray-500 dark:text-gray-400", children: email }),
@@ -2358,10 +2361,25 @@ function ProfileModal({ user, onClose, dark = false }) {
                           title: opt.label,
                           "aria-label": opt.label,
                           "aria-pressed": selected,
-                          className: `relative aspect-square rounded-xl border-2 transition-all ${selected ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200 bg-gray-50 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900/40 dark:hover:border-gray-500"}`,
+                          className: `relative aspect-square rounded-xl border-2 p-1.5 transition-all ${selected ? "border-red-500 ring-2 ring-red-500/30" : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"}`,
+                          style: { backgroundColor: opt.tint },
                           children: [
-                            /* @__PURE__ */ jsx("img", { src: avatarUrl(opt), alt: opt.label, className: "h-full w-full rounded-lg" }),
-                            selected && /* @__PURE__ */ jsx("span", { className: "absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white shadow", children: /* @__PURE__ */ jsx(Check, { size: 12 }) })
+                            /* @__PURE__ */ jsx(
+                              "img",
+                              {
+                                src: avatarUrl(opt),
+                                alt: "",
+                                className: "h-full w-full object-contain"
+                              }
+                            ),
+                            selected && /* @__PURE__ */ jsx(
+                              "span",
+                              {
+                                "aria-hidden": "true",
+                                className: "absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow",
+                                children: /* @__PURE__ */ jsx(Check, { size: 12 })
+                              }
+                            )
                           ]
                         },
                         opt.id
@@ -2370,22 +2388,38 @@ function ProfileModal({ user, onClose, dark = false }) {
                   ] }),
                   /* @__PURE__ */ jsxs("div", { className: "mt-5 space-y-3", children: [
                     /* @__PURE__ */ jsxs("div", { children: [
-                      /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "Gender" }),
+                      /* @__PURE__ */ jsx(
+                        "label",
+                        {
+                          htmlFor: "swn-profile-gender",
+                          className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300",
+                          children: "Gender"
+                        }
+                      ),
                       /* @__PURE__ */ jsx(
                         "select",
                         {
+                          id: "swn-profile-gender",
                           value: draft.gender,
                           onChange: (e) => setDraft((d) => ({ ...d, gender: e.target.value })),
-                          className: "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100",
+                          className: FIELD_CLASS,
                           children: GENDER_OPTIONS.map((opt) => /* @__PURE__ */ jsx("option", { value: opt.value, children: opt.label }, opt.value))
                         }
                       )
                     ] }),
                     /* @__PURE__ */ jsxs("div", { children: [
-                      /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "Age" }),
+                      /* @__PURE__ */ jsx(
+                        "label",
+                        {
+                          htmlFor: "swn-profile-age",
+                          className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300",
+                          children: "Age"
+                        }
+                      ),
                       /* @__PURE__ */ jsx(
                         "input",
                         {
+                          id: "swn-profile-age",
                           type: "number",
                           min: 0,
                           max: 120,
@@ -2398,20 +2432,28 @@ function ProfileModal({ user, onClose, dark = false }) {
                             }));
                           },
                           placeholder: "\u2014",
-                          className: "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                          className: FIELD_CLASS
                         }
                       )
                     ] }),
                     /* @__PURE__ */ jsxs("div", { children: [
-                      /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "About" }),
+                      /* @__PURE__ */ jsx(
+                        "label",
+                        {
+                          htmlFor: "swn-profile-about",
+                          className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300",
+                          children: "About"
+                        }
+                      ),
                       /* @__PURE__ */ jsx(
                         "textarea",
                         {
+                          id: "swn-profile-about",
                           rows: 3,
                           value: draft.about,
                           onChange: (e) => setDraft((d) => ({ ...d, about: e.target.value })),
                           placeholder: "A short bio (optional)",
-                          className: "w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                          className: `${FIELD_CLASS} resize-none`
                         }
                       )
                     ] })
@@ -2422,7 +2464,7 @@ function ProfileModal({ user, onClose, dark = false }) {
                       {
                         type: "button",
                         onClick: onClose,
-                        className: "rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700",
+                        className: "rounded-xl px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
                         children: "Close"
                       }
                     ),
@@ -2432,7 +2474,7 @@ function ProfileModal({ user, onClose, dark = false }) {
                         type: "button",
                         onClick: handleSave,
                         disabled: !dirty,
-                        className: "rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40",
+                        className: "rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40",
                         children: "Save changes"
                       }
                     )
