@@ -2,10 +2,10 @@
 //
 // Each message sent to Claire emits a parcel-scoped signal to the shared RES
 // API, so the admin dashboard can count assistant interactions per parcel.
-// The request goes through the consuming app's own /api/signal-collect proxy
-// (a Vercel edge function that attaches the server-side bearer token).
+// This is a thin wrapper over the suite-wide signal client — see
+// `../signal/client`.
 
-const SIGNAL_ENDPOINT = '/api/signal-collect';
+import { createSignalClient } from '../signal/client';
 
 interface ClaireMessageSignal {
   /** App emitting the signal — recorded as app_name. */
@@ -33,26 +33,14 @@ export async function sendClaireMessageSignal({
   address,
   source,
 }: ClaireMessageSignal): Promise<void> {
-  try {
-    await fetch(SIGNAL_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        app_name: appName,
-        user_action: 'Claire Assistant Message',
-        // No parcel_id is sent: the RES API resolves the canonical parcel
-        // (SwissTopo EGRID) from target_lat/lng, so the Claire signal stays
-        // consistent with the address-search signal instead of recording an
-        // app-internal tile id.
-        lat,
-        lng,
-        target_address: address,
-        target_lat: lat,
-        target_lng: lng,
-        meta_data: source ? { source } : undefined,
-      }),
-    });
-  } catch (err) {
-    console.error('Signal collection error:', err);
-  }
+  // No parcel_id is sent: the RES API resolves the canonical parcel
+  // (SwissTopo EGRID) from target_lat/lng, so the Claire signal stays
+  // consistent with the address-search signal instead of recording an
+  // app-internal tile id.
+  await createSignalClient({ appName }).send('Claire Assistant Message', {
+    address,
+    lat,
+    lng,
+    metaData: source ? { source } : undefined,
+  });
 }
