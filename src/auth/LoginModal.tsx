@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Lock, type LucideIcon } from 'lucide-react';
 
 export interface LoginModalFeature {
@@ -66,7 +67,7 @@ export default function LoginModal({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center p-4"
       role="dialog"
@@ -145,7 +146,8 @@ export default function LoginModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
