@@ -2,7 +2,7 @@ import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, Loader2, AlertCircle, Send } from 'lucide-react';
+import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, Loader2, AlertCircle, Send, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 
@@ -2010,5 +2010,432 @@ function SkeletonText({
 function SkeletonGroup({ children }) {
   return /* @__PURE__ */ jsx("div", { role: "status", "aria-busy": "true", "aria-live": "polite", children });
 }
+function Avatar({ url, initials, size = 28, className = "" }) {
+  const [errored, setErrored] = useState(false);
+  const show = url && !errored;
+  if (!show) {
+    return /* @__PURE__ */ jsx(
+      "span",
+      {
+        className: `inline-flex items-center justify-center rounded-full bg-blue-600 font-semibold text-white ${className}`,
+        style: { width: size, height: size, fontSize: Math.round(size * 0.42) },
+        children: initials
+      }
+    );
+  }
+  return /* @__PURE__ */ jsx(
+    "img",
+    {
+      src: url,
+      alt: "",
+      width: size,
+      height: size,
+      onError: () => setErrored(true),
+      className: `rounded-full bg-white object-cover ${className}`,
+      style: { width: size, height: size }
+    }
+  );
+}
 
-export { AuthProvider, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, LoginModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, Skeleton, SkeletonGroup, SkeletonText, buildParcelContextSummary, createSignalClient, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+// src/profile/avatars.ts
+var DICEBEAR = "https://api.dicebear.com/9.x";
+var avatarOptions = [
+  { id: "fox", label: "Fox", style: "fun-emoji", seed: "Felix" },
+  { id: "panda", label: "Panda", style: "fun-emoji", seed: "Aneka" },
+  { id: "tiger", label: "Tiger", style: "fun-emoji", seed: "Sasha" },
+  { id: "koala", label: "Koala", style: "fun-emoji", seed: "Bandit" },
+  { id: "owl", label: "Owl", style: "big-ears", seed: "Salem" },
+  { id: "rabbit", label: "Rabbit", style: "big-ears", seed: "Pixie" },
+  { id: "cat", label: "Cat", style: "big-ears", seed: "Mochi" },
+  { id: "dog", label: "Dog", style: "big-ears", seed: "Biscuit" },
+  { id: "bot-mint", label: "Mint Bot", style: "bottts", seed: "Sprout" },
+  { id: "bot-rose", label: "Rose Bot", style: "bottts", seed: "Cocoa" },
+  { id: "bot-sky", label: "Sky Bot", style: "bottts", seed: "Comet" },
+  { id: "bot-sun", label: "Sun Bot", style: "bottts", seed: "Honey" },
+  { id: "explorer", label: "Explorer", style: "adventurer", seed: "Atlas" },
+  { id: "voyager", label: "Voyager", style: "adventurer", seed: "River" },
+  { id: "lorelei", label: "Pal", style: "lorelei", seed: "Maple" },
+  { id: "thumbs", label: "Star", style: "thumbs", seed: "Nova" }
+];
+function avatarUrl(opt) {
+  return `${DICEBEAR}/${opt.style}/svg?seed=${encodeURIComponent(opt.seed)}&radius=50`;
+}
+function avatarUrlById(id) {
+  if (!id) return null;
+  const opt = avatarOptions.find((a) => a.id === id);
+  return opt ? avatarUrl(opt) : null;
+}
+function avatarUrlFromSeed(seed) {
+  return `${DICEBEAR}/pixel-art/svg?seed=${encodeURIComponent(seed)}&radius=50`;
+}
+
+// src/profile/identity.ts
+function readClaim(p, key) {
+  const v = p?.[key];
+  return typeof v === "string" && v.trim() ? v.trim() : void 0;
+}
+function emailOf(user) {
+  return readClaim(user?.profile, "email") ?? "";
+}
+function fullNameOf(user) {
+  const p = user?.profile;
+  const name = readClaim(p, "name");
+  if (name) return name;
+  const given = readClaim(p, "given_name");
+  const family = readClaim(p, "family_name");
+  const combined = [given, family].filter(Boolean).join(" ").trim();
+  if (combined) return combined;
+  return readClaim(p, "preferred_username") ?? "";
+}
+function firstNameOf(user) {
+  const given = readClaim(user?.profile, "given_name");
+  if (given) return given;
+  const full = fullNameOf(user);
+  if (full) {
+    const head = full.split(/\s+/)[0];
+    if (head) return head;
+  }
+  const email = emailOf(user);
+  if (email.includes("@")) return email.split("@")[0];
+  return email || "Account";
+}
+function initialsOf(user) {
+  const source = fullNameOf(user) || emailOf(user);
+  if (!source) return "?";
+  if (source.includes("@")) return source[0].toUpperCase();
+  const parts = source.split(/\s+/).filter(Boolean);
+  const letters = parts.slice(0, 2).map((p) => p[0].toUpperCase()).join("");
+  return letters || source[0].toUpperCase();
+}
+function pictureOf(user) {
+  return readClaim(user?.profile, "picture") ?? null;
+}
+
+// src/profile/profileStore.ts
+var LS_KEY = "swissnovo:profile";
+var LEGACY_AVATAR_KEY = "swissnovo:avatar_id";
+var DEFAULT_PROFILE_URL = "https://res.zeroo.ch/res_api/swissnovo_user/profile";
+function profileApiUrl() {
+  try {
+    const env = import.meta.env;
+    const override = env?.VITE_PROFILE_API_URL?.trim();
+    if (override) return override;
+  } catch {
+  }
+  return DEFAULT_PROFILE_URL;
+}
+function defaultProfile() {
+  return { avatar_id: null, gender: "unspecified", age: null, about: "" };
+}
+function coerce(raw) {
+  const base = defaultProfile();
+  if (!raw || typeof raw !== "object") return base;
+  return {
+    avatar_id: typeof raw.avatar_id === "string" && raw.avatar_id ? raw.avatar_id : null,
+    gender: ["male", "female", "other", "unspecified"].includes(raw.gender) ? raw.gender : "unspecified",
+    age: typeof raw.age === "number" && Number.isFinite(raw.age) ? raw.age : null,
+    about: typeof raw.about === "string" ? raw.about : ""
+  };
+}
+function loadLocal() {
+  if (typeof window === "undefined") return defaultProfile();
+  try {
+    const raw = window.localStorage.getItem(LS_KEY);
+    if (raw) return coerce(JSON.parse(raw));
+    const legacy = window.localStorage.getItem(LEGACY_AVATAR_KEY);
+    if (legacy) return coerce({ avatar_id: legacy });
+  } catch {
+  }
+  return defaultProfile();
+}
+function writeLocal(p) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LS_KEY, JSON.stringify(p));
+    if (p.avatar_id) window.localStorage.setItem(LEGACY_AVATAR_KEY, p.avatar_id);
+    else window.localStorage.removeItem(LEGACY_AVATAR_KEY);
+  } catch {
+  }
+}
+var current = null;
+var subscribers = /* @__PURE__ */ new Set();
+function getProfile() {
+  if (!current) current = loadLocal();
+  return current;
+}
+function subscribe(cb) {
+  subscribers.add(cb);
+  return () => {
+    subscribers.delete(cb);
+  };
+}
+function broadcast(next) {
+  current = next;
+  writeLocal(next);
+  subscribers.forEach((cb) => cb(next));
+}
+var warnedAboutRemote = false;
+function isDev() {
+  try {
+    return Boolean(import.meta.env?.DEV);
+  } catch {
+    return false;
+  }
+}
+async function fetchRemoteProfile(accessToken) {
+  if (!accessToken) return null;
+  try {
+    const res = await fetch(profileApiUrl(), {
+      method: "GET",
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return coerce({
+      avatar_id: typeof data?.avatar_icon === "string" ? data.avatar_icon : null,
+      gender: data?.gender,
+      age: typeof data?.age === "number" ? data.age : null,
+      about: typeof data?.account_info?.about === "string" ? data.account_info.about : ""
+    });
+  } catch {
+    return null;
+  }
+}
+async function pushRemoteProfile(p, accessToken) {
+  if (!accessToken) return;
+  try {
+    const res = await fetch(profileApiUrl(), {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        avatar_icon: p.avatar_id,
+        gender: p.gender,
+        age: p.age,
+        account_info: { about: p.about }
+      })
+    });
+    if (!res.ok && !warnedAboutRemote && isDev()) {
+      warnedAboutRemote = true;
+      console.info("[profile] RES API profile PUT returned", res.status, "\u2014 using localStorage only.");
+    }
+  } catch {
+  }
+}
+function updateProfile(patch, accessToken) {
+  const next = coerce({ ...getProfile(), ...patch });
+  broadcast(next);
+  void pushRemoteProfile(next, accessToken);
+  return next;
+}
+async function hydrateFromRemote(accessToken) {
+  const remote = await fetchRemoteProfile(accessToken);
+  if (remote) broadcast(remote);
+}
+
+// src/profile/useUserProfile.ts
+function useUserProfile(user) {
+  const [profile, setProfileState] = useState(() => getProfile());
+  const accessToken = user && !user.expired ? user.access_token : void 0;
+  useEffect(() => subscribe(setProfileState), []);
+  useEffect(() => {
+    if (!accessToken) return;
+    void hydrateFromRemote(accessToken);
+  }, [accessToken]);
+  const updateProfile2 = useCallback(
+    (patch) => {
+      updateProfile(patch, accessToken);
+    },
+    [accessToken]
+  );
+  const setAvatarId = useCallback(
+    (id) => {
+      updateProfile({ avatar_id: id }, accessToken);
+    },
+    [accessToken]
+  );
+  return {
+    profile,
+    avatarId: profile.avatar_id,
+    avatarUrl: avatarUrlById(profile.avatar_id),
+    setAvatarId,
+    updateProfile: updateProfile2
+  };
+}
+var GENDER_OPTIONS = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "other", label: "Other" },
+  { value: "unspecified", label: "Prefer not to say" }
+];
+function ProfileModal({ user, onClose, dark = false }) {
+  const { profile, avatarId, avatarUrl: chosenUrl, setAvatarId, updateProfile: updateProfile2 } = useUserProfile(user);
+  const [draft, setDraft] = useState({
+    gender: profile.gender,
+    age: profile.age,
+    about: profile.about
+  });
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const name = fullNameOf(user) || initialsOf(user);
+  const email = emailOf(user);
+  const initials = initialsOf(user);
+  const dirty = useMemo(
+    () => draft.gender !== profile.gender || draft.age !== profile.age || draft.about !== profile.about,
+    [draft, profile]
+  );
+  function handleSave() {
+    updateProfile2(draft);
+    onClose();
+  }
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: `${dark ? "dark " : ""}fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm`,
+      onClick: onClose,
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-label": "Profile",
+      children: [
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            className: "relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800",
+            onClick: (e) => e.stopPropagation(),
+            style: { animation: "swn-profile-in 0.22s cubic-bezier(0.34,1.56,0.64,1) both" },
+            children: [
+              /* @__PURE__ */ jsx("div", { className: "relative h-24 shrink-0 bg-gradient-to-br from-blue-500 to-cyan-500", children: /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: onClose,
+                  className: "absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30",
+                  "aria-label": "Close",
+                  children: /* @__PURE__ */ jsx(X, { size: 16 })
+                }
+              ) }),
+              /* @__PURE__ */ jsxs("div", { className: "-mt-12 flex-1 overflow-y-auto px-5 pb-5", children: [
+                /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center", children: [
+                  /* @__PURE__ */ jsx("span", { className: "rounded-full border-4 border-white bg-white dark:border-gray-800", children: /* @__PURE__ */ jsx(Avatar, { url: chosenUrl, initials, size: 88 }) }),
+                  /* @__PURE__ */ jsxs("div", { className: "mt-3 text-center", children: [
+                    /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-base font-semibold text-gray-900 dark:text-gray-100", children: name }),
+                    email && /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-xs text-gray-500 dark:text-gray-400", children: email }),
+                    /* @__PURE__ */ jsxs("div", { className: "mt-1.5 flex items-center justify-center gap-1.5", children: [
+                      /* @__PURE__ */ jsxs("span", { className: "relative flex h-2 w-2", children: [
+                        /* @__PURE__ */ jsx("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" }),
+                        /* @__PURE__ */ jsx("span", { className: "relative inline-flex h-2 w-2 rounded-full bg-green-500" })
+                      ] }),
+                      /* @__PURE__ */ jsx("span", { className: "text-[11px] font-medium text-green-600 dark:text-green-400", children: "Active session" })
+                    ] })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxs("div", { className: "mt-5", children: [
+                  /* @__PURE__ */ jsx("div", { className: "mb-2 text-xs font-medium text-gray-700 dark:text-gray-300", children: "Choose your avatar" }),
+                  /* @__PURE__ */ jsx("p", { className: "mb-3 text-[11px] text-gray-500 dark:text-gray-400", children: "Your pick follows you across every Swissnovo app." }),
+                  /* @__PURE__ */ jsx("div", { className: "grid grid-cols-4 gap-2.5", children: avatarOptions.map((opt) => {
+                    const selected = opt.id === avatarId;
+                    return /* @__PURE__ */ jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => setAvatarId(opt.id),
+                        title: opt.label,
+                        "aria-label": opt.label,
+                        "aria-pressed": selected,
+                        className: `relative aspect-square rounded-xl border-2 transition-all ${selected ? "border-blue-500 ring-2 ring-blue-500/30" : "border-gray-200 bg-gray-50 hover:border-gray-400 dark:border-gray-700 dark:bg-gray-900/40 dark:hover:border-gray-500"}`,
+                        children: [
+                          /* @__PURE__ */ jsx("img", { src: avatarUrl(opt), alt: opt.label, className: "h-full w-full rounded-lg" }),
+                          selected && /* @__PURE__ */ jsx("span", { className: "absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white shadow", children: /* @__PURE__ */ jsx(Check, { size: 12 }) })
+                        ]
+                      },
+                      opt.id
+                    );
+                  }) })
+                ] }),
+                /* @__PURE__ */ jsxs("div", { className: "mt-5 space-y-3", children: [
+                  /* @__PURE__ */ jsxs("div", { children: [
+                    /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "Gender" }),
+                    /* @__PURE__ */ jsx(
+                      "select",
+                      {
+                        value: draft.gender,
+                        onChange: (e) => setDraft((d) => ({ ...d, gender: e.target.value })),
+                        className: "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100",
+                        children: GENDER_OPTIONS.map((opt) => /* @__PURE__ */ jsx("option", { value: opt.value, children: opt.label }, opt.value))
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxs("div", { children: [
+                    /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "Age" }),
+                    /* @__PURE__ */ jsx(
+                      "input",
+                      {
+                        type: "number",
+                        min: 0,
+                        max: 120,
+                        value: draft.age ?? "",
+                        onChange: (e) => {
+                          const v = e.target.value;
+                          setDraft((d) => ({
+                            ...d,
+                            age: v === "" ? null : Math.max(0, Math.min(120, Number(v)))
+                          }));
+                        },
+                        placeholder: "\u2014",
+                        className: "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxs("div", { children: [
+                    /* @__PURE__ */ jsx("label", { className: "mb-1 block text-xs font-medium text-gray-700 dark:text-gray-300", children: "About" }),
+                    /* @__PURE__ */ jsx(
+                      "textarea",
+                      {
+                        rows: 3,
+                        value: draft.about,
+                        onChange: (e) => setDraft((d) => ({ ...d, about: e.target.value })),
+                        placeholder: "A short bio (optional)",
+                        className: "w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                      }
+                    )
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxs("div", { className: "mt-5 flex items-center justify-end gap-2", children: [
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: onClose,
+                      className: "rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700",
+                      children: "Close"
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: handleSave,
+                      disabled: !dirty,
+                      className: "rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40",
+                      children: "Save changes"
+                    }
+                  )
+                ] })
+              ] })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsx("style", { children: `@keyframes swn-profile-in{from{opacity:0;transform:scale(0.9) translateY(12px)}to{opacity:1;transform:scale(1) translateY(0)}}` })
+      ]
+    }
+  );
+}
+
+export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, LoginModal, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, Skeleton, SkeletonGroup, SkeletonText, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createSignalClient, defaultProfile, emailOf, fetchClaireContext, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

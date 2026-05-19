@@ -59,6 +59,34 @@ export type {
   SkeletonProviderProps,
 } from './skeleton/Skeleton';
 
+export { ProfileModal, Avatar, useUserProfile } from './profile';
+export type {
+  ProfileModalProps,
+  AvatarProps,
+  UseUserProfileResult,
+  AvatarOption,
+  AvatarStyle,
+  SwissnovoProfile,
+  Gender,
+} from './profile';
+export {
+  avatarOptions,
+  avatarUrl,
+  avatarUrlById,
+  avatarUrlFromSeed,
+  emailOf,
+  fullNameOf,
+  firstNameOf,
+  initialsOf,
+  pictureOf,
+  getProfile,
+  subscribeProfile,
+  updateProfile,
+  fetchRemoteProfile,
+  hydrateFromRemote,
+  defaultProfile,
+} from './profile';
+
 export { createResApiClient, RES_API_BASE_URL } from './api';
 export type {
   ResApiClient,

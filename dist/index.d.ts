@@ -423,4 +423,110 @@ interface SkeletonProviderProps {
 /** Optional wrapper carrying an accessible "loading" label for a skeleton region. */
 declare function SkeletonGroup({ children }: SkeletonProviderProps): JSX.Element;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, KIND_META, type Locale, LoginModal, type LoginModalFeature, type LoginModalProps, type ParcelContextInput, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, buildParcelContextSummary, createSignalClient, fetchClaireContext, generateParcelChatReply, getAuthToken, getExistingUser, getReleaseNotesStrings, loadClaireConversation, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, urlHasAuthParams, useAuth, userManager };
+interface ProfileModalProps {
+    /** The signed-in OIDC user. */
+    user: User;
+    /** Called on any dismiss path (backdrop, Esc, close buttons). */
+    onClose: () => void;
+    /**
+     * Force dark styling. Only needed for apps that theme via a boolean rather
+     * than a `dark` class on an ancestor element.
+     */
+    dark?: boolean;
+}
+/** The standard SwissNovo profile modal. Render it only while open. */
+declare function ProfileModal({ user, onClose, dark }: ProfileModalProps): react_jsx_runtime.JSX.Element;
+
+interface AvatarProps {
+    /** Avatar image URL, or `null` to show the initials fallback. */
+    url: string | null;
+    /** Initials shown when there is no image. */
+    initials: string;
+    /** Rendered width/height in pixels. */
+    size?: number;
+    className?: string;
+}
+declare function Avatar({ url, initials, size, className }: AvatarProps): react_jsx_runtime.JSX.Element;
+
+type Gender = 'male' | 'female' | 'other' | 'unspecified';
+/** The complete, unified SwissNovo user profile. */
+interface SwissnovoProfile {
+    /** Id of the chosen catalogue avatar (see `avatars.ts`), or `null`. */
+    avatar_id: string | null;
+    gender: Gender;
+    age: number | null;
+    /** Short free-text bio. */
+    about: string;
+}
+declare function defaultProfile(): SwissnovoProfile;
+/** The current profile, lazily initialised from localStorage. */
+declare function getProfile(): SwissnovoProfile;
+/** Subscribe to profile changes. Returns an unsubscribe function. */
+declare function subscribe(cb: (p: SwissnovoProfile) => void): () => void;
+/** Fetch the profile stored on the RES API, or `null` on any failure. */
+declare function fetchRemoteProfile(accessToken: string | undefined): Promise<SwissnovoProfile | null>;
+/**
+ * Merge `patch` into the current profile, persist it, broadcast to every
+ * subscriber, and mirror it to the RES API.
+ */
+declare function updateProfile(patch: Partial<SwissnovoProfile>, accessToken?: string): SwissnovoProfile;
+/**
+ * Pull the profile from the RES API and adopt it locally. Called once after
+ * sign-in so a profile set on another device shows up here.
+ */
+declare function hydrateFromRemote(accessToken: string | undefined): Promise<void>;
+
+interface UseUserProfileResult {
+    /** The current unified profile. */
+    profile: SwissnovoProfile;
+    /** Id of the chosen catalogue avatar, or `null`. */
+    avatarId: string | null;
+    /** Render URL for the chosen avatar, or `null` when none is set. */
+    avatarUrl: string | null;
+    /** Select a catalogue avatar by id. */
+    setAvatarId: (id: string) => void;
+    /** Merge a partial change into the profile. */
+    updateProfile: (patch: Partial<SwissnovoProfile>) => void;
+}
+/**
+ * Read and update the signed-in user's SwissNovo profile.
+ *
+ * @param user The OIDC user (pass `null` when anonymous). Its access token is
+ *   used to mirror changes to the RES API; everything still works offline.
+ */
+declare function useUserProfile(user: User | null | undefined): UseUserProfileResult;
+
+type AvatarStyle = 'fun-emoji' | 'bottts' | 'big-ears' | 'adventurer' | 'lorelei' | 'thumbs';
+interface AvatarOption {
+    /** Stable identifier persisted in the user's profile. */
+    id: string;
+    /** Human-readable label, shown as a tooltip in the picker. */
+    label: string;
+    style: AvatarStyle;
+    /** DiceBear seed — together with `style` this fixes the rendered image. */
+    seed: string;
+}
+/** The full set of avatars a user can pick from. Order is the picker order. */
+declare const avatarOptions: AvatarOption[];
+/** Render URL for a catalogue avatar. */
+declare function avatarUrl(opt: AvatarOption): string;
+/** Render URL for a catalogue avatar id, or `null` when the id is unknown. */
+declare function avatarUrlById(id: string | null | undefined): string | null;
+/**
+ * Render URL for a free-form seed (legacy "generated" avatar). Used only as a
+ * fallback for users who never picked a catalogue avatar.
+ */
+declare function avatarUrlFromSeed(seed: string): string;
+
+/** The user's email, or `''` when unknown. */
+declare function emailOf(user: User | null | undefined): string;
+/** Best-effort full name (name → given+family → preferred_username). */
+declare function fullNameOf(user: User | null | undefined): string;
+/** Best-effort first name (given_name → first word of full name → email local part). */
+declare function firstNameOf(user: User | null | undefined): string;
+/** 1–2 letter initials derived from the name, falling back to the email. */
+declare function initialsOf(user: User | null | undefined): string;
+/** The provider-supplied profile picture URL, if any. */
+declare function pictureOf(user: User | null | undefined): string | null;
+
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type AvatarStyle, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale, LoginModal, type LoginModalFeature, type LoginModalProps, type ParcelContextInput, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SwissnovoProfile, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createSignalClient, defaultProfile, emailOf, fetchClaireContext, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
