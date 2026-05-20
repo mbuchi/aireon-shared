@@ -7,6 +7,9 @@ export type { ReleaseNotesButtonProps } from './releaseNotes/ReleaseNotesButton'
 export { RELEASE_NOTES_STRINGS, getReleaseNotesStrings } from './releaseNotes/i18n';
 export type { Locale, ReleaseNotesStrings } from './releaseNotes/i18n';
 
+export { LocaleSelector, default as LocaleSelectorDefault } from './i18n/LocaleSelector';
+export type { LocaleSelectorProps } from './i18n/LocaleSelector';
+
 export { AuthProvider, useAuth } from './auth/AuthProvider';
 export type {
   AuthContextValue,

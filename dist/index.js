@@ -567,6 +567,45 @@ function ReleaseNotesButton({
     )
   ] });
 }
+var LOCALE_LABELS = {
+  en: "EN",
+  fr: "FR",
+  de: "DE",
+  it: "IT"
+};
+var LOCALE_OPTIONS = ["en", "fr", "de", "it"];
+function LocaleSelector({
+  locale,
+  onChange,
+  ariaLabel,
+  className
+}) {
+  return /* @__PURE__ */ jsx(
+    "select",
+    {
+      value: locale,
+      onChange: (e) => onChange(e.target.value),
+      "aria-label": ariaLabel ?? "Select language",
+      className: [
+        "h-9 text-xs font-semibold text-gray-500 dark:text-gray-400",
+        "bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg px-1.5",
+        "hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer",
+        "focus:outline-none focus:ring-2 focus:ring-red-500/40",
+        className ?? ""
+      ].filter(Boolean).join(" "),
+      children: LOCALE_OPTIONS.map((l) => /* @__PURE__ */ jsx(
+        "option",
+        {
+          value: l,
+          className: "bg-white dark:bg-gray-900",
+          children: LOCALE_LABELS[l]
+        },
+        l
+      ))
+    }
+  );
+}
+var LocaleSelector_default = LocaleSelector;
 var ZITADEL_AUTHORITY = "https://swissnovo-ekqvxs.ch1.zitadel.cloud/";
 var ZITADEL_CLIENT_ID = "366334583324661156";
 var origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -2491,4 +2530,4 @@ function ProfileModal({ user, onClose, dark = false }) {
   );
 }
 
-export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, LoginModal, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, Skeleton, SkeletonGroup, SkeletonText, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createSignalClient, defaultProfile, emailOf, fetchClaireContext, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, GeminiConfigError, KIND_META, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SSO_ATTEMPTED_KEY, Skeleton, SkeletonGroup, SkeletonText, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createSignalClient, defaultProfile, emailOf, fetchClaireContext, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
