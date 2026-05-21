@@ -10,6 +10,38 @@ export type { Locale, ReleaseNotesStrings } from './releaseNotes/i18n';
 export { LocaleSelector, default as LocaleSelectorDefault } from './i18n/LocaleSelector';
 export type { LocaleSelectorProps } from './i18n/LocaleSelector';
 
+export { SavedParcelsModal } from './prm/SavedParcelsModal';
+export type { SavedParcelsModalProps } from './prm/SavedParcelsModal';
+export {
+  fetchPrmRecords,
+  fetchPrmByParcel,
+  createPrmRecord,
+  updatePrmState,
+  updatePrmPriority,
+  updatePrmTags,
+  deletePrmRecord,
+  AuthRequiredError as PrmAuthRequiredError,
+  PRM_STATES,
+  PRM_PRIORITIES,
+  PROOM_APP_URL,
+  TOOLBOX_APP_URL,
+  GEOPOOL_APP_URL,
+} from './prm/api';
+export type {
+  PrmRecord,
+  PrmState,
+  PrmPriority,
+  CreatePrmInput,
+} from './prm/api';
+export {
+  SAVED_PARCELS_STRINGS,
+  getSavedParcelsStrings,
+} from './prm/i18n';
+export type {
+  Locale as PrmLocale,
+  SavedParcelsStrings,
+} from './prm/i18n';
+
 export { AuthProvider, useAuth } from './auth/AuthProvider';
 export type {
   AuthContextValue,

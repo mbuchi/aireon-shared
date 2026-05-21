@@ -29,7 +29,7 @@ declare const KIND_META: Record<ChangeKind, {
 }>;
 
 /** Languages supported across the SwissNovo suite. */
-type Locale = 'de' | 'en' | 'fr' | 'it';
+type Locale$1 = 'de' | 'en' | 'fr' | 'it';
 interface ReleaseNotesStrings {
     /** Panel <h1>, followed by the brand wordmark. */
     whatsNewIn: string;
@@ -66,14 +66,14 @@ interface ReleaseNotesStrings {
     /** Change-kind labels (badges + filter chips). */
     kind: Record<ChangeKind, string>;
 }
-declare const RELEASE_NOTES_STRINGS: Record<Locale, ReleaseNotesStrings>;
-declare const getReleaseNotesStrings: (locale?: Locale) => ReleaseNotesStrings;
+declare const RELEASE_NOTES_STRINGS: Record<Locale$1, ReleaseNotesStrings>;
+declare const getReleaseNotesStrings: (locale?: Locale$1) => ReleaseNotesStrings;
 
 interface ReleaseNotesPanelProps {
     /** Called when the panel finishes its close animation. */
     onClose: () => void;
     /** UI language for the panel chrome. Defaults to English. */
-    locale?: Locale;
+    locale?: Locale$1;
     /** The app's release history, newest first. */
     releases: Release[];
     /** GitHub repo URL, used to link PRs (e.g. https://github.com/mbuchi/boom). */
@@ -95,7 +95,7 @@ interface ReleaseNotesButtonProps {
     /** The app's release history, newest first. */
     releases: Release[];
     /** UI language for the button + panel chrome. Defaults to English. */
-    locale?: Locale;
+    locale?: Locale$1;
     /** localStorage key for unread tracking — namespace per app, e.g. "boom:lastSeenReleaseVersion". */
     storageKey: string;
     /** GitHub repo URL, used to link PRs. */
@@ -115,9 +115,9 @@ declare function ReleaseNotesButton({ releases, locale, storageKey, repoUrl, bra
 
 interface LocaleSelectorProps {
     /** Currently active locale. */
-    locale: Locale;
+    locale: Locale$1;
     /** Called with the newly chosen locale when the user changes selection. */
-    onChange: (locale: Locale) => void;
+    onChange: (locale: Locale$1) => void;
     /** Accessible label for screen readers. Defaults to "Select language". */
     ariaLabel?: string;
     /** Extra class names appended to the default styling. */
@@ -132,6 +132,109 @@ interface LocaleSelectorProps {
  * with `className`.
  */
 declare function LocaleSelector({ locale, onChange, ariaLabel, className, }: LocaleSelectorProps): JSX.Element;
+
+type PrmState = 'new' | 'contacted' | 'negotiation' | 'due_diligence' | 'closed' | 'rejected';
+type PrmPriority = 'low' | 'medium' | 'high' | 'urgent';
+declare const PRM_STATES: {
+    value: PrmState;
+    color: string;
+    bg: string;
+}[];
+declare const PRM_PRIORITIES: {
+    value: PrmPriority;
+    color: string;
+}[];
+interface CreatePrmInput {
+    parcel_id: string;
+    parcel_label: string;
+    parcel_municipality: string;
+    parcel_area: number;
+    parcel_lng: number;
+    parcel_lat: number;
+}
+interface PrmRecord {
+    id: string;
+    parcel_id: string;
+    user_id: string;
+    state: PrmState;
+    priority: PrmPriority;
+    tags: string[];
+    parcel_label: string;
+    parcel_municipality: string;
+    parcel_area: number;
+    parcel_lng: number;
+    parcel_lat: number;
+    created_at: string;
+    updated_at: string;
+}
+declare class AuthRequiredError extends Error {
+    constructor();
+}
+declare function fetchPrmByParcel(token: string | null, parcelId: string): Promise<PrmRecord | null>;
+declare function createPrmRecord(token: string | null, input: CreatePrmInput): Promise<PrmRecord>;
+declare function fetchPrmRecords(token: string | null): Promise<PrmRecord[]>;
+declare function updatePrmState(token: string | null, id: string, state: PrmState): Promise<PrmRecord>;
+declare function updatePrmPriority(token: string | null, id: string, priority: PrmPriority): Promise<PrmRecord>;
+declare function updatePrmTags(token: string | null, id: string, tags: string[]): Promise<PrmRecord>;
+declare function deletePrmRecord(token: string | null, id: string): Promise<void>;
+declare const PROOM_APP_URL = "https://swissnovo-proom.vercel.app";
+declare const TOOLBOX_APP_URL = "https://swissnovo-toolbox.vercel.app";
+declare const GEOPOOL_APP_URL = "https://swissnovo-geopool.vercel.app";
+
+type Locale = 'de' | 'en' | 'fr' | 'it';
+interface SavedParcelsStrings {
+    title: string;
+    refresh: string;
+    exportCsv: string;
+    openInProom: string;
+    searchPlaceholder: string;
+    filterAllStates: string;
+    showingAll: (n: number) => string;
+    showingFiltered: (n: number, total: number) => string;
+    empty: string;
+    emptyHint: string;
+    noMatch: string;
+    loadFailed: string;
+    signinRequired: string;
+    colAddress: string;
+    colMunicipality: string;
+    colState: string;
+    colPriority: string;
+    colTags: string;
+    colUpdated: string;
+    colActions: string;
+    openHere: string;
+    openInToolbox: string;
+    openInGeopool: string;
+    delete: string;
+    tagPlaceholder: string;
+    addTag: string;
+    removeTag: (tag: string) => string;
+    confirmDeleteTitle: string;
+    confirmDeleteBody: string;
+    close: string;
+    cancel: string;
+    state: Record<PrmState, string>;
+    priority: Record<PrmPriority, string>;
+}
+declare const SAVED_PARCELS_STRINGS: Record<Locale, SavedParcelsStrings>;
+declare const getSavedParcelsStrings: (locale?: Locale) => SavedParcelsStrings;
+
+interface SavedParcelsModalProps {
+    /** Locale for the modal's UI text. Defaults to 'en'. */
+    locale?: Locale;
+    /** Close the modal. */
+    onClose: () => void;
+    /**
+     * "Open here" action — host app handles what "here" means. Typical pattern
+     * is to reload the current page with `?lat=&lng=&address=` for the chosen
+     * parcel. Receives the full record so the app can do whatever it needs.
+     */
+    onOpenHere?: (record: PrmRecord) => void;
+    /** Override the "Open here" button label. Defaults to "Open here". */
+    openHereLabel?: string;
+}
+declare function SavedParcelsModal({ locale, onClose, onOpenHere, openHereLabel, }: SavedParcelsModalProps): react_jsx_runtime.JSX.Element;
 
 interface LoginModalFeature {
     /** Optional leading icon. */
@@ -550,4 +653,4 @@ declare function initialsOf(user: User | null | undefined): string;
 /** The provider-supplied profile picture URL, if any. */
 declare function pictureOf(user: User | null | undefined): string | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, LoginModal, type LoginModalFeature, type LoginModalProps, type ParcelContextInput, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SSO_ATTEMPTED_KEY, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SwissnovoProfile, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createSignalClient, defaultProfile, emailOf, fetchClaireContext, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type CreatePrmInput, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

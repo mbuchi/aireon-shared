@@ -1,6 +1,6 @@
 {
   "name": "@swissnovo/shared",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Shared UI components and utilities for the SwissNovo app suite.",
   "type": "module",
   "license": "UNLICENSED",
