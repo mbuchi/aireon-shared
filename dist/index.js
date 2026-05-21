@@ -805,11 +805,33 @@ function AuthProvider({
   const [loginRequested, setLoginRequested] = useState(false);
   const firstVisitDecided = useRef(false);
   useEffect(() => {
+    const t = setTimeout(() => {
+      setIsLoading((prev) => {
+        if (prev) console.warn("[auth] init death-switch fired \u2014 falling to anonymous");
+        return false;
+      });
+    }, 8e3);
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => {
+    const onLoaded = (u) => setUser(u);
+    const onUnloaded = () => setUser(null);
+    const onExpired = () => {
+      userManager.removeUser().finally(() => setUser(null));
+    };
+    userManager.events.addUserLoaded(onLoaded);
+    userManager.events.addUserUnloaded(onUnloaded);
+    userManager.events.addAccessTokenExpired(onExpired);
+    return () => {
+      userManager.events.removeUserLoaded(onLoaded);
+      userManager.events.removeUserUnloaded(onUnloaded);
+      userManager.events.removeAccessTokenExpired(onExpired);
+    };
+  }, []);
+  useEffect(() => {
     if (initStarted.current) return;
     initStarted.current = true;
-    let cancelled = false;
     const finish = (loaded) => {
-      if (cancelled) return;
       setUser(loaded);
       setIsLoading(false);
     };
@@ -857,28 +879,6 @@ function AuthProvider({
         finish(null);
       }
     })();
-    const onLoaded = (u) => {
-      if (!cancelled) setUser(u);
-    };
-    const onUnloaded = () => {
-      if (!cancelled) setUser(null);
-    };
-    const onExpired = () => {
-      if (!cancelled) {
-        userManager.removeUser().finally(() => {
-          if (!cancelled) setUser(null);
-        });
-      }
-    };
-    userManager.events.addUserLoaded(onLoaded);
-    userManager.events.addUserUnloaded(onUnloaded);
-    userManager.events.addAccessTokenExpired(onExpired);
-    return () => {
-      cancelled = true;
-      userManager.events.removeUserLoaded(onLoaded);
-      userManager.events.removeUserUnloaded(onUnloaded);
-      userManager.events.removeAccessTokenExpired(onExpired);
-    };
   }, []);
   const isAuthenticatedNow = !!user && !user.expired;
   useEffect(() => {

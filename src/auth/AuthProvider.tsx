@@ -99,13 +99,54 @@ export function AuthProvider({
   const [loginRequested, setLoginRequested] = useState(false);
   const firstVisitDecided = useRef(false);
 
+  // Death-switch: every mount unconditionally flips out of `isLoading` after
+  // 8s, regardless of how the silent-SSO init goes. This is the only guard
+  // that survives React 18 StrictMode's double-effect dance — the init
+  // effect below is gated by `initStarted.current` so the second mount
+  // skips re-running the IIFE, and the first mount's `setIsLoading` would
+  // be a no-op against the live (second) mount. The death-switch instead
+  // captures the CURRENT mount's setter on every mount, so it always
+  // updates the live tree.
+  //
+  // Defensive against any path the init might fail to settle: Zitadel's
+  // `Content-Security-Policy: frame-ancestors 'none'` keeps the silent-SSO
+  // iframe from ever reaching silent-callback.html, and oidc-client-ts's
+  // own `silentRequestTimeoutInSeconds` does NOT reliably propagate the
+  // rejection through to our await in every scenario.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setIsLoading((prev) => {
+        if (prev) console.warn('[auth] init death-switch fired — falling to anonymous');
+        return false;
+      });
+    }, 8000);
+    return () => clearTimeout(t);
+  }, []);
+
+  // userManager events run on every mount: even when the init IIFE settled
+  // on a stale (now-unmounted) instance, a real userLoaded event still hits
+  // the live mount via this listener.
+  useEffect(() => {
+    const onLoaded = (u: User) => setUser(u);
+    const onUnloaded = () => setUser(null);
+    const onExpired = () => {
+      userManager.removeUser().finally(() => setUser(null));
+    };
+    userManager.events.addUserLoaded(onLoaded);
+    userManager.events.addUserUnloaded(onUnloaded);
+    userManager.events.addAccessTokenExpired(onExpired);
+    return () => {
+      userManager.events.removeUserLoaded(onLoaded);
+      userManager.events.removeUserUnloaded(onUnloaded);
+      userManager.events.removeAccessTokenExpired(onExpired);
+    };
+  }, []);
+
   useEffect(() => {
     if (initStarted.current) return;
     initStarted.current = true;
-    let cancelled = false;
 
     const finish = (loaded: User | null) => {
-      if (cancelled) return;
       setUser(loaded);
       setIsLoading(false);
     };
@@ -135,18 +176,10 @@ export function AuthProvider({
         }
         if (existing?.expired) await userManager.removeUser().catch(() => {});
 
-        // Hidden-iframe silent SSO: picks up an existing Zitadel session
-        // without a full-page redirect. When there is no session it rejects
-        // quietly (any login UI stays trapped in the invisible iframe), so the
-        // app simply renders anonymous instead of stranding the visitor.
-        //
-        // We wrap signinSilent in our own hard timeout because Zitadel's
-        // login UI responds with `Content-Security-Policy: frame-ancestors
-        // 'none'`. The browser refuses to render Zitadel inside the hidden
-        // iframe, and oidc-client-ts's own `silentRequestTimeoutInSeconds`
-        // does NOT fire in that path — the silent promise hangs forever,
-        // leaving the app stuck on its loading state. A Promise.race against
-        // an explicit timer is the reliable backstop.
+        // Hidden-iframe silent SSO with a 6s race timeout as defence-in-depth.
+        // A positive resolution lets the app settle to authenticated promptly
+        // rather than waiting the full 8s on the death-switch when the
+        // network round-trip is just slow.
         if (sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== '1') {
           sessionStorage.setItem(SSO_ATTEMPTED_KEY, '1');
           try {
@@ -168,31 +201,6 @@ export function AuthProvider({
         finish(null);
       }
     })();
-
-    const onLoaded = (u: User) => {
-      if (!cancelled) setUser(u);
-    };
-    const onUnloaded = () => {
-      if (!cancelled) setUser(null);
-    };
-    const onExpired = () => {
-      if (!cancelled) {
-        userManager.removeUser().finally(() => {
-          if (!cancelled) setUser(null);
-        });
-      }
-    };
-
-    userManager.events.addUserLoaded(onLoaded);
-    userManager.events.addUserUnloaded(onUnloaded);
-    userManager.events.addAccessTokenExpired(onExpired);
-
-    return () => {
-      cancelled = true;
-      userManager.events.removeUserLoaded(onLoaded);
-      userManager.events.removeUserUnloaded(onUnloaded);
-      userManager.events.removeAccessTokenExpired(onExpired);
-    };
   }, []);
 
   const isAuthenticatedNow = !!user && !user.expired;
