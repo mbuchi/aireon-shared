@@ -18,6 +18,7 @@ import {
 } from './geminiClient';
 import { sendClaireMessageSignal } from './signal';
 import { fetchClaireContext } from './claireContext';
+import { fetchClairePOIs } from './clairePOIs';
 import {
   loadClaireConversation,
   saveClaireConversation,
@@ -226,10 +227,24 @@ const ClaireAssistant = ({
     return () => controller.abort();
   }, [lngLat.lng, lngLat.lat]);
 
+  // Surrounding OSM POIs (schools, transit, shops, etc.) fetched from the
+  // host app's `/api/claire-pois` proxy → RES `/score/poi-osm` (local
+  // PostGIS, refreshed monthly). Same best-effort policy: a missing proxy
+  // or network error just yields no POI context, never an error.
+  const [pois, setPois] = useState<string>('');
+  useEffect(() => {
+    const controller = new AbortController();
+    setPois('');
+    void fetchClairePOIs(lngLat.lng, lngLat.lat, controller.signal)
+      .then((res) => setPois(res.text))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [lngLat.lng, lngLat.lat]);
+
   const fullContext = useMemo(
     () =>
-      official.text ? `${parcelContext}\n\n${official.text}` : parcelContext,
-    [parcelContext, official.text],
+      [parcelContext, official.text, pois].filter(Boolean).join('\n\n'),
+    [parcelContext, official.text, pois],
   );
 
   // Reset conversation whenever the targeted parcel changes — the chat must

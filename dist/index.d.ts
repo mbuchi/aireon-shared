@@ -467,6 +467,21 @@ interface ClaireContext {
  */
 declare function fetchClaireContext(lng: number, lat: number, signal?: AbortSignal): Promise<ClaireContext>;
 
+interface ClairePOIs {
+    /** Ready-to-append context block; '' on error or when nothing found. */
+    text: string;
+    /** Total POIs surfaced after categorisation (for telemetry / debug). */
+    count: number;
+}
+/**
+ * Fetches and summarises surrounding OSM POIs for a parcel coordinate. The
+ * returned text is a compact bulleted block ready to append to the parcel
+ * context — counts per category plus the nearest few names with distances.
+ *
+ * Never throws — best-effort enrichment, like fetchClaireContext.
+ */
+declare function fetchClairePOIs(lng: number, lat: number, signal?: AbortSignal): Promise<ClairePOIs>;
+
 /** The thing a signal is about — typically the selected parcel / address. */
 interface SignalTarget {
     /** Human-readable address. */
@@ -653,4 +668,4 @@ declare function initialsOf(user: User | null | undefined): string;
 /** The provider-supplied profile picture URL, if any. */
 declare function pictureOf(user: User | null | undefined): string | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireTurn, type CreatePrmInput, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClairePOIs, type ClaireTurn, type CreatePrmInput, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

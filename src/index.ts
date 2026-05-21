@@ -79,6 +79,8 @@ export type { ClaireTurn } from './claire/claireConversation';
 export { sendClaireMessageSignal } from './claire/signal';
 export { fetchClaireContext } from './claire/claireContext';
 export type { ClaireContext } from './claire/claireContext';
+export { fetchClairePOIs } from './claire/clairePOIs';
+export type { ClairePOIs } from './claire/clairePOIs';
 
 export { createSignalClient } from './signal/client';
 export type {

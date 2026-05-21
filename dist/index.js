@@ -1826,6 +1826,7 @@ Tone and format:
 Rules:
 - Always stay focused on the currently selected parcel below. If the user asks for nearby comparisons, market trends, or legal advice, give helpful general guidance grounded in the parcel context and clearly mark estimates as such.
 - Never invent specific cadastral, legal, or pricing figures that aren't supplied. If data is missing, say so briefly and suggest what would be needed.
+- When the user asks about the neighbourhood (schools, transit, shops, restaurants, parks, services), draw from the "Surrounding points of interest" block if present \u2014 quote names and distances faithfully and do not invent POIs not listed.
 - Mention regulatory caveats for Switzerland where relevant (e.g. zoning law, Lex Koller, planning permissions) at a high level.
 - Do not output disclaimers longer than one short sentence.`;
 }
@@ -2117,6 +2118,162 @@ ${sections.join("\n\n")}`;
   return { text, address };
 }
 
+// src/claire/clairePOIs.ts
+var POI_ENDPOINT = "/api/claire-pois";
+var TAG_CATEGORY = {
+  "amenity=restaurant": "Food & dining",
+  "amenity=cafe": "Food & dining",
+  "amenity=bar": "Food & dining",
+  "amenity=pub": "Food & dining",
+  "amenity=biergarten": "Food & dining",
+  "amenity=fast_food": "Food & dining",
+  "amenity=ice_cream": "Food & dining",
+  "amenity=food_court": "Food & dining",
+  "shop=supermarket": "Groceries",
+  "shop=convenience": "Groceries",
+  "shop=bakery": "Groceries",
+  "shop=butcher": "Groceries",
+  "shop=greengrocer": "Groceries",
+  "shop=deli": "Groceries",
+  "shop=organic": "Groceries",
+  "shop=beverages": "Groceries",
+  "shop=cheese": "Groceries",
+  "amenity=hospital": "Health",
+  "amenity=clinic": "Health",
+  "amenity=pharmacy": "Health",
+  "amenity=doctors": "Health",
+  "healthcare=doctor": "Health",
+  "healthcare=dentist": "Health",
+  "healthcare=clinic": "Health",
+  "healthcare=hospital": "Health",
+  "healthcare=pharmacy": "Health",
+  "amenity=school": "Education",
+  "amenity=kindergarten": "Education",
+  "amenity=library": "Education",
+  "amenity=university": "Education",
+  "amenity=college": "Education",
+  "amenity=childcare": "Education",
+  "amenity=bus_station": "Transport",
+  "highway=bus_stop": "Transport",
+  "railway=station": "Transport",
+  "railway=halt": "Transport",
+  "railway=tram_stop": "Transport",
+  "amenity=post_office": "Public services",
+  "amenity=police": "Public services",
+  "amenity=townhall": "Public services",
+  "amenity=marketplace": "Public services",
+  "amenity=bank": "Money & fuel",
+  "amenity=atm": "Money & fuel",
+  "amenity=money_exchange": "Money & fuel",
+  "amenity=fuel": "Money & fuel",
+  "amenity=charging_station": "Money & fuel",
+  "amenity=cinema": "Recreation",
+  "amenity=theatre": "Recreation",
+  "amenity=arts_centre": "Recreation",
+  "amenity=museum": "Recreation",
+  "amenity=gallery": "Recreation",
+  "leisure=sports_centre": "Recreation",
+  "leisure=fitness_centre": "Recreation",
+  "leisure=stadium": "Recreation",
+  "leisure=park": "Outdoors",
+  "leisure=playground": "Outdoors",
+  "amenity=community_centre": "Community",
+  "amenity=place_of_worship": "Community",
+  "amenity=social_facility": "Community"
+};
+var CATEGORY_ORDER = [
+  "Transport",
+  "Education",
+  "Groceries",
+  "Food & dining",
+  "Health",
+  "Public services",
+  "Recreation",
+  "Outdoors",
+  "Money & fuel",
+  "Community"
+];
+var CAP_PER_CATEGORY = 5;
+function haversineMetres(lat1, lng1, lat2, lng2) {
+  const R = 6371e3;
+  const toRad = (x) => x * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+function coordsOf(el) {
+  if (typeof el.lat === "number" && typeof el.lon === "number")
+    return { lat: el.lat, lng: el.lon };
+  if (el.center) return { lat: el.center.lat, lng: el.center.lon };
+  return null;
+}
+function categoryOf(tags) {
+  for (const [k, v] of Object.entries(tags)) {
+    const cat = TAG_CATEGORY[`${k}=${v}`];
+    if (cat) return cat;
+  }
+  return null;
+}
+function nameOf(tags) {
+  if (tags.name) return tags.name;
+  const primary = tags.amenity ?? tags.shop ?? tags.leisure ?? tags.railway ?? tags.highway ?? tags.healthcare;
+  if (primary) {
+    return primary.charAt(0).toUpperCase() + primary.slice(1).replace(/_/g, " ");
+  }
+  return "Unnamed";
+}
+function formatDistance(metres) {
+  if (metres < 1e3) return `${Math.round(metres)} m`;
+  if (metres < 1e4) return `${(metres / 1e3).toFixed(1)} km`;
+  return `${Math.round(metres / 1e3)} km`;
+}
+async function fetchClairePOIs(lng, lat, signal) {
+  let data;
+  try {
+    const res = await fetch(POI_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lat, lng }),
+      signal
+    });
+    if (!res.ok) return { text: "", count: 0 };
+    data = await res.json();
+  } catch {
+    return { text: "", count: 0 };
+  }
+  const elements = data.elements ?? [];
+  if (elements.length === 0) return { text: "", count: 0 };
+  const buckets = {};
+  let total = 0;
+  for (const el of elements) {
+    if (!el.tags) continue;
+    const c = coordsOf(el);
+    if (!c) continue;
+    const cat = categoryOf(el.tags);
+    if (!cat) continue;
+    const distance = haversineMetres(lat, lng, c.lat, c.lng);
+    (buckets[cat] ?? (buckets[cat] = [])).push({ name: nameOf(el.tags), distance });
+    total += 1;
+  }
+  const sections = [];
+  for (const cat of CATEGORY_ORDER) {
+    const items = buckets[cat];
+    if (!items || items.length === 0) continue;
+    items.sort((a, b) => a.distance - b.distance);
+    const top = items.slice(0, CAP_PER_CATEGORY);
+    const list = top.map((p) => `${p.name} (${formatDistance(p.distance)})`).join(", ");
+    const suffix = items.length > top.length ? `, +${items.length - top.length} more` : "";
+    sections.push(`- ${cat} (${items.length} within radius): ${list}${suffix}`);
+  }
+  if (sections.length === 0) return { text: "", count: 0 };
+  return {
+    text: `Surrounding points of interest (OpenStreetMap, walking-radius search):
+${sections.join("\n")}`,
+    count: total
+  };
+}
+
 // src/claire/claireConversation.ts
 var CLAIRE_API_BASE = "https://res.zeroo.ch/res_api/claire";
 async function loadClaireConversation(parcelId, accessToken) {
@@ -2287,11 +2444,17 @@ var ClaireAssistant = ({
     });
     return () => controller.abort();
   }, [lngLat.lng, lngLat.lat]);
+  const [pois, setPois] = useState("");
+  useEffect(() => {
+    const controller = new AbortController();
+    setPois("");
+    void fetchClairePOIs(lngLat.lng, lngLat.lat, controller.signal).then((res) => setPois(res.text)).catch(() => {
+    });
+    return () => controller.abort();
+  }, [lngLat.lng, lngLat.lat]);
   const fullContext = useMemo(
-    () => official.text ? `${parcelContext}
-
-${official.text}` : parcelContext,
-    [parcelContext, official.text]
+    () => [parcelContext, official.text, pois].filter(Boolean).join("\n\n"),
+    [parcelContext, official.text, pois]
   );
   useEffect(() => {
     abortRef.current?.abort();
@@ -3276,4 +3439,4 @@ function ProfileModal({ user, onClose, dark = false }) {
   );
 }
 
-export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
