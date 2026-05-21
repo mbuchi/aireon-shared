@@ -139,14 +139,27 @@ export function AuthProvider({
         // without a full-page redirect. When there is no session it rejects
         // quietly (any login UI stays trapped in the invisible iframe), so the
         // app simply renders anonymous instead of stranding the visitor.
+        //
+        // We wrap signinSilent in our own hard timeout because Zitadel's
+        // login UI responds with `Content-Security-Policy: frame-ancestors
+        // 'none'`. The browser refuses to render Zitadel inside the hidden
+        // iframe, and oidc-client-ts's own `silentRequestTimeoutInSeconds`
+        // does NOT fire in that path — the silent promise hangs forever,
+        // leaving the app stuck on its loading state. A Promise.race against
+        // an explicit timer is the reliable backstop.
         if (sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== '1') {
           sessionStorage.setItem(SSO_ATTEMPTED_KEY, '1');
           try {
-            const silent = await userManager.signinSilent();
+            const silent = await Promise.race([
+              userManager.signinSilent(),
+              new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('silent SSO hard timeout')), 6000),
+              ),
+            ]);
             finish(silent && !silent.expired ? silent : null);
             return;
           } catch {
-            /* no session — expected for anonymous visitors */
+            /* no session, CSP-blocked iframe, or hard timeout — fall through */
           }
         }
         finish(null);
