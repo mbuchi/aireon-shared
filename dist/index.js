@@ -840,7 +840,12 @@ function AuthProvider({
         if (sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== "1") {
           sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
           try {
-            const silent = await userManager.signinSilent();
+            const silent = await Promise.race([
+              userManager.signinSilent(),
+              new Promise(
+                (_, reject) => setTimeout(() => reject(new Error("silent SSO hard timeout")), 6e3)
+              )
+            ]);
             finish(silent && !silent.expired ? silent : null);
             return;
           } catch {
