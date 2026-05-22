@@ -1717,6 +1717,58 @@ function ConfirmDelete({ t, onCancel, onConfirm }) {
   ] }) });
 }
 
+// src/claire/claireAppCatalog.ts
+var SWISSNOVO_SUITE_BLURB = "SwissNovo is a suite of focused web apps for Swiss real estate, built for owners, architects and brokers. Each app does one job well \u2014 valuation, zoning, GIS, monitoring, CRM, and more \u2014 and the toolbox dashboard links them all. Most accept a parcel or coordinates so the user can carry context from one tool to the next.";
+var SWISSNOVO_APP_CATALOG = `Valuation & pricing:
+- valoo \u2014 map of parcel values; spots pricing hotspots and underpriced pockets. https://swissnovo-valoo.vercel.app
+- proove \u2014 instant property valuation with transparent, factor-based pricing and upside estimates. https://proove.vercel.app/
+- scoore \u2014 auto-scores parcels on location, infrastructure and development potential. https://swissnovo-scoore.vercel.app/
+
+Maps & GIS data:
+- geopool \u2014 visual GIS data browser for real estate, like Google Maps for parcels. https://geopool.vercel.app/
+- contoor \u2014 extracts CAD geodata, parcel boundaries and topographic information. https://contoor.vercel.app/
+- woom \u2014 detects every available WMS map layer for a parcel. https://swissnovo-woom.vercel.app/
+- voogle \u2014 exports high-resolution Street View images for brochures. https://swissnovo-voogle.vercel.app/
+
+Building, terrain & environment:
+- roofs \u2014 analyzes building heights and roof structures. https://swissnovo-roofs.vercel.app/
+- roots \u2014 researches building age and history for renovation/investment decisions. https://swissnovo-roots.vercel.app/
+- hood \u2014 simulates 3D sunlight and shadow patterns for any parcel. https://swissnovo-hood.vercel.app/
+- footprint \u2014 analyzes building footprints, coverage ratios and sealed surface. https://swissnovo-footprint.vercel.app/
+- soolar \u2014 building-level solar/PV potential from the BFE Sonnendach dataset. https://swissnovo-soolar.vercel.app/
+- boom \u2014 Swiss environmental noise map (road & rail) checked against legal limits. https://swissnovo-boom.vercel.app/
+
+Regulations & legal:
+- xploore \u2014 finds building regulations, zoning plans and rules for a parcel. https://xploore.vercel.app/
+- handbook \u2014 planning-document dataroom with AI summaries and regulation Q&A. https://swissnovo-handbook.vercel.app/
+- roolez \u2014 AI-powered analysis and interpretation of building regulations. https://roolez.vercel.app/
+- lookup \u2014 OEREB control center for public-law restriction queries. https://swissnovo-lookup.vercel.app/
+
+Monitoring & market signals:
+- scoops \u2014 real-time dashboard of property signals and market indicators. https://swissnovo-scoops.vercel.app/
+- watchoo \u2014 tracks building permits Switzerland-wide to qualify leads early. https://swissnovo-watchoo.vercel.app/
+- vacoo \u2014 monitors Swiss vacancy rates and market availability. https://vacoo.vercel.app/
+- groove \u2014 monitors official GWR building data and detects registry changes. https://swissnovo-groove.vercel.app/
+- goody \u2014 map of every new building project in Switzerland from the GWR register. https://swissnovo-goody.vercel.app/
+- taxoo \u2014 compares Swiss tax rates across municipalities. https://taxoo.vercel.app/
+
+Search & parcel data:
+- choose \u2014 SQL-backed parcel filter and export by size, price, city, year. https://swissnovo-choose.vercel.app/
+- showroom \u2014 full parcel data overview from an address search. https://swissnovo-showroom.vercel.app/
+
+Pipeline & AI assistants:
+- proom \u2014 parcel-first CRM with a Kanban pipeline, saved parcels and activity log. https://swissnovo-proom.vercel.app/
+- doorway \u2014 natural-language parcel chat about ownership, zoning and potential. https://swissnovo-doorway.vercel.app/
+- booklet \u2014 builds professional property portfolios and company presentations. https://swissnovo-booklet.vercel.app/
+
+Transactions & brokers:
+- boost \u2014 compares brokers by performance, commission and specialization. https://swissnovo-boost.vercel.app/
+- zeroo \u2014 zero-commission marketplace to buy and sell property directly. https://swissnovo-zeroo.vercel.app/
+- realioo \u2014 fractional, tokenized Swiss real-estate investment. https://realioo.brokereum.xyz
+
+Hub:
+- toolbox \u2014 the suite dashboard: search and launch every SwissNovo tool. https://swissnovo-toolbox.vercel.app/`;
+
 // src/claire/geminiClient.ts
 var DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite";
 var GEMINI_ENDPOINT = (model, key) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
@@ -1815,6 +1867,7 @@ function buildParcelContextSummary(input) {
 }
 function systemInstruction(appName) {
   const where = appName ? `${appName}, a SwissNovo real-estate analytics app` : "a SwissNovo real-estate analytics app";
+  const currentApp = appName ?? "the current app";
   return `You are "Claire", the AI parcel assistant embedded inside ${where}. You help investors, developers and property owners understand a single selected parcel.
 
 Tone and format:
@@ -1826,9 +1879,16 @@ Tone and format:
 Rules:
 - Always stay focused on the currently selected parcel below. If the user asks for nearby comparisons, market trends, or legal advice, give helpful general guidance grounded in the parcel context and clearly mark estimates as such.
 - Never invent specific cadastral, legal, or pricing figures that aren't supplied. If data is missing, say so briefly and suggest what would be needed.
-- When the user asks about the neighbourhood (schools, transit, shops, restaurants, parks, services), draw from the "Surrounding points of interest" block if present \u2014 quote names and distances faithfully and do not invent POIs not listed.
+- When the user asks about the neighbourhood (schools, transit, shops, restaurants, parks, services), draw from the "Surrounding location & amenities" block if present \u2014 quote names and distances faithfully and do not invent POIs not listed.
+- If a "Location-accessibility score" is present, treat it as the parcel's scoore walkability score: it runs 0\u20136, where 6 means key amenities are at the doorstep. Cite it as "<n>/6" and explain weak categories using the per-category breakdown.
 - Mention regulatory caveats for Switzerland where relevant (e.g. zoning law, Lex Koller, planning permissions) at a high level.
-- Do not output disclaimers longer than one short sentence.`;
+- When another SwissNovo app would clearly serve the user's need better than this one, recommend it by name with its URL \u2014 usually a single suggestion. Never recommend ${currentApp} itself (it is the app they are already using). Point users to the toolbox dashboard when they want to browse the whole suite.
+- Do not output disclaimers longer than one short sentence.
+
+About the SwissNovo suite:
+${SWISSNOVO_SUITE_BLURB}
+
+${SWISSNOVO_APP_CATALOG}`;
 }
 var GeminiConfigError = class extends Error {
   constructor() {
@@ -2118,17 +2178,55 @@ ${sections.join("\n\n")}`;
   return { text, address };
 }
 
+// src/claire/claireScore.ts
+var SCORE_CATEGORIES = [
+  { name: "Transport", minPOIs: 2, perfectDistance: 100, radius: 1e3, penaltyFactor: 1, weight: 1 },
+  { name: "Utilities", minPOIs: 2, perfectDistance: 100, radius: 1e3, penaltyFactor: 1, weight: 1 },
+  { name: "Education", minPOIs: 1, perfectDistance: 200, radius: 5e3, penaltyFactor: 1, weight: 1 },
+  { name: "Health", minPOIs: 2, perfectDistance: 200, radius: 1e3, penaltyFactor: 1, weight: 1 },
+  { name: "Groceries", minPOIs: 3, perfectDistance: 50, radius: 1e3, penaltyFactor: 1, weight: 1 },
+  { name: "Food_Dining", minPOIs: 3, perfectDistance: 50, radius: 1e3, penaltyFactor: 1, weight: 1 },
+  { name: "Recreation", minPOIs: 2, perfectDistance: 200, radius: 2e3, penaltyFactor: 1, weight: 1 },
+  { name: "Public_Services", minPOIs: 2, perfectDistance: 200, radius: 2e3, penaltyFactor: 1, weight: 1 },
+  { name: "Community", minPOIs: 2, perfectDistance: 200, radius: 1e3, penaltyFactor: 1, weight: 1 },
+  { name: "Outdoor", minPOIs: 2, perfectDistance: 300, radius: 5e3, penaltyFactor: 1, weight: 1 }
+];
+function poiScore(distance, perfectDistance, penaltyFactor) {
+  if (distance <= 0) return 6;
+  const score = 6 - penaltyFactor * Math.log2(distance / perfectDistance);
+  return Math.max(0, Math.min(6, score));
+}
+function categoryScore(cat, distances) {
+  const nearest = distances.filter((d) => d <= cat.radius).sort((a, b) => a - b).slice(0, cat.minPOIs).map((d) => poiScore(d, cat.perfectDistance, cat.penaltyFactor));
+  while (nearest.length < cat.minPOIs) nearest.push(0);
+  return nearest.reduce((acc, s) => acc + s, 0) / cat.minPOIs;
+}
+function computeLocationScore(categoryDistances) {
+  const byCategory = {};
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (const cat of SCORE_CATEGORIES) {
+    const distances = categoryDistances[cat.name] ?? [];
+    const score = distances.length > 0 ? categoryScore(cat, distances) : 0;
+    byCategory[cat.name] = Math.round(score * 100) / 100;
+    weightedSum += score * cat.weight;
+    totalWeight += cat.weight;
+  }
+  const total = totalWeight > 0 ? Math.round(weightedSum / totalWeight * 100) / 100 : 0;
+  return { total, byCategory };
+}
+
 // src/claire/clairePOIs.ts
 var POI_ENDPOINT = "/api/claire-pois";
 var TAG_CATEGORY = {
-  "amenity=restaurant": "Food & dining",
-  "amenity=cafe": "Food & dining",
-  "amenity=bar": "Food & dining",
-  "amenity=pub": "Food & dining",
-  "amenity=biergarten": "Food & dining",
-  "amenity=fast_food": "Food & dining",
-  "amenity=ice_cream": "Food & dining",
-  "amenity=food_court": "Food & dining",
+  "amenity=restaurant": "Food_Dining",
+  "amenity=cafe": "Food_Dining",
+  "amenity=bar": "Food_Dining",
+  "amenity=pub": "Food_Dining",
+  "amenity=biergarten": "Food_Dining",
+  "amenity=fast_food": "Food_Dining",
+  "amenity=ice_cream": "Food_Dining",
+  "amenity=food_court": "Food_Dining",
   "shop=supermarket": "Groceries",
   "shop=convenience": "Groceries",
   "shop=bakery": "Groceries",
@@ -2158,15 +2256,15 @@ var TAG_CATEGORY = {
   "railway=station": "Transport",
   "railway=halt": "Transport",
   "railway=tram_stop": "Transport",
-  "amenity=post_office": "Public services",
-  "amenity=police": "Public services",
-  "amenity=townhall": "Public services",
-  "amenity=marketplace": "Public services",
-  "amenity=bank": "Money & fuel",
-  "amenity=atm": "Money & fuel",
-  "amenity=money_exchange": "Money & fuel",
-  "amenity=fuel": "Money & fuel",
-  "amenity=charging_station": "Money & fuel",
+  "amenity=post_office": "Public_Services",
+  "amenity=police": "Public_Services",
+  "amenity=townhall": "Public_Services",
+  "amenity=marketplace": "Public_Services",
+  "amenity=bank": "Utilities",
+  "amenity=atm": "Utilities",
+  "amenity=money_exchange": "Utilities",
+  "amenity=fuel": "Utilities",
+  "amenity=charging_station": "Utilities",
   "amenity=cinema": "Recreation",
   "amenity=theatre": "Recreation",
   "amenity=arts_centre": "Recreation",
@@ -2175,22 +2273,34 @@ var TAG_CATEGORY = {
   "leisure=sports_centre": "Recreation",
   "leisure=fitness_centre": "Recreation",
   "leisure=stadium": "Recreation",
-  "leisure=park": "Outdoors",
-  "leisure=playground": "Outdoors",
+  "leisure=park": "Outdoor",
+  "leisure=playground": "Outdoor",
   "amenity=community_centre": "Community",
   "amenity=place_of_worship": "Community",
   "amenity=social_facility": "Community"
+};
+var CATEGORY_LABEL = {
+  Transport: "Transport",
+  Education: "Education",
+  Groceries: "Groceries",
+  Food_Dining: "Food & dining",
+  Health: "Health",
+  Public_Services: "Public services",
+  Recreation: "Recreation",
+  Outdoor: "Outdoors",
+  Utilities: "Money & fuel",
+  Community: "Community"
 };
 var CATEGORY_ORDER = [
   "Transport",
   "Education",
   "Groceries",
-  "Food & dining",
+  "Food_Dining",
   "Health",
-  "Public services",
+  "Public_Services",
   "Recreation",
-  "Outdoors",
-  "Money & fuel",
+  "Outdoor",
+  "Utilities",
   "Community"
 ];
 var CAP_PER_CATEGORY = 5;
@@ -2237,13 +2347,13 @@ async function fetchClairePOIs(lng, lat, signal) {
       body: JSON.stringify({ lat, lng }),
       signal
     });
-    if (!res.ok) return { text: "", count: 0 };
+    if (!res.ok) return { text: "", count: 0, score: null };
     data = await res.json();
   } catch {
-    return { text: "", count: 0 };
+    return { text: "", count: 0, score: null };
   }
   const elements = data.elements ?? [];
-  if (elements.length === 0) return { text: "", count: 0 };
+  if (elements.length === 0) return { text: "", count: 0, score: null };
   const buckets = {};
   let total = 0;
   for (const el of elements) {
@@ -2256,7 +2366,16 @@ async function fetchClairePOIs(lng, lat, signal) {
     (buckets[cat] ?? (buckets[cat] = [])).push({ name: nameOf(el.tags), distance });
     total += 1;
   }
-  const sections = [];
+  if (total === 0) return { text: "", count: 0, score: null };
+  const distancesByCategory = {};
+  for (const [cat, items] of Object.entries(buckets)) {
+    distancesByCategory[cat] = items.map((i) => i.distance);
+  }
+  const score = computeLocationScore(distancesByCategory);
+  const perCategory = CATEGORY_ORDER.map(
+    (cat) => `${CATEGORY_LABEL[cat]} ${score.byCategory[cat].toFixed(1)}`
+  ).join(", ");
+  const poiLines = [];
   for (const cat of CATEGORY_ORDER) {
     const items = buckets[cat];
     if (!items || items.length === 0) continue;
@@ -2264,14 +2383,16 @@ async function fetchClairePOIs(lng, lat, signal) {
     const top = items.slice(0, CAP_PER_CATEGORY);
     const list = top.map((p) => `${p.name} (${formatDistance(p.distance)})`).join(", ");
     const suffix = items.length > top.length ? `, +${items.length - top.length} more` : "";
-    sections.push(`- ${cat} (${items.length} within radius): ${list}${suffix}`);
+    poiLines.push(
+      `- ${CATEGORY_LABEL[cat]} (${items.length} within radius): ${list}${suffix}`
+    );
   }
-  if (sections.length === 0) return { text: "", count: 0 };
-  return {
-    text: `Surrounding points of interest (OpenStreetMap, walking-radius search):
-${sections.join("\n")}`,
-    count: total
-  };
+  const text = `Surrounding location & amenities (OpenStreetMap):
+Location-accessibility score (scoore walkability model, 0\u20136 where 6 means key amenities are at the doorstep): ${score.total.toFixed(1)} / 6.
+Per category (0\u20136): ${perCategory}.
+Nearest points of interest:
+${poiLines.join("\n")}`;
+  return { text, count: total, score };
 }
 
 // src/claire/claireConversation.ts
@@ -3439,4 +3560,4 @@ function ProfileModal({ user, onClose, dark = false }) {
   );
 }
 
-export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

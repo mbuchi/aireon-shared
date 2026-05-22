@@ -2,6 +2,11 @@
 // AI parcel assistant. The API key and model are passed in by the consuming
 // app (read from its own Vite env) so the shared package stays config-free.
 
+import {
+  SWISSNOVO_SUITE_BLURB,
+  SWISSNOVO_APP_CATALOG,
+} from './claireAppCatalog';
+
 const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
 const GEMINI_ENDPOINT = (model: string, key: string) =>
@@ -124,6 +129,7 @@ function systemInstruction(appName?: string): string {
   const where = appName
     ? `${appName}, a SwissNovo real-estate analytics app`
     : 'a SwissNovo real-estate analytics app';
+  const currentApp = appName ?? 'the current app';
   return `You are "Claire", the AI parcel assistant embedded inside ${where}. You help investors, developers and property owners understand a single selected parcel.
 
 Tone and format:
@@ -135,9 +141,16 @@ Tone and format:
 Rules:
 - Always stay focused on the currently selected parcel below. If the user asks for nearby comparisons, market trends, or legal advice, give helpful general guidance grounded in the parcel context and clearly mark estimates as such.
 - Never invent specific cadastral, legal, or pricing figures that aren't supplied. If data is missing, say so briefly and suggest what would be needed.
-- When the user asks about the neighbourhood (schools, transit, shops, restaurants, parks, services), draw from the "Surrounding points of interest" block if present — quote names and distances faithfully and do not invent POIs not listed.
+- When the user asks about the neighbourhood (schools, transit, shops, restaurants, parks, services), draw from the "Surrounding location & amenities" block if present — quote names and distances faithfully and do not invent POIs not listed.
+- If a "Location-accessibility score" is present, treat it as the parcel's scoore walkability score: it runs 0–6, where 6 means key amenities are at the doorstep. Cite it as "<n>/6" and explain weak categories using the per-category breakdown.
 - Mention regulatory caveats for Switzerland where relevant (e.g. zoning law, Lex Koller, planning permissions) at a high level.
-- Do not output disclaimers longer than one short sentence.`;
+- When another SwissNovo app would clearly serve the user's need better than this one, recommend it by name with its URL — usually a single suggestion. Never recommend ${currentApp} itself (it is the app they are already using). Point users to the toolbox dashboard when they want to browse the whole suite.
+- Do not output disclaimers longer than one short sentence.
+
+About the SwissNovo suite:
+${SWISSNOVO_SUITE_BLURB}
+
+${SWISSNOVO_APP_CATALOG}`;
 }
 
 export interface GeminiCallOptions {
