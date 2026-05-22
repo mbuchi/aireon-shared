@@ -467,20 +467,45 @@ interface ClaireContext {
  */
 declare function fetchClaireContext(lng: number, lat: number, signal?: AbortSignal): Promise<ClaireContext>;
 
+interface LocationScore {
+    /** Overall accessibility score, 0–6 (6 = key amenities at the doorstep). */
+    total: number;
+    /** Per-category sub-scores, 0–6, keyed by scoore category id. */
+    byCategory: Record<string, number>;
+}
+/**
+ * Computes scoore's location-accessibility score from per-category POI
+ * distances (metres). Mirrors scoore's `calculateLocationScore` exactly:
+ * an unweighted average of the ten category scores, each 0–6.
+ */
+declare function computeLocationScore(categoryDistances: Record<string, number[]>): LocationScore;
+
 interface ClairePOIs {
     /** Ready-to-append context block; '' on error or when nothing found. */
     text: string;
     /** Total POIs surfaced after categorisation (for telemetry / debug). */
     count: number;
+    /** scoore-equivalent location-accessibility score; null when no POIs. */
+    score: LocationScore | null;
 }
 /**
- * Fetches and summarises surrounding OSM POIs for a parcel coordinate. The
- * returned text is a compact bulleted block ready to append to the parcel
- * context — counts per category plus the nearest few names with distances.
+ * Fetches surrounding OSM POIs for a parcel coordinate, computes scoore's
+ * location-accessibility score from them, and returns a compact context
+ * block: the score (overall + per category) followed by the nearest few
+ * POIs per category with distances.
  *
  * Never throws — best-effort enrichment, like fetchClaireContext.
  */
 declare function fetchClairePOIs(lng: number, lat: number, signal?: AbortSignal): Promise<ClairePOIs>;
+
+/** One-paragraph description of what the SwissNovo suite is. */
+declare const SWISSNOVO_SUITE_BLURB: string;
+/**
+ * Compact, grouped catalogue of every SwissNovo app — name, one-line purpose,
+ * and launch URL. Woven into Claire's system prompt so she can point users to
+ * the most relevant tool.
+ */
+declare const SWISSNOVO_APP_CATALOG = "Valuation & pricing:\n- valoo \u2014 map of parcel values; spots pricing hotspots and underpriced pockets. https://swissnovo-valoo.vercel.app\n- proove \u2014 instant property valuation with transparent, factor-based pricing and upside estimates. https://proove.vercel.app/\n- scoore \u2014 auto-scores parcels on location, infrastructure and development potential. https://swissnovo-scoore.vercel.app/\n\nMaps & GIS data:\n- geopool \u2014 visual GIS data browser for real estate, like Google Maps for parcels. https://geopool.vercel.app/\n- contoor \u2014 extracts CAD geodata, parcel boundaries and topographic information. https://contoor.vercel.app/\n- woom \u2014 detects every available WMS map layer for a parcel. https://swissnovo-woom.vercel.app/\n- voogle \u2014 exports high-resolution Street View images for brochures. https://swissnovo-voogle.vercel.app/\n\nBuilding, terrain & environment:\n- roofs \u2014 analyzes building heights and roof structures. https://swissnovo-roofs.vercel.app/\n- roots \u2014 researches building age and history for renovation/investment decisions. https://swissnovo-roots.vercel.app/\n- hood \u2014 simulates 3D sunlight and shadow patterns for any parcel. https://swissnovo-hood.vercel.app/\n- footprint \u2014 analyzes building footprints, coverage ratios and sealed surface. https://swissnovo-footprint.vercel.app/\n- soolar \u2014 building-level solar/PV potential from the BFE Sonnendach dataset. https://swissnovo-soolar.vercel.app/\n- boom \u2014 Swiss environmental noise map (road & rail) checked against legal limits. https://swissnovo-boom.vercel.app/\n\nRegulations & legal:\n- xploore \u2014 finds building regulations, zoning plans and rules for a parcel. https://xploore.vercel.app/\n- handbook \u2014 planning-document dataroom with AI summaries and regulation Q&A. https://swissnovo-handbook.vercel.app/\n- roolez \u2014 AI-powered analysis and interpretation of building regulations. https://roolez.vercel.app/\n- lookup \u2014 OEREB control center for public-law restriction queries. https://swissnovo-lookup.vercel.app/\n\nMonitoring & market signals:\n- scoops \u2014 real-time dashboard of property signals and market indicators. https://swissnovo-scoops.vercel.app/\n- watchoo \u2014 tracks building permits Switzerland-wide to qualify leads early. https://swissnovo-watchoo.vercel.app/\n- vacoo \u2014 monitors Swiss vacancy rates and market availability. https://vacoo.vercel.app/\n- groove \u2014 monitors official GWR building data and detects registry changes. https://swissnovo-groove.vercel.app/\n- goody \u2014 map of every new building project in Switzerland from the GWR register. https://swissnovo-goody.vercel.app/\n- taxoo \u2014 compares Swiss tax rates across municipalities. https://taxoo.vercel.app/\n\nSearch & parcel data:\n- choose \u2014 SQL-backed parcel filter and export by size, price, city, year. https://swissnovo-choose.vercel.app/\n- showroom \u2014 full parcel data overview from an address search. https://swissnovo-showroom.vercel.app/\n\nPipeline & AI assistants:\n- proom \u2014 parcel-first CRM with a Kanban pipeline, saved parcels and activity log. https://swissnovo-proom.vercel.app/\n- doorway \u2014 natural-language parcel chat about ownership, zoning and potential. https://swissnovo-doorway.vercel.app/\n- booklet \u2014 builds professional property portfolios and company presentations. https://swissnovo-booklet.vercel.app/\n\nTransactions & brokers:\n- boost \u2014 compares brokers by performance, commission and specialization. https://swissnovo-boost.vercel.app/\n- zeroo \u2014 zero-commission marketplace to buy and sell property directly. https://swissnovo-zeroo.vercel.app/\n- realioo \u2014 fractional, tokenized Swiss real-estate investment. https://realioo.brokereum.xyz\n\nHub:\n- toolbox \u2014 the suite dashboard: search and launch every SwissNovo tool. https://swissnovo-toolbox.vercel.app/";
 
 /** The thing a signal is about — typically the selected parcel / address. */
 interface SignalTarget {
@@ -668,4 +693,4 @@ declare function initialsOf(user: User | null | undefined): string;
 /** The provider-supplied profile picture URL, if any. */
 declare function pictureOf(user: User | null | undefined): string | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClairePOIs, type ClaireTurn, type CreatePrmInput, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClairePOIs, type ClaireTurn, type CreatePrmInput, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
