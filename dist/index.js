@@ -1955,7 +1955,7 @@ ${parcelContext}`;
 
 // src/claire/elevenLabsClient.ts
 var DEFAULT_TTS_MODEL = "eleven_turbo_v2_5";
-var DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+var DEFAULT_VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 var TTS_ENDPOINT = (voiceId) => `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}`;
 var ElevenLabsConfigError = class extends Error {
   constructor() {

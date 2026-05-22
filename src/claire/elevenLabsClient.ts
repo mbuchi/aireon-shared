@@ -10,9 +10,10 @@
 // short; apps may override via the elevenLabsModel prop.
 const DEFAULT_TTS_MODEL = 'eleven_turbo_v2_5';
 
-// "Rachel" — a calm, professional ElevenLabs preset voice. A sensible
-// default for Claire; apps may override via the elevenLabsVoiceId prop.
-const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM';
+// "Sarah" — a mature, reassuring, professional female ElevenLabs preset
+// voice. A sensible default for Claire and usable on free-tier accounts;
+// apps may override via the elevenLabsVoiceId prop.
+const DEFAULT_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL';
 
 const TTS_ENDPOINT = (voiceId: string) =>
   `https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(voiceId)}`;
@@ -27,7 +28,7 @@ export class ElevenLabsConfigError extends Error {
 export interface SpeechOptions {
   /** ElevenLabs API key — supplied by the consuming app from its Vite env. */
   apiKey: string;
-  /** Voice id; defaults to the "Rachel" preset. */
+  /** Voice id; defaults to the "Sarah" preset. */
   voiceId?: string;
   /** Model id; defaults to eleven_turbo_v2_5. */
   model?: string;

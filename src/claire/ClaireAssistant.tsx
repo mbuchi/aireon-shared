@@ -62,7 +62,7 @@ export interface ClaireAssistantProps {
    * Omit it to keep Claire text-only (the speaker controls never render).
    */
   elevenLabsApiKey?: string;
-  /** Optional ElevenLabs voice id (defaults to the "Rachel" preset voice). */
+  /** Optional ElevenLabs voice id (defaults to the "Sarah" preset voice). */
   elevenLabsVoiceId?: string;
   /** Optional ElevenLabs model override (defaults to eleven_turbo_v2_5). */
   elevenLabsModel?: string;

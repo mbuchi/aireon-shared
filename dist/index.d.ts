@@ -350,7 +350,7 @@ interface ClaireAssistantProps {
      * Omit it to keep Claire text-only (the speaker controls never render).
      */
     elevenLabsApiKey?: string;
-    /** Optional ElevenLabs voice id (defaults to the "Rachel" preset voice). */
+    /** Optional ElevenLabs voice id (defaults to the "Sarah" preset voice). */
     elevenLabsVoiceId?: string;
     /** Optional ElevenLabs model override (defaults to eleven_turbo_v2_5). */
     elevenLabsModel?: string;
@@ -427,7 +427,7 @@ declare class ElevenLabsConfigError extends Error {
 interface SpeechOptions {
     /** ElevenLabs API key — supplied by the consuming app from its Vite env. */
     apiKey: string;
-    /** Voice id; defaults to the "Rachel" preset. */
+    /** Voice id; defaults to the "Sarah" preset. */
     voiceId?: string;
     /** Model id; defaults to eleven_turbo_v2_5. */
     model?: string;
