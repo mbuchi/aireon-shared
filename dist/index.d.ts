@@ -345,6 +345,16 @@ interface ClaireAssistantProps {
     /** Optional Gemini model override (defaults to gemini-3.1-flash-lite). */
     geminiModel?: string;
     /**
+     * ElevenLabs API key — when supplied, Claire can speak her replies aloud
+     * via text-to-speech. Read by the app from its own VITE_ELEVENLABS_API_KEY.
+     * Omit it to keep Claire text-only (the speaker controls never render).
+     */
+    elevenLabsApiKey?: string;
+    /** Optional ElevenLabs voice id (defaults to the "Rachel" preset voice). */
+    elevenLabsVoiceId?: string;
+    /** Optional ElevenLabs model override (defaults to eleven_turbo_v2_5). */
+    elevenLabsModel?: string;
+    /**
      * @deprecated Accepted for backward compatibility but ignored. Claire now
      * renders one fixed look suite-wide (valoo's dark theme) so the widget is
      * visually consistent across every app, regardless of the host's theme.
@@ -371,9 +381,12 @@ interface ClaireAssistantProps {
  *  - expose an `/api/signal-collect` proxy,
  *  - pass its `VITE_GEMINI_API_KEY` as `geminiApiKey`,
  *  - be wrapped in this package's <AuthProvider>.
+ * Optionally, passing `elevenLabsApiKey` unlocks Claire's voice: a speaker
+ * toggle in the header (auto-speak replies) plus a per-message play button,
+ * driven by ElevenLabs text-to-speech. Omit the key to keep her text-only.
  * The avatar is inlined — no per-app public/ asset is needed.
  */
-declare const ClaireAssistant: ({ appName, geminiApiKey, geminiModel, properties, enrichment, lngLat, lv95, headerAddress, }: ClaireAssistantProps) => react.ReactPortal;
+declare const ClaireAssistant: ({ appName, geminiApiKey, geminiModel, elevenLabsApiKey, elevenLabsVoiceId, elevenLabsModel, properties, enrichment, lngLat, lv95, headerAddress, }: ClaireAssistantProps) => react.ReactPortal;
 
 interface ChatTurn {
     role: 'user' | 'assistant';
@@ -407,6 +420,28 @@ declare class GeminiConfigError extends Error {
     constructor();
 }
 declare function generateParcelChatReply({ apiKey, model, appName, parcelContext, history, signal, }: GeminiCallOptions): Promise<string>;
+
+declare class ElevenLabsConfigError extends Error {
+    constructor();
+}
+interface SpeechOptions {
+    /** ElevenLabs API key — supplied by the consuming app from its Vite env. */
+    apiKey: string;
+    /** Voice id; defaults to the "Rachel" preset. */
+    voiceId?: string;
+    /** Model id; defaults to eleven_turbo_v2_5. */
+    model?: string;
+    /** The assistant text to speak (markdown is flattened before synthesis). */
+    text: string;
+    signal?: AbortSignal;
+}
+declare function plainSpeechText(text: string): string;
+/**
+ * Synthesize speech for one Claire reply, returning an MP3 blob the caller
+ * can play via an <audio> element. Throws ElevenLabsConfigError when no key
+ * is configured, or a plain Error with the ElevenLabs message on failure.
+ */
+declare function synthesizeSpeech({ apiKey, voiceId, model, text, signal, }: SpeechOptions): Promise<Blob>;
 
 interface ClaireTurn {
     role: 'user' | 'assistant';
@@ -693,4 +728,4 @@ declare function initialsOf(user: User | null | undefined): string;
 /** The provider-supplied profile picture URL, if any. */
 declare function pictureOf(user: User | null | undefined): string | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClairePOIs, type ClaireTurn, type CreatePrmInput, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClairePOIs, type ClaireTurn, type CreatePrmInput, ElevenLabsConfigError, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SpeechOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, plainSpeechText, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, synthesizeSpeech, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

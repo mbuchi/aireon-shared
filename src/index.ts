@@ -72,6 +72,12 @@ export type {
   GeminiCallOptions,
 } from './claire/geminiClient';
 export {
+  synthesizeSpeech,
+  plainSpeechText,
+  ElevenLabsConfigError,
+} from './claire/elevenLabsClient';
+export type { SpeechOptions } from './claire/elevenLabsClient';
+export {
   loadClaireConversation,
   saveClaireConversation,
 } from './claire/claireConversation';
