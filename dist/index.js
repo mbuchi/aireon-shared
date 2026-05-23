@@ -2,7 +2,7 @@ import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Phone, PhoneOff, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
+import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle2, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Phone, PhoneOff, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { VoiceConversation, Conversation } from '@elevenlabs/client';
@@ -541,14 +541,10 @@ function ReleaseNotesButton({
         "aria-expanded": open,
         title: `${t.whatsNew} \u2014 v${currentVersion}`,
         "aria-label": `${t.whatsNew} \u2014 v${currentVersion}`,
-        className: `hidden sm:inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full text-[11px] font-semibold border transition-colors border-gray-200 text-gray-600 hover:text-red-700 hover:border-red-200 hover:bg-red-50 dark:border-gray-700 dark:text-gray-300 dark:hover:text-red-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 ${className ?? ""}`,
+        className: `relative hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors text-gray-600 hover:text-red-700 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-300 dark:hover:bg-red-500/10 ${className ?? ""}`,
         children: [
-          /* @__PURE__ */ jsx(Sparkles, { size: 12, className: "text-red-600 dark:text-red-400" }),
-          /* @__PURE__ */ jsxs("span", { className: "font-mono", children: [
-            "v",
-            currentVersion
-          ] }),
-          hasUnread && /* @__PURE__ */ jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" })
+          /* @__PURE__ */ jsx(CheckCircle2, { size: 18 }),
+          hasUnread && /* @__PURE__ */ jsx("span", { className: "absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" })
         ]
       }
     ),

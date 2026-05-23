@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import ReleaseNotesPanel from './ReleaseNotesPanel';
 import type { Release } from './types';
 import { getReleaseNotesStrings, type Locale } from './i18n';
@@ -107,12 +107,11 @@ export default function ReleaseNotesButton({
         aria-expanded={open}
         title={`${t.whatsNew} — v${currentVersion}`}
         aria-label={`${t.whatsNew} — v${currentVersion}`}
-        className={`hidden sm:inline-flex items-center gap-1.5 h-7 pl-2 pr-2.5 rounded-full text-[11px] font-semibold border transition-colors border-gray-200 text-gray-600 hover:text-red-700 hover:border-red-200 hover:bg-red-50 dark:border-gray-700 dark:text-gray-300 dark:hover:text-red-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 ${className ?? ''}`}
+        className={`relative hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors text-gray-600 hover:text-red-700 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-300 dark:hover:bg-red-500/10 ${className ?? ''}`}
       >
-        <Sparkles size={12} className="text-red-600 dark:text-red-400" />
-        <span className="font-mono">v{currentVersion}</span>
+        <CheckCircle2 size={18} />
         {hasUnread && (
-          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+          <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
         )}
       </button>
       {open && (
