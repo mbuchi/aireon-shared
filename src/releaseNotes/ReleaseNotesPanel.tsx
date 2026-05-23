@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  X, Search, Sparkles, ChevronDown, ChevronUp, ExternalLink, GitPullRequest, Tag,
+  X, Search, ChevronDown, ChevronUp, ExternalLink, GitPullRequest, Tag,
 } from 'lucide-react';
 import { KIND_META, type ChangeKind, type Release } from './types';
 import { getReleaseNotesStrings, type Locale } from './i18n';
@@ -153,9 +153,6 @@ export default function ReleaseNotesPanel({
           </button>
 
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/30">
-              <Sparkles className="text-red-600 dark:text-red-400" size={22} />
-            </div>
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {t.whatsNewIn}{' '}

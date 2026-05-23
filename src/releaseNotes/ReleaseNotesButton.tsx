@@ -1,5 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { CheckCircle2 } from 'lucide-react';
+import { Tag } from 'lucide-react';
 import ReleaseNotesPanel from './ReleaseNotesPanel';
 import type { Release } from './types';
 import { getReleaseNotesStrings, type Locale } from './i18n';
@@ -109,7 +109,7 @@ export default function ReleaseNotesButton({
         aria-label={`${t.whatsNew} — v${currentVersion}`}
         className={`relative hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors text-gray-600 hover:text-red-700 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-300 dark:hover:bg-red-500/10 ${className ?? ''}`}
       >
-        <CheckCircle2 size={18} />
+        <Tag size={18} />
         {hasUnread && (
           <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
         )}

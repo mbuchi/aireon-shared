@@ -2,7 +2,7 @@ import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle2, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Phone, PhoneOff, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Phone, PhoneOff, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { VoiceConversation, Conversation } from '@elevenlabs/client';
@@ -221,71 +221,68 @@ function ReleaseNotesPanel({
                       children: /* @__PURE__ */ jsx(X, { size: 18 })
                     }
                   ),
-                  /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-4", children: [
-                    /* @__PURE__ */ jsx("div", { className: "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/30", children: /* @__PURE__ */ jsx(Sparkles, { className: "text-red-600 dark:text-red-400", size: 22 }) }),
-                    /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
-                      /* @__PURE__ */ jsxs("h1", { className: "text-xl font-semibold text-gray-900 dark:text-white", children: [
-                        t.whatsNewIn,
-                        " ",
-                        /* @__PURE__ */ jsx("span", { className: "font-normal", style: { fontFamily: "'Varela Round', sans-serif" }, children: brandNode ?? /* @__PURE__ */ jsxs(Fragment, { children: [
-                          brandPrefix,
-                          /* @__PURE__ */ jsx("span", { className: "text-red-600", children: "oo" }),
-                          brandSuffix
-                        ] }) })
+                  /* @__PURE__ */ jsx("div", { className: "flex items-start gap-4", children: /* @__PURE__ */ jsxs("div", { className: "flex-1 min-w-0", children: [
+                    /* @__PURE__ */ jsxs("h1", { className: "text-xl font-semibold text-gray-900 dark:text-white", children: [
+                      t.whatsNewIn,
+                      " ",
+                      /* @__PURE__ */ jsx("span", { className: "font-normal", style: { fontFamily: "'Varela Round', sans-serif" }, children: brandNode ?? /* @__PURE__ */ jsxs(Fragment, { children: [
+                        brandPrefix,
+                        /* @__PURE__ */ jsx("span", { className: "text-red-600", children: "oo" }),
+                        brandSuffix
+                      ] }) })
+                    ] }),
+                    /* @__PURE__ */ jsxs("p", { className: "mt-1 text-sm leading-relaxed text-gray-500 dark:text-slate-400", children: [
+                      t.subtitleLead,
+                      " ",
+                      /* @__PURE__ */ jsxs("span", { className: "font-mono font-semibold text-red-600 dark:text-red-400", children: [
+                        "v",
+                        latest.version
                       ] }),
-                      /* @__PURE__ */ jsxs("p", { className: "mt-1 text-sm leading-relaxed text-gray-500 dark:text-slate-400", children: [
-                        t.subtitleLead,
+                      " ",
+                      "\xB7 ",
+                      /* @__PURE__ */ jsx("span", { className: "font-medium", children: latest.codename }),
+                      " \xB7 ",
+                      latest.date,
+                      "."
+                    ] }),
+                    /* @__PURE__ */ jsxs("div", { className: "mt-3 flex flex-wrap items-center gap-2 text-xs", children: [
+                      /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-red-50 text-red-700 border border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/30", children: [
+                        /* @__PURE__ */ jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" }),
+                        "v",
+                        latest.version,
                         " ",
-                        /* @__PURE__ */ jsxs("span", { className: "font-mono font-semibold text-red-600 dark:text-red-400", children: [
-                          "v",
-                          latest.version
-                        ] }),
-                        " ",
-                        "\xB7 ",
-                        /* @__PURE__ */ jsx("span", { className: "font-medium", children: latest.codename }),
-                        " \xB7 ",
-                        latest.date,
-                        "."
+                        t.live
                       ] }),
-                      /* @__PURE__ */ jsxs("div", { className: "mt-3 flex flex-wrap items-center gap-2 text-xs", children: [
-                        /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold bg-red-50 text-red-700 border border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/30", children: [
-                          /* @__PURE__ */ jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" }),
-                          "v",
-                          latest.version,
-                          " ",
-                          t.live
-                        ] }),
-                        /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-white/[0.05] dark:text-slate-300", children: [
-                          /* @__PURE__ */ jsx(Tag, { size: 12 }),
-                          " ",
-                          totals.releases,
-                          " ",
-                          t.releases
-                        ] }),
-                        /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-white/[0.05] dark:text-slate-300", children: [
-                          /* @__PURE__ */ jsx(GitPullRequest, { size: 12 }),
-                          " ",
-                          totals.changes,
-                          " ",
-                          t.changes
-                        ] }),
-                        /* @__PURE__ */ jsxs(
-                          "a",
-                          {
-                            href: `${repoUrl}/pulls?q=is%3Apr+is%3Aclosed`,
-                            target: "_blank",
-                            rel: "noopener noreferrer",
-                            className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-white/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.08] transition-colors",
-                            children: [
-                              /* @__PURE__ */ jsx(ExternalLink, { size: 12 }),
-                              " ",
-                              t.viewAllPRs
-                            ]
-                          }
-                        )
-                      ] })
+                      /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-white/[0.05] dark:text-slate-300", children: [
+                        /* @__PURE__ */ jsx(Tag, { size: 12 }),
+                        " ",
+                        totals.releases,
+                        " ",
+                        t.releases
+                      ] }),
+                      /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 dark:bg-white/[0.05] dark:text-slate-300", children: [
+                        /* @__PURE__ */ jsx(GitPullRequest, { size: 12 }),
+                        " ",
+                        totals.changes,
+                        " ",
+                        t.changes
+                      ] }),
+                      /* @__PURE__ */ jsxs(
+                        "a",
+                        {
+                          href: `${repoUrl}/pulls?q=is%3Apr+is%3Aclosed`,
+                          target: "_blank",
+                          rel: "noopener noreferrer",
+                          className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-white/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.08] transition-colors",
+                          children: [
+                            /* @__PURE__ */ jsx(ExternalLink, { size: 12 }),
+                            " ",
+                            t.viewAllPRs
+                          ]
+                        }
+                      )
                     ] })
-                  ] }),
+                  ] }) }),
                   /* @__PURE__ */ jsxs("div", { className: "mt-5 flex flex-col sm:flex-row sm:items-center gap-3", children: [
                     /* @__PURE__ */ jsxs("div", { className: "relative flex-1", children: [
                       /* @__PURE__ */ jsx(
@@ -543,7 +540,7 @@ function ReleaseNotesButton({
         "aria-label": `${t.whatsNew} \u2014 v${currentVersion}`,
         className: `relative hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors text-gray-600 hover:text-red-700 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-300 dark:hover:bg-red-500/10 ${className ?? ""}`,
         children: [
-          /* @__PURE__ */ jsx(CheckCircle2, { size: 18 }),
+          /* @__PURE__ */ jsx(Tag, { size: 18 }),
           hasUnread && /* @__PURE__ */ jsx("span", { className: "absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" })
         ]
       }
@@ -3444,7 +3441,7 @@ function Skeleton({
   as
 }) {
   useSkeletonStyles();
-  const Tag2 = as ?? "div";
+  const Tag3 = as ?? "div";
   const css = {
     width: toDim(width),
     height: toDim(height) ?? (circle ? toDim(width) : void 0),
@@ -3454,7 +3451,7 @@ function Skeleton({
     ...style
   };
   return /* @__PURE__ */ jsx(
-    Tag2,
+    Tag3,
     {
       className: `swn-skeleton${className ? ` ${className}` : ""}`,
       style: css,
