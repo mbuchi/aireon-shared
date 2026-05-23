@@ -2656,6 +2656,8 @@ var ClaireAssistant = ({
   const [callStatus, setCallStatus] = useState("idle");
   const [callMode, setCallMode] = useState(null);
   const [callError, setCallError] = useState(null);
+  const [voiceTurns, setVoiceTurns] = useState([]);
+  const voiceTranscriptRef = useRef(null);
   const conversationRef = useRef(null);
   const { isAuthenticated, getAccessToken } = useAuth();
   const configured = useMemo(() => Boolean(geminiApiKey), [geminiApiKey]);
@@ -2706,6 +2708,7 @@ var ClaireAssistant = ({
     }
     setCallStatus("idle");
     setCallMode(null);
+    setVoiceTurns([]);
   }, []);
   const stopSpeech = useCallback(() => {
     speechAbortRef.current?.abort();
@@ -2759,6 +2762,11 @@ var ClaireAssistant = ({
       behavior: "smooth"
     });
   }, [messages, loading, open]);
+  useEffect(() => {
+    if (voiceTranscriptRef.current) {
+      voiceTranscriptRef.current.scrollTop = voiceTranscriptRef.current.scrollHeight;
+    }
+  }, [voiceTurns]);
   useEffect(
     () => () => {
       abortRef.current?.abort();
@@ -2838,6 +2846,16 @@ var ClaireAssistant = ({
           if (mode === "listening" || mode === "speaking") {
             setCallMode(mode);
           }
+        },
+        onMessage: ({ message, role }) => {
+          if (!message) return;
+          setVoiceTurns((prev) => [
+            ...prev,
+            { id: newId(), role, text: message }
+          ]);
+        },
+        onDebug: (info) => {
+          console.log("[claire-voice]", info);
         },
         onError: (message) => {
           setCallError(message || "Voice call failed.");
@@ -3290,6 +3308,24 @@ var ClaireAssistant = ({
           ),
           /* @__PURE__ */ jsx("div", { className: "mt-4 text-sm font-semibold text-white", children: callStatus === "connecting" ? "Calling Claire\u2026" : callStatus === "ending" ? "Ending call\u2026" : callMode === "speaking" ? "Claire is speaking" : "Listening\u2026" }),
           /* @__PURE__ */ jsx("div", { className: "mt-1 text-[11px] text-amber-200/70 min-h-[14px]", children: callStatus === "connected" ? "Speak naturally \u2014 this is a live voice call." : "\xA0" }),
+          voiceTurns.length > 0 && /* @__PURE__ */ jsx(
+            "div",
+            {
+              ref: voiceTranscriptRef,
+              className: "mt-4 w-full max-w-[22rem] max-h-[12rem] overflow-y-auto px-3 py-2 rounded-lg bg-white/[0.04] ring-1 ring-white/[0.06] text-[12px] leading-snug text-left space-y-1.5",
+              children: voiceTurns.map((t) => /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  className: t.role === "user" ? "text-amber-200/90" : "text-gray-100",
+                  children: [
+                    /* @__PURE__ */ jsx("span", { className: "font-semibold mr-1", children: t.role === "user" ? "You:" : "Claire:" }),
+                    t.text
+                  ]
+                },
+                t.id
+              ))
+            }
+          ),
           /* @__PURE__ */ jsxs(
             "button",
             {

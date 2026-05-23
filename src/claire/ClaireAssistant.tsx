@@ -266,6 +266,13 @@ const ClaireAssistant = ({
   const [callStatus, setCallStatus] = useState<CallStatus>('idle');
   const [callMode, setCallMode] = useState<CallMode>(null);
   const [callError, setCallError] = useState<string | null>(null);
+  // Voice transcripts (user STT + agent answer) surfaced in the call overlay
+  // so the loop is visible even if audio playback fails (browser autoplay,
+  // headphones unplugged, etc.). Cleared on call end and parcel change.
+  const [voiceTurns, setVoiceTurns] = useState<
+    { id: string; role: 'user' | 'agent'; text: string }[]
+  >([]);
+  const voiceTranscriptRef = useRef<HTMLDivElement>(null);
   const conversationRef = useRef<Awaited<
     ReturnType<typeof Conversation.startSession>
   > | null>(null);
@@ -341,6 +348,7 @@ const ClaireAssistant = ({
     }
     setCallStatus('idle');
     setCallMode(null);
+    setVoiceTurns([]);
   }, []);
 
   // Stop and fully tear down any in-flight or playing speech.
@@ -407,6 +415,14 @@ const ClaireAssistant = ({
       behavior: 'smooth',
     });
   }, [messages, loading, open]);
+
+  // Keep the voice-call transcript pinned to the most recent turn.
+  useEffect(() => {
+    if (voiceTranscriptRef.current) {
+      voiceTranscriptRef.current.scrollTop =
+        voiceTranscriptRef.current.scrollHeight;
+    }
+  }, [voiceTurns]);
 
   useEffect(
     () => () => {
@@ -498,6 +514,17 @@ const ClaireAssistant = ({
           if (mode === 'listening' || mode === 'speaking') {
             setCallMode(mode);
           }
+        },
+        onMessage: ({ message, role }) => {
+          if (!message) return;
+          setVoiceTurns((prev) => [
+            ...prev,
+            { id: newId(), role, text: message },
+          ]);
+        },
+        onDebug: (info: unknown) => {
+          // eslint-disable-next-line no-console
+          console.log('[claire-voice]', info);
         },
         onError: (message) => {
           setCallError(message || 'Voice call failed.');
@@ -1080,6 +1107,29 @@ const ClaireAssistant = ({
               ? 'Speak naturally — this is a live voice call.'
               : ' '}
           </div>
+          {/* Live transcript — STT + agent reply. Always shown so the loop
+              is visible even if audio playback fails (autoplay block etc.). */}
+          {voiceTurns.length > 0 && (
+            <div
+              ref={voiceTranscriptRef}
+              className="mt-4 w-full max-w-[22rem] max-h-[12rem] overflow-y-auto px-3 py-2 rounded-lg bg-white/[0.04] ring-1 ring-white/[0.06] text-[12px] leading-snug text-left space-y-1.5"
+            >
+              {voiceTurns.map((t) => (
+                <div
+                  key={t.id}
+                  className={
+                    t.role === 'user' ? 'text-amber-200/90' : 'text-gray-100'
+                  }
+                >
+                  <span className="font-semibold mr-1">
+                    {t.role === 'user' ? 'You:' : 'Claire:'}
+                  </span>
+                  {t.text}
+                </div>
+              ))}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => void endCall()}
