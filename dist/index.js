@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Phone, PhoneOff, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
-import { Conversation } from '@elevenlabs/client';
+import { VoiceConversation, Conversation } from '@elevenlabs/client';
 
 // src/releaseNotes/types.ts
 var KIND_META = {
@@ -2011,8 +2011,40 @@ async function synthesizeSpeech({
   }
   return res.blob();
 }
-
-// src/claire/elevenLabsCall.ts
+var voiceErrorEventPatched = false;
+function patchVoiceErrorEvent() {
+  if (voiceErrorEventPatched) return;
+  const proto = Object.getPrototypeOf(
+    VoiceConversation.prototype
+  );
+  if (!proto || typeof proto.handleErrorEvent !== "function") {
+    voiceErrorEventPatched = true;
+    return;
+  }
+  const original = proto.handleErrorEvent;
+  proto.handleErrorEvent = function patchedHandleErrorEvent(event) {
+    const e = event;
+    if (e && typeof e === "object" && e.error_event) {
+      return original.call(this, event);
+    }
+    let summary = "Voice agent error";
+    try {
+      summary = e?.message ? String(e.message) : JSON.stringify(event);
+    } catch {
+    }
+    console.error("[claire-voice] malformed error event from agent:", event);
+    try {
+      this.onError?.(`Server error: ${summary}`, { rawEvent: event });
+    } catch {
+    }
+    try {
+      void this.endSession?.();
+    } catch {
+    }
+  };
+  voiceErrorEventPatched = true;
+}
+patchVoiceErrorEvent();
 async function fetchVoiceCallToken(signal) {
   const res = await fetch("/api/claire-voice/token", { signal });
   if (!res.ok) {
