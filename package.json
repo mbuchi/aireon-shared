@@ -1,6 +1,6 @@
 {
   "name": "@swissnovo/shared",
-  "version": "0.20.1",
+  "version": "0.21.0",
   "description": "Shared UI components and utilities for the SwissNovo app suite.",
   "type": "module",
   "license": "UNLICENSED",
@@ -52,6 +52,7 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
+    "@elevenlabs/client": "^1.8.1",
     "openapi-fetch": "^0.13.8"
   }
 }

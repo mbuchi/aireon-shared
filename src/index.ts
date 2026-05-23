@@ -78,6 +78,11 @@ export {
 } from './claire/elevenLabsClient';
 export type { SpeechOptions } from './claire/elevenLabsClient';
 export {
+  fetchVoiceCallToken,
+  registerVoiceCallContext,
+} from './claire/elevenLabsCall';
+export type { VoiceCallContextPayload } from './claire/elevenLabsCall';
+export {
   loadClaireConversation,
   saveClaireConversation,
 } from './claire/claireConversation';

@@ -355,6 +355,15 @@ interface ClaireAssistantProps {
     /** Optional ElevenLabs model override (defaults to eleven_turbo_v2_5). */
     elevenLabsModel?: string;
     /**
+     * Enable Claire's full voice-call mode (ElevenLabs Speech Engine). When
+     * true, a phone button in the header opens a live spoken conversation
+     * — the host app must expose `/api/claire-voice/token` and
+     * `/api/claire-voice/context` proxies to project_RES. With no proxies
+     * wired the call simply fails to start; with this flag false (default)
+     * the button never renders.
+     */
+    voiceCallEnabled?: boolean;
+    /**
      * @deprecated Accepted for backward compatibility but ignored. Claire now
      * renders one fixed look suite-wide (valoo's dark theme) so the widget is
      * visually consistent across every app, regardless of the host's theme.
@@ -386,7 +395,7 @@ interface ClaireAssistantProps {
  * driven by ElevenLabs text-to-speech. Omit the key to keep her text-only.
  * The avatar is inlined — no per-app public/ asset is needed.
  */
-declare const ClaireAssistant: ({ appName, geminiApiKey, geminiModel, elevenLabsApiKey, elevenLabsVoiceId, elevenLabsModel, properties, enrichment, lngLat, lv95, headerAddress, }: ClaireAssistantProps) => react.ReactPortal;
+declare const ClaireAssistant: ({ appName, geminiApiKey, geminiModel, elevenLabsApiKey, elevenLabsVoiceId, elevenLabsModel, voiceCallEnabled, properties, enrichment, lngLat, lv95, headerAddress, }: ClaireAssistantProps) => react.ReactPortal;
 
 interface ChatTurn {
     role: 'user' | 'assistant';
@@ -442,6 +451,15 @@ declare function plainSpeechText(text: string): string;
  * is configured, or a plain Error with the ElevenLabs message on failure.
  */
 declare function synthesizeSpeech({ apiKey, voiceId, model, text, signal, }: SpeechOptions): Promise<Blob>;
+
+declare function fetchVoiceCallToken(signal?: AbortSignal): Promise<string>;
+interface VoiceCallContextPayload {
+    conversationId: string;
+    context: string;
+    appName: string;
+    address?: string;
+}
+declare function registerVoiceCallContext(payload: VoiceCallContextPayload, signal?: AbortSignal): Promise<void>;
 
 interface ClaireTurn {
     role: 'user' | 'assistant';
@@ -728,4 +746,4 @@ declare function initialsOf(user: User | null | undefined): string;
 /** The provider-supplied profile picture URL, if any. */
 declare function pictureOf(user: User | null | undefined): string | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClairePOIs, type ClaireTurn, type CreatePrmInput, ElevenLabsConfigError, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SpeechOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, plainSpeechText, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, synthesizeSpeech, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClairePOIs, type ClaireTurn, type CreatePrmInput, ElevenLabsConfigError, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SpeechOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, type VoiceCallContextPayload, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, fetchVoiceCallToken, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, plainSpeechText, registerVoiceCallContext, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, synthesizeSpeech, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

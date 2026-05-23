@@ -9,5 +9,12 @@ export default defineConfig({
   dts: true,
   clean: true,
   treeshake: true,
-  external: ['react', 'react-dom', 'lucide-react', 'oidc-client-ts', 'openapi-fetch'],
+  external: [
+    'react',
+    'react-dom',
+    'lucide-react',
+    'oidc-client-ts',
+    'openapi-fetch',
+    '@elevenlabs/client',
+  ],
 });

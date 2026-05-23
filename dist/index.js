@@ -2,9 +2,10 @@ import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
+import { X, Sparkles, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Phone, PhoneOff, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
+import { Conversation } from '@elevenlabs/client';
 
 // src/releaseNotes/types.ts
 var KIND_META = {
@@ -2011,6 +2012,34 @@ async function synthesizeSpeech({
   return res.blob();
 }
 
+// src/claire/elevenLabsCall.ts
+async function fetchVoiceCallToken(signal) {
+  const res = await fetch("/api/claire-voice/token", { signal });
+  if (!res.ok) {
+    let detail = `Token request failed (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body?.error) detail = body.error;
+    } catch {
+    }
+    throw new Error(detail);
+  }
+  const data = await res.json();
+  if (!data.token) throw new Error("Token endpoint returned no token.");
+  return data.token;
+}
+async function registerVoiceCallContext(payload, signal) {
+  try {
+    await fetch("/api/claire-voice/context", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal
+    });
+  } catch {
+  }
+}
+
 // src/signal/client.ts
 var DEFAULT_ENDPOINT = "/api/signal-collect";
 function createSignalClient(options) {
@@ -2589,6 +2618,7 @@ var ClaireAssistant = ({
   elevenLabsApiKey,
   elevenLabsVoiceId,
   elevenLabsModel,
+  voiceCallEnabled = false,
   properties,
   enrichment,
   lngLat,
@@ -2623,6 +2653,10 @@ var ClaireAssistant = ({
   useEffect(() => {
     voiceEnabledRef.current = voiceEnabled;
   }, [voiceEnabled]);
+  const [callStatus, setCallStatus] = useState("idle");
+  const [callMode, setCallMode] = useState(null);
+  const [callError, setCallError] = useState(null);
+  const conversationRef = useRef(null);
   const { isAuthenticated, getAccessToken } = useAuth();
   const configured = useMemo(() => Boolean(geminiApiKey), [geminiApiKey]);
   const parcelId = useMemo(() => resolveParcelId(properties), [properties]);
@@ -2657,6 +2691,22 @@ var ClaireAssistant = ({
     () => [parcelContext, official.text, pois].filter(Boolean).join("\n\n"),
     [parcelContext, official.text, pois]
   );
+  const endCall = useCallback(async () => {
+    const conv = conversationRef.current;
+    conversationRef.current = null;
+    if (!conv) {
+      setCallStatus("idle");
+      setCallMode(null);
+      return;
+    }
+    setCallStatus("ending");
+    try {
+      await conv.endSession();
+    } catch {
+    }
+    setCallStatus("idle");
+    setCallMode(null);
+  }, []);
   const stopSpeech = useCallback(() => {
     speechAbortRef.current?.abort();
     speechAbortRef.current = null;
@@ -2676,12 +2726,14 @@ var ClaireAssistant = ({
     abortRef.current?.abort();
     abortRef.current = null;
     stopSpeech();
+    void endCall();
     setMessages([]);
     setInput("");
     setError(null);
     setSpeechError(null);
+    setCallError(null);
     setLoading(false);
-  }, [lngLat.lng, lngLat.lat, stopSpeech]);
+  }, [lngLat.lng, lngLat.lat, stopSpeech, endCall]);
   useEffect(() => {
     if (!parcelId || !isAuthenticated) return;
     const token = getAccessToken();
@@ -2711,8 +2763,9 @@ var ClaireAssistant = ({
     () => () => {
       abortRef.current?.abort();
       stopSpeech();
+      void endCall();
     },
-    [stopSpeech]
+    [stopSpeech, endCall]
   );
   const speakMessage = useCallback(
     async (id, text) => {
@@ -2758,6 +2811,49 @@ var ClaireAssistant = ({
     },
     [elevenLabsApiKey, elevenLabsVoiceId, elevenLabsModel, stopSpeech]
   );
+  const startCall = useCallback(async () => {
+    if (callStatus !== "idle") return;
+    setCallError(null);
+    setCallStatus("connecting");
+    try {
+      const token = await fetchVoiceCallToken();
+      const conv = await Conversation.startSession({
+        conversationToken: token,
+        connectionType: "webrtc",
+        onConnect: ({ conversationId }) => {
+          setCallStatus("connected");
+          void registerVoiceCallContext({
+            conversationId,
+            context: fullContext,
+            appName,
+            address: headerAddress || official.address
+          });
+        },
+        onDisconnect: () => {
+          conversationRef.current = null;
+          setCallStatus("idle");
+          setCallMode(null);
+        },
+        onModeChange: ({ mode }) => {
+          if (mode === "listening" || mode === "speaking") {
+            setCallMode(mode);
+          }
+        },
+        onError: (message) => {
+          setCallError(message || "Voice call failed.");
+          conversationRef.current = null;
+          setCallStatus("idle");
+          setCallMode(null);
+        }
+      });
+      conversationRef.current = conv;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Could not start the call.";
+      setCallError(msg);
+      setCallStatus("idle");
+      setCallMode(null);
+    }
+  }, [callStatus, fullContext, appName, headerAddress, official.address]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
@@ -2947,6 +3043,18 @@ var ClaireAssistant = ({
                   }
                 )
               ] }),
+              voiceCallEnabled && /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => callStatus === "idle" ? void startCall() : void endCall(),
+                  disabled: callStatus === "connecting" || callStatus === "ending",
+                  "aria-label": callStatus === "idle" ? "Call Claire" : "End call",
+                  title: callStatus === "idle" ? "Have a spoken conversation with Claire" : "End the call",
+                  className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${callStatus === "idle" ? "text-gray-400 hover:text-emerald-300 hover:bg-emerald-400/10" : "text-rose-200 bg-rose-500/15 ring-1 ring-rose-400/30 hover:bg-rose-500/25 disabled:opacity-60"}`,
+                  children: callStatus === "idle" ? /* @__PURE__ */ jsx(Phone, { size: 15 }) : /* @__PURE__ */ jsx(PhoneOff, { size: 15 })
+                }
+              ),
               voiceAvailable && /* @__PURE__ */ jsx(
                 "button",
                 {
@@ -3096,6 +3204,13 @@ var ClaireAssistant = ({
                   "Claire\u2019s voice is unavailable: ",
                   speechError
                 ] })
+              ] }),
+              callError && callStatus === "idle" && /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-2 rounded-xl px-3 py-2 text-[11.5px] bg-rose-500/10 text-rose-200/90 ring-1 ring-rose-400/20", children: [
+                /* @__PURE__ */ jsx(PhoneOff, { size: 12, className: "shrink-0 mt-0.5" }),
+                /* @__PURE__ */ jsxs("span", { children: [
+                  "Voice call ended: ",
+                  callError
+                ] })
               ] })
             ]
           }
@@ -3157,7 +3272,39 @@ var ClaireAssistant = ({
               ] })
             ]
           }
-        )
+        ),
+        callStatus !== "idle" && /* @__PURE__ */ jsxs("div", { className: "absolute inset-x-0 bottom-0 top-[58px] flex flex-col items-center justify-center px-4 bg-[#0b0f15]/95 backdrop-blur-sm", children: [
+          /* @__PURE__ */ jsx(
+            "div",
+            {
+              className: `w-20 h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/30 transition-transform ${callMode === "speaking" ? "scale-105 animate-pulse" : ""}`,
+              children: /* @__PURE__ */ jsx(
+                "img",
+                {
+                  src: CLAIRE_AVATAR,
+                  alt: "",
+                  className: "w-full h-full rounded-2xl object-cover"
+                }
+              )
+            }
+          ),
+          /* @__PURE__ */ jsx("div", { className: "mt-4 text-sm font-semibold text-white", children: callStatus === "connecting" ? "Calling Claire\u2026" : callStatus === "ending" ? "Ending call\u2026" : callMode === "speaking" ? "Claire is speaking" : "Listening\u2026" }),
+          /* @__PURE__ */ jsx("div", { className: "mt-1 text-[11px] text-amber-200/70 min-h-[14px]", children: callStatus === "connected" ? "Speak naturally \u2014 this is a live voice call." : "\xA0" }),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => void endCall(),
+              disabled: callStatus === "connecting" || callStatus === "ending",
+              className: "mt-5 inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-[12px] font-semibold text-white bg-rose-500 hover:bg-rose-400 disabled:opacity-60 transition-colors shadow-[0_4px_12px_-4px_rgba(244,63,94,0.6)]",
+              children: [
+                /* @__PURE__ */ jsx(PhoneOff, { size: 13 }),
+                " End call"
+              ]
+            }
+          ),
+          callError && /* @__PURE__ */ jsx("div", { className: "mt-3 text-[11px] text-rose-300 text-center max-w-[18rem]", children: callError })
+        ] })
       ]
     }
   );
@@ -3756,4 +3903,4 @@ function ProfileModal({ user, onClose, dark = false }) {
   );
 }
 
-export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, ElevenLabsConfigError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, plainSpeechText, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, synthesizeSpeech, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, ElevenLabsConfigError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, fetchVoiceCallToken, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, plainSpeechText, registerVoiceCallContext, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, synthesizeSpeech, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

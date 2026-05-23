@@ -9,7 +9,17 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertCircle, Loader2, Send, Volume2, VolumeX, X } from 'lucide-react';
+import {
+  AlertCircle,
+  Loader2,
+  Phone,
+  PhoneOff,
+  Send,
+  Volume2,
+  VolumeX,
+  X,
+} from 'lucide-react';
+import { Conversation } from '@elevenlabs/client';
 import {
   type ChatTurn,
   GeminiConfigError,
@@ -17,6 +27,10 @@ import {
   generateParcelChatReply,
 } from './geminiClient';
 import { synthesizeSpeech } from './elevenLabsClient';
+import {
+  fetchVoiceCallToken,
+  registerVoiceCallContext,
+} from './elevenLabsCall';
 import { sendClaireMessageSignal } from './signal';
 import { fetchClaireContext } from './claireContext';
 import { fetchClairePOIs } from './clairePOIs';
@@ -66,6 +80,15 @@ export interface ClaireAssistantProps {
   elevenLabsVoiceId?: string;
   /** Optional ElevenLabs model override (defaults to eleven_turbo_v2_5). */
   elevenLabsModel?: string;
+  /**
+   * Enable Claire's full voice-call mode (ElevenLabs Speech Engine). When
+   * true, a phone button in the header opens a live spoken conversation
+   * — the host app must expose `/api/claire-voice/token` and
+   * `/api/claire-voice/context` proxies to project_RES. With no proxies
+   * wired the call simply fails to start; with this flag false (default)
+   * the button never renders.
+   */
+  voiceCallEnabled?: boolean;
   /**
    * @deprecated Accepted for backward compatibility but ignored. Claire now
    * renders one fixed look suite-wide (valoo's dark theme) so the widget is
@@ -186,6 +209,7 @@ const ClaireAssistant = ({
   elevenLabsApiKey,
   elevenLabsVoiceId,
   elevenLabsModel,
+  voiceCallEnabled = false,
   properties,
   enrichment,
   lngLat,
@@ -233,6 +257,18 @@ const ClaireAssistant = ({
   useEffect(() => {
     voiceEnabledRef.current = voiceEnabled;
   }, [voiceEnabled]);
+
+  // Claire's voice-call mode (ElevenLabs Speech Engine). The chat-card
+  // overlays a live-call UI while a call is active; the mic, playback and
+  // turn-taking are owned by @elevenlabs/client.
+  type CallStatus = 'idle' | 'connecting' | 'connected' | 'ending';
+  type CallMode = 'listening' | 'speaking' | null;
+  const [callStatus, setCallStatus] = useState<CallStatus>('idle');
+  const [callMode, setCallMode] = useState<CallMode>(null);
+  const [callError, setCallError] = useState<string | null>(null);
+  const conversationRef = useRef<Awaited<
+    ReturnType<typeof Conversation.startSession>
+  > | null>(null);
 
   const { isAuthenticated, getAccessToken } = useAuth();
 
@@ -288,6 +324,25 @@ const ClaireAssistant = ({
     [parcelContext, official.text, pois],
   );
 
+  // End any in-flight voice call cleanly.
+  const endCall = useCallback(async () => {
+    const conv = conversationRef.current;
+    conversationRef.current = null;
+    if (!conv) {
+      setCallStatus('idle');
+      setCallMode(null);
+      return;
+    }
+    setCallStatus('ending');
+    try {
+      await conv.endSession();
+    } catch {
+      /* already gone */
+    }
+    setCallStatus('idle');
+    setCallMode(null);
+  }, []);
+
   // Stop and fully tear down any in-flight or playing speech.
   const stopSpeech = useCallback(() => {
     speechAbortRef.current?.abort();
@@ -306,17 +361,20 @@ const ClaireAssistant = ({
   }, []);
 
   // Reset conversation whenever the targeted parcel changes — the chat must
-  // refresh its context to match the freshly selected parcel.
+  // refresh its context to match the freshly selected parcel. Any live voice
+  // call is hung up too: it was anchored to the previous parcel's context.
   useEffect(() => {
     abortRef.current?.abort();
     abortRef.current = null;
     stopSpeech();
+    void endCall();
     setMessages([]);
     setInput('');
     setError(null);
     setSpeechError(null);
+    setCallError(null);
     setLoading(false);
-  }, [lngLat.lng, lngLat.lat, stopSpeech]);
+  }, [lngLat.lng, lngLat.lat, stopSpeech, endCall]);
 
   // Restore this parcel's stored conversation for the signed-in user. Runs
   // after the reset effect above, so a saved thread re-populates the chat;
@@ -354,8 +412,9 @@ const ClaireAssistant = ({
     () => () => {
       abortRef.current?.abort();
       stopSpeech();
+      void endCall();
     },
-    [stopSpeech],
+    [stopSpeech, endCall],
   );
 
   // Speak one assistant message aloud via ElevenLabs. Clicking the speaker
@@ -405,6 +464,57 @@ const ClaireAssistant = ({
     },
     [elevenLabsApiKey, elevenLabsVoiceId, elevenLabsModel, stopSpeech],
   );
+
+  // Open a live spoken conversation with Claire. The mic / playback /
+  // turn-taking are owned by @elevenlabs/client; this orchestrates the
+  // token round-trip and registers per-parcel context against the
+  // Speech Engine conversation id so project_RES can ground the answer.
+  const startCall = useCallback(async () => {
+    if (callStatus !== 'idle') return;
+    setCallError(null);
+    setCallStatus('connecting');
+    try {
+      const token = await fetchVoiceCallToken();
+      const conv = await Conversation.startSession({
+        conversationToken: token,
+        connectionType: 'webrtc',
+        onConnect: ({ conversationId }) => {
+          setCallStatus('connected');
+          // Register parcel context for this conversation. Best-effort —
+          // a failed registration just makes Claire less grounded.
+          void registerVoiceCallContext({
+            conversationId,
+            context: fullContext,
+            appName,
+            address: headerAddress || official.address,
+          });
+        },
+        onDisconnect: () => {
+          conversationRef.current = null;
+          setCallStatus('idle');
+          setCallMode(null);
+        },
+        onModeChange: ({ mode }) => {
+          if (mode === 'listening' || mode === 'speaking') {
+            setCallMode(mode);
+          }
+        },
+        onError: (message) => {
+          setCallError(message || 'Voice call failed.');
+          conversationRef.current = null;
+          setCallStatus('idle');
+          setCallMode(null);
+        },
+      });
+      conversationRef.current = conv;
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Could not start the call.';
+      setCallError(msg);
+      setCallStatus('idle');
+      setCallMode(null);
+    }
+  }, [callStatus, fullContext, appName, headerAddress, official.address]);
 
   // Esc closes the floating card; focus the input when it opens.
   useEffect(() => {
@@ -635,6 +745,26 @@ const ClaireAssistant = ({
             {subtitle}
           </div>
         </div>
+        {voiceCallEnabled && (
+          <button
+            type="button"
+            onClick={() => (callStatus === 'idle' ? void startCall() : void endCall())}
+            disabled={callStatus === 'connecting' || callStatus === 'ending'}
+            aria-label={callStatus === 'idle' ? 'Call Claire' : 'End call'}
+            title={
+              callStatus === 'idle'
+                ? 'Have a spoken conversation with Claire'
+                : 'End the call'
+            }
+            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+              callStatus === 'idle'
+                ? 'text-gray-400 hover:text-emerald-300 hover:bg-emerald-400/10'
+                : 'text-rose-200 bg-rose-500/15 ring-1 ring-rose-400/30 hover:bg-rose-500/25 disabled:opacity-60'
+            }`}
+          >
+            {callStatus === 'idle' ? <Phone size={15} /> : <PhoneOff size={15} />}
+          </button>
+        )}
         {voiceAvailable && (
           <button
             type="button"
@@ -833,6 +963,13 @@ const ClaireAssistant = ({
             <span>Claire’s voice is unavailable: {speechError}</span>
           </div>
         )}
+
+        {callError && callStatus === 'idle' && (
+          <div className="flex items-start gap-2 rounded-xl px-3 py-2 text-[11.5px] bg-rose-500/10 text-rose-200/90 ring-1 ring-rose-400/20">
+            <PhoneOff size={12} className="shrink-0 mt-0.5" />
+            <span>Voice call ended: {callError}</span>
+          </div>
+        )}
       </div>
 
       {/* Composer */}
@@ -912,6 +1049,52 @@ const ClaireAssistant = ({
           </div>
         </form>
       </div>
+
+      {/* Live voice-call overlay — covers the messages + composer while a
+          spoken conversation is active, leaving the header (with the End
+          Call button) reachable. */}
+      {callStatus !== 'idle' && (
+        <div className="absolute inset-x-0 bottom-0 top-[58px] flex flex-col items-center justify-center px-4 bg-[#0b0f15]/95 backdrop-blur-sm">
+          <div
+            className={`w-20 h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/30 transition-transform ${
+              callMode === 'speaking' ? 'scale-105 animate-pulse' : ''
+            }`}
+          >
+            <img
+              src={CLAIRE_AVATAR}
+              alt=""
+              className="w-full h-full rounded-2xl object-cover"
+            />
+          </div>
+          <div className="mt-4 text-sm font-semibold text-white">
+            {callStatus === 'connecting'
+              ? 'Calling Claire…'
+              : callStatus === 'ending'
+                ? 'Ending call…'
+                : callMode === 'speaking'
+                  ? 'Claire is speaking'
+                  : 'Listening…'}
+          </div>
+          <div className="mt-1 text-[11px] text-amber-200/70 min-h-[14px]">
+            {callStatus === 'connected'
+              ? 'Speak naturally — this is a live voice call.'
+              : ' '}
+          </div>
+          <button
+            type="button"
+            onClick={() => void endCall()}
+            disabled={callStatus === 'connecting' || callStatus === 'ending'}
+            className="mt-5 inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-[12px] font-semibold text-white bg-rose-500 hover:bg-rose-400 disabled:opacity-60 transition-colors shadow-[0_4px_12px_-4px_rgba(244,63,94,0.6)]"
+          >
+            <PhoneOff size={13} /> End call
+          </button>
+          {callError && (
+            <div className="mt-3 text-[11px] text-rose-300 text-center max-w-[18rem]">
+              {callError}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
