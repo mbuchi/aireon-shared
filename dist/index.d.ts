@@ -355,12 +355,11 @@ interface ClaireAssistantProps {
     /** Optional ElevenLabs model override (defaults to eleven_turbo_v2_5). */
     elevenLabsModel?: string;
     /**
-     * Enable Claire's full voice-call mode (ElevenLabs Speech Engine). When
-     * true, a phone button in the header opens a live spoken conversation
-     * — the host app must expose `/api/claire-voice/token` and
-     * `/api/claire-voice/context` proxies to project_RES. With no proxies
-     * wired the call simply fails to start; with this flag false (default)
-     * the button never renders.
+     * Enable Claire's full voice-call mode (Gemini Live via the project_RES
+     * WebSocket bridge at wss://res.zeroo.ch/res_api/claire/voice/ws). When
+     * true, a phone button in the header opens a live spoken conversation;
+     * with this flag false (default) the button never renders. The host app
+     * needs no proxies — the browser opens the WS directly.
      */
     voiceCallEnabled?: boolean;
     /**
@@ -452,14 +451,50 @@ declare function plainSpeechText(text: string): string;
  */
 declare function synthesizeSpeech({ apiKey, voiceId, model, text, signal, }: SpeechOptions): Promise<Blob>;
 
-declare function fetchVoiceCallToken(signal?: AbortSignal): Promise<string>;
-interface VoiceCallContextPayload {
-    conversationId: string;
-    context: string;
-    appName: string;
-    address?: string;
+type CallMode = 'listening' | 'speaking';
+type CallRole = 'user' | 'agent';
+interface VoiceCallCallbacks {
+    /** Fired once the upstream voice session is ready to accept audio. */
+    onConnect?: (info: {
+        conversationId: string;
+    }) => void;
+    /** Fired once the session has fully torn down (for any reason). */
+    onDisconnect?: () => void;
+    /** Fired when Claire transitions between listening / speaking states. */
+    onModeChange?: (info: {
+        mode: CallMode;
+    }) => void;
+    /** Fired with each transcript chunk (user STT or agent TTS). */
+    onMessage?: (info: {
+        role: CallRole;
+        message: string;
+    }) => void;
+    /** Fired when the user interrupted Claire — buffered speech is dropped. */
+    onInterrupted?: () => void;
+    /** Fired with a human-readable failure message; call also tears down. */
+    onError?: (message: string) => void;
+    /** Free-form diagnostic events for the host app's console / telemetry. */
+    onDebug?: (info: unknown) => void;
 }
-declare function registerVoiceCallContext(payload: VoiceCallContextPayload, signal?: AbortSignal): Promise<void>;
+interface StartVoiceCallOptions extends VoiceCallCallbacks {
+    /** Name of the app mounting Claire (e.g. "valoo"). Used in the prompt. */
+    appName: string;
+    /** Selected-parcel context string Claire should ground her answers in. */
+    parcelContext: string;
+    /** Optional street address — used to title the call in Claire's prompt. */
+    address?: string;
+    /** UI locale — maps to Gemini Live's language_code (de / en / fr / it). */
+    language?: string;
+    /** Override the WebSocket endpoint; defaults to the prod RES bridge. */
+    wsUrl?: string;
+}
+interface VoiceCallSession {
+    /** Locally generated id, useful for telemetry / log correlation. */
+    conversationId: string;
+    /** Hang up the call and release mic + audio contexts. Idempotent. */
+    endSession: () => Promise<void>;
+}
+declare function startVoiceCall(options: StartVoiceCallOptions): Promise<VoiceCallSession>;
 
 interface ClaireTurn {
     role: 'user' | 'assistant';
@@ -746,4 +781,4 @@ declare function initialsOf(user: User | null | undefined): string;
 /** The provider-supplied profile picture URL, if any. */
 declare function pictureOf(user: User | null | undefined): string | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClairePOIs, type ClaireTurn, type CreatePrmInput, ElevenLabsConfigError, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SpeechOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, type VoiceCallContextPayload, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, fetchVoiceCallToken, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, plainSpeechText, registerVoiceCallContext, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, synthesizeSpeech, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClairePOIs, type ClaireTurn, type CreatePrmInput, ElevenLabsConfigError, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type SpeechOptions, type StartVoiceCallOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, type VoiceCallCallbacks, type VoiceCallSession, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, plainSpeechText, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, stripAuthParams, subscribe as subscribeProfile, synthesizeSpeech, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

@@ -15,6 +15,5 @@ export default defineConfig({
     'lucide-react',
     'oidc-client-ts',
     'openapi-fetch',
-    '@elevenlabs/client',
   ],
 });
