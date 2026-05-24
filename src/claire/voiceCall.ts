@@ -59,6 +59,13 @@ export interface StartVoiceCallOptions extends VoiceCallCallbacks {
     language?: string;
     /** Override the WebSocket endpoint; defaults to the prod RES bridge. */
     wsUrl?: string;
+    /**
+     * Gemini Live model to use for this call. RES whitelists which models are
+     * allowed and silently falls back to its default for anything else; this
+     * lets a host app render multiple buttons (e.g. one per pipeline) without
+     * shipping the allow-list itself.
+     */
+    model?: string;
 }
 
 export interface VoiceCallSession {
@@ -222,6 +229,7 @@ export async function startVoiceCall(
                     language: (options.language || 'de').toLowerCase(),
                     address: options.address || '',
                     parcelContext: options.parcelContext || '',
+                    ...(options.model ? { model: options.model } : {}),
                 }),
             );
             options.onDebug?.({ type: 'setup_sent', conversationId });

@@ -2,7 +2,7 @@ import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Phone, PhoneOff, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, PhoneOff, Phone, Zap, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 
@@ -2221,7 +2221,8 @@ async function startVoiceCall(options) {
           appName: options.appName,
           language: (options.language || "de").toLowerCase(),
           address: options.address || "",
-          parcelContext: options.parcelContext || ""
+          parcelContext: options.parcelContext || "",
+          ...options.model ? { model: options.model } : {}
         })
       );
       options.onDebug?.({ type: "setup_sent", conversationId });
@@ -3072,55 +3073,65 @@ var ClaireAssistant = ({
     },
     [elevenLabsApiKey, elevenLabsVoiceId, elevenLabsModel, stopSpeech]
   );
-  const startCall = useCallback(async () => {
-    if (callStatus !== "idle") return;
-    setCallError(null);
-    setCallStatus("connecting");
-    try {
-      const language = typeof document !== "undefined" && document.documentElement.lang || "de";
-      const conv = await startVoiceCall({
-        appName,
-        parcelContext: fullContext,
-        address: headerAddress || official.address,
-        language,
-        onConnect: () => {
-          setCallStatus("connected");
-        },
-        onDisconnect: () => {
-          conversationRef.current = null;
-          setCallStatus("idle");
-          setCallMode(null);
-        },
-        onModeChange: ({ mode }) => {
-          if (mode === "listening" || mode === "speaking") {
-            setCallMode(mode);
+  const [activeCallKind, setActiveCallKind] = useState(null);
+  const startCall = useCallback(
+    async (kind = "native-25") => {
+      if (callStatus !== "idle") return;
+      setCallError(null);
+      setCallStatus("connecting");
+      setActiveCallKind(kind);
+      const model = kind === "live-31" ? "gemini-3.1-flash-live-preview" : "gemini-2.5-flash-native-audio-latest";
+      try {
+        const language = typeof document !== "undefined" && document.documentElement.lang || "de";
+        const conv = await startVoiceCall({
+          appName,
+          parcelContext: fullContext,
+          address: headerAddress || official.address,
+          language,
+          model,
+          onConnect: () => {
+            setCallStatus("connected");
+          },
+          onDisconnect: () => {
+            conversationRef.current = null;
+            setCallStatus("idle");
+            setCallMode(null);
+            setActiveCallKind(null);
+          },
+          onModeChange: ({ mode }) => {
+            if (mode === "listening" || mode === "speaking") {
+              setCallMode(mode);
+            }
+          },
+          onMessage: ({ message, role }) => {
+            if (!message) return;
+            setVoiceTurns((prev) => [
+              ...prev,
+              { id: newId(), role, text: message }
+            ]);
+          },
+          onDebug: (info) => {
+            console.log("[claire-voice]", info);
+          },
+          onError: (message) => {
+            setCallError(message || "Voice call failed.");
+            conversationRef.current = null;
+            setCallStatus("idle");
+            setCallMode(null);
+            setActiveCallKind(null);
           }
-        },
-        onMessage: ({ message, role }) => {
-          if (!message) return;
-          setVoiceTurns((prev) => [
-            ...prev,
-            { id: newId(), role, text: message }
-          ]);
-        },
-        onDebug: (info) => {
-          console.log("[claire-voice]", info);
-        },
-        onError: (message) => {
-          setCallError(message || "Voice call failed.");
-          conversationRef.current = null;
-          setCallStatus("idle");
-          setCallMode(null);
-        }
-      });
-      conversationRef.current = conv;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Could not start the call.";
-      setCallError(msg);
-      setCallStatus("idle");
-      setCallMode(null);
-    }
-  }, [callStatus, fullContext, appName, headerAddress, official.address]);
+        });
+        conversationRef.current = conv;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Could not start the call.";
+        setCallError(msg);
+        setCallStatus("idle");
+        setCallMode(null);
+        setActiveCallKind(null);
+      }
+    },
+    [callStatus, fullContext, appName, headerAddress, official.address]
+  );
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
@@ -3310,18 +3321,32 @@ var ClaireAssistant = ({
                   }
                 )
               ] }),
-              voiceCallEnabled && /* @__PURE__ */ jsx(
-                "button",
-                {
-                  type: "button",
-                  onClick: () => callStatus === "idle" ? void startCall() : void endCall(),
-                  disabled: callStatus === "connecting" || callStatus === "ending",
-                  "aria-label": callStatus === "idle" ? "Call Claire" : "End call",
-                  title: callStatus === "idle" ? "Have a spoken conversation with Claire" : "End the call",
-                  className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${callStatus === "idle" ? "text-gray-400 hover:text-emerald-300 hover:bg-emerald-400/10" : "text-rose-200 bg-rose-500/15 ring-1 ring-rose-400/30 hover:bg-rose-500/25 disabled:opacity-60"}`,
-                  children: callStatus === "idle" ? /* @__PURE__ */ jsx(Phone, { size: 15 }) : /* @__PURE__ */ jsx(PhoneOff, { size: 15 })
-                }
-              ),
+              voiceCallEnabled && /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => callStatus === "idle" ? void startCall("native-25") : activeCallKind === "native-25" ? void endCall() : void 0,
+                    disabled: callStatus === "connecting" || callStatus === "ending" || callStatus !== "idle" && activeCallKind !== "native-25",
+                    "aria-label": callStatus === "idle" || activeCallKind !== "native-25" ? "Call Claire (Native Audio 2.5)" : "End call",
+                    title: callStatus === "idle" ? "Call Claire \u2014 Native Audio 2.5 (Aoede voice)" : activeCallKind === "native-25" ? "End the call" : "Another call is active",
+                    className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${callStatus !== "idle" && activeCallKind === "native-25" ? "text-rose-200 bg-rose-500/15 ring-1 ring-rose-400/30 hover:bg-rose-500/25 disabled:opacity-60" : "text-gray-400 hover:text-emerald-300 hover:bg-emerald-400/10 disabled:opacity-40"}`,
+                    children: callStatus !== "idle" && activeCallKind === "native-25" ? /* @__PURE__ */ jsx(PhoneOff, { size: 15 }) : /* @__PURE__ */ jsx(Phone, { size: 15 })
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => callStatus === "idle" ? void startCall("live-31") : activeCallKind === "live-31" ? void endCall() : void 0,
+                    disabled: callStatus === "connecting" || callStatus === "ending" || callStatus !== "idle" && activeCallKind !== "live-31",
+                    "aria-label": callStatus === "idle" || activeCallKind !== "live-31" ? "Call Claire (Gemini 3.1 Live)" : "End call",
+                    title: callStatus === "idle" ? "Call Claire \u2014 Gemini 3.1 Flash Live preview (lower latency)" : activeCallKind === "live-31" ? "End the call" : "Another call is active",
+                    className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${callStatus !== "idle" && activeCallKind === "live-31" ? "text-rose-200 bg-rose-500/15 ring-1 ring-rose-400/30 hover:bg-rose-500/25 disabled:opacity-60" : "text-gray-400 hover:text-sky-300 hover:bg-sky-400/10 disabled:opacity-40"}`,
+                    children: callStatus !== "idle" && activeCallKind === "live-31" ? /* @__PURE__ */ jsx(PhoneOff, { size: 15 }) : /* @__PURE__ */ jsx(Zap, { size: 15 })
+                  }
+                )
+              ] }),
               voiceAvailable && /* @__PURE__ */ jsx(
                 "button",
                 {

@@ -487,6 +487,13 @@ interface StartVoiceCallOptions extends VoiceCallCallbacks {
     language?: string;
     /** Override the WebSocket endpoint; defaults to the prod RES bridge. */
     wsUrl?: string;
+    /**
+     * Gemini Live model to use for this call. RES whitelists which models are
+     * allowed and silently falls back to its default for anything else; this
+     * lets a host app render multiple buttons (e.g. one per pipeline) without
+     * shipping the allow-list itself.
+     */
+    model?: string;
 }
 interface VoiceCallSession {
     /** Locally generated id, useful for telemetry / log correlation. */
