@@ -18,7 +18,6 @@ import {
   Volume2,
   VolumeX,
   X,
-  Zap,
 } from 'lucide-react';
 import {
   type ChatTurn,
@@ -475,103 +474,85 @@ const ClaireAssistant = ({
     [elevenLabsApiKey, elevenLabsVoiceId, elevenLabsModel, stopSpeech],
   );
 
-  // Which Gemini Live model the currently-active (or last-started) call is
-  // using. `null` when no call is active. The header re-renders the right
-  // PhoneOff button on the matching control so the user knows which line
-  // is open.
-  const [activeCallKind, setActiveCallKind] = useState<
-    'native-25' | 'live-31' | null
-  >(null);
-
   // Open a live spoken conversation with Claire. The mic / playback /
   // transport are owned by `startVoiceCall`; this just orchestrates the
-  // status machine and surfaces transcripts in the overlay. `kind` selects
-  // which Gemini Live model to use (currently the default native-audio 2.5
-  // pipeline or the newer 3.1 Live preview).
-  const startCall = useCallback(
-    async (kind: 'native-25' | 'live-31' = 'native-25') => {
-      if (callStatus !== 'idle') return;
-      setCallError(null);
-      setCallStatus('connecting');
-      setActiveCallKind(kind);
-      const model =
-        kind === 'live-31'
-          ? 'gemini-3.1-flash-live-preview'
-          : 'gemini-2.5-flash-native-audio-latest';
-      try {
-        // Read the page-level UI language so Gemini Live speaks back in the
-        // same one. Defaults to German (suite default); the server clamps
-        // anything unknown to de-DE so an unexpected tag never breaks the call.
-        const language =
-          (typeof document !== 'undefined' && document.documentElement.lang) ||
-          'de';
-        const conv = await startVoiceCall({
-          appName,
-          parcelContext: fullContext,
-          address: headerAddress || official.address,
-          language,
-          model,
-          onConnect: () => {
-            setCallStatus('connected');
-          },
-          onDisconnect: () => {
-            conversationRef.current = null;
-            setCallStatus('idle');
-            setCallMode(null);
-            setActiveCallKind(null);
-          },
-          onModeChange: ({ mode }) => {
-            if (mode === 'listening' || mode === 'speaking') {
-              setCallMode(mode);
+  // status machine and surfaces transcripts in the overlay. Uses the
+  // Gemini 3.1 Flash Live preview model — lowest-latency option in
+  // Google's docs and the one we settled on after A/B testing against
+  // the older 2.5 native-audio pipeline.
+  const startCall = useCallback(async () => {
+    if (callStatus !== 'idle') return;
+    setCallError(null);
+    setCallStatus('connecting');
+    try {
+      // Read the page-level UI language so Gemini Live speaks back in the
+      // same one. Defaults to German (suite default); the server clamps
+      // anything unknown to de-DE so an unexpected tag never breaks the call.
+      const language =
+        (typeof document !== 'undefined' && document.documentElement.lang) ||
+        'de';
+      const conv = await startVoiceCall({
+        appName,
+        parcelContext: fullContext,
+        address: headerAddress || official.address,
+        language,
+        model: 'gemini-3.1-flash-live-preview',
+        onConnect: () => {
+          setCallStatus('connected');
+        },
+        onDisconnect: () => {
+          conversationRef.current = null;
+          setCallStatus('idle');
+          setCallMode(null);
+        },
+        onModeChange: ({ mode }) => {
+          if (mode === 'listening' || mode === 'speaking') {
+            setCallMode(mode);
+          }
+        },
+        onMessage: ({ message, role }) => {
+          if (!message) return;
+          // Gemini Live streams transcripts as small deltas (often per
+          // word). Coalesce consecutive same-speaker chunks into one
+          // bubble — when the role changes, a new bubble starts. Add a
+          // separator space only when neither side of the join already
+          // has one and the new chunk doesn't begin with punctuation.
+          setVoiceTurns((prev) => {
+            const last = prev[prev.length - 1];
+            if (last && last.role === role) {
+              const joinNeedsSpace =
+                !/\s$/.test(last.text) && !/^[\s.,;:!?)\]}»"']/.test(message);
+              return [
+                ...prev.slice(0, -1),
+                {
+                  ...last,
+                  text: last.text + (joinNeedsSpace ? ' ' : '') + message,
+                },
+              ];
             }
-          },
-          onMessage: ({ message, role }) => {
-            if (!message) return;
-            // Gemini Live streams transcripts as small deltas (often per
-            // word). Coalesce consecutive same-speaker chunks into one
-            // bubble — when the role changes, a new bubble starts. Add a
-            // separator space only when neither side of the join already
-            // has one and the new chunk doesn't begin with punctuation.
-            setVoiceTurns((prev) => {
-              const last = prev[prev.length - 1];
-              if (last && last.role === role) {
-                const joinNeedsSpace =
-                  !/\s$/.test(last.text) && !/^[\s.,;:!?)\]}»"']/.test(message);
-                return [
-                  ...prev.slice(0, -1),
-                  {
-                    ...last,
-                    text: last.text + (joinNeedsSpace ? ' ' : '') + message,
-                  },
-                ];
-              }
-              return [...prev, { id: newId(), role, text: message }];
-            });
-          },
-          onDebug: (info: unknown) => {
-            // eslint-disable-next-line no-console
-            console.log('[claire-voice]', info);
-          },
-          onError: (message) => {
-            setCallError(message || 'Voice call failed.');
-            conversationRef.current = null;
-            setCallStatus('idle');
-            setCallMode(null);
-            setActiveCallKind(null);
-          },
-        });
-        conversationRef.current = conv;
-      } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : 'Could not start the call.';
-        setCallError(msg);
-        setCallStatus('idle');
-        setCallMode(null);
-        setActiveCallKind(null);
-      }
-    },
-    [callStatus, fullContext, appName, headerAddress, official.address],
-  );
+            return [...prev, { id: newId(), role, text: message }];
+          });
+        },
+        onDebug: (info: unknown) => {
+          // eslint-disable-next-line no-console
+          console.log('[claire-voice]', info);
+        },
+        onError: (message) => {
+          setCallError(message || 'Voice call failed.');
+          conversationRef.current = null;
+          setCallStatus('idle');
+          setCallMode(null);
+        },
+      });
+      conversationRef.current = conv;
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Could not start the call.';
+      setCallError(msg);
+      setCallStatus('idle');
+      setCallMode(null);
+    }
+  }, [callStatus, fullContext, appName, headerAddress, official.address]);
 
   // Esc closes the floating card; focus the input when it opens.
   useEffect(() => {
@@ -803,87 +784,24 @@ const ClaireAssistant = ({
           </div>
         </div>
         {voiceCallEnabled && (
-          <>
-            {/* Native Audio 2.5 — the original call button. */}
-            <button
-              type="button"
-              onClick={() =>
-                callStatus === 'idle'
-                  ? void startCall('native-25')
-                  : activeCallKind === 'native-25'
-                    ? void endCall()
-                    : undefined
-              }
-              disabled={
-                callStatus === 'connecting' ||
-                callStatus === 'ending' ||
-                (callStatus !== 'idle' && activeCallKind !== 'native-25')
-              }
-              aria-label={
-                callStatus === 'idle' || activeCallKind !== 'native-25'
-                  ? 'Call Claire (Native Audio 2.5)'
-                  : 'End call'
-              }
-              title={
-                callStatus === 'idle'
-                  ? 'Call Claire — Native Audio 2.5 (Aoede voice)'
-                  : activeCallKind === 'native-25'
-                    ? 'End the call'
-                    : 'Another call is active'
-              }
-              className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                callStatus !== 'idle' && activeCallKind === 'native-25'
-                  ? 'text-rose-200 bg-rose-500/15 ring-1 ring-rose-400/30 hover:bg-rose-500/25 disabled:opacity-60'
-                  : 'text-gray-400 hover:text-emerald-300 hover:bg-emerald-400/10 disabled:opacity-40'
-              }`}
-            >
-              {callStatus !== 'idle' && activeCallKind === 'native-25' ? (
-                <PhoneOff size={15} />
-              ) : (
-                <Phone size={15} />
-              )}
-            </button>
-
-            {/* Gemini 3.1 Flash Live preview — newer, latency-optimised. */}
-            <button
-              type="button"
-              onClick={() =>
-                callStatus === 'idle'
-                  ? void startCall('live-31')
-                  : activeCallKind === 'live-31'
-                    ? void endCall()
-                    : undefined
-              }
-              disabled={
-                callStatus === 'connecting' ||
-                callStatus === 'ending' ||
-                (callStatus !== 'idle' && activeCallKind !== 'live-31')
-              }
-              aria-label={
-                callStatus === 'idle' || activeCallKind !== 'live-31'
-                  ? 'Call Claire (Gemini 3.1 Live)'
-                  : 'End call'
-              }
-              title={
-                callStatus === 'idle'
-                  ? 'Call Claire — Gemini 3.1 Flash Live preview (lower latency)'
-                  : activeCallKind === 'live-31'
-                    ? 'End the call'
-                    : 'Another call is active'
-              }
-              className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                callStatus !== 'idle' && activeCallKind === 'live-31'
-                  ? 'text-rose-200 bg-rose-500/15 ring-1 ring-rose-400/30 hover:bg-rose-500/25 disabled:opacity-60'
-                  : 'text-gray-400 hover:text-sky-300 hover:bg-sky-400/10 disabled:opacity-40'
-              }`}
-            >
-              {callStatus !== 'idle' && activeCallKind === 'live-31' ? (
-                <PhoneOff size={15} />
-              ) : (
-                <Zap size={15} />
-              )}
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={() => (callStatus === 'idle' ? void startCall() : void endCall())}
+            disabled={callStatus === 'connecting' || callStatus === 'ending'}
+            aria-label={callStatus === 'idle' ? 'Call Claire' : 'End call'}
+            title={
+              callStatus === 'idle'
+                ? 'Have a spoken conversation with Claire'
+                : 'End the call'
+            }
+            className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+              callStatus === 'idle'
+                ? 'text-gray-400 hover:text-emerald-300 hover:bg-emerald-400/10'
+                : 'text-rose-200 bg-rose-500/15 ring-1 ring-rose-400/30 hover:bg-rose-500/25 disabled:opacity-60'
+            }`}
+          >
+            {callStatus === 'idle' ? <Phone size={15} /> : <PhoneOff size={15} />}
+          </button>
         )}
         {voiceAvailable && (
           <button
