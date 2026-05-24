@@ -162,8 +162,15 @@ export async function startVoiceCall(
         processorOptions: { bufferSize: MIC_BUFFER_SIZE },
     });
     micSource.connect(micNode);
-    // Intentionally not connecting micNode to micCtx.destination — that would
-    // route the user's voice back to their own speakers (loop / echo).
+    // Drain the mic worklet through a muted gain node into the destination.
+    // AudioWorklets whose output isn't observed by the graph may have their
+    // process() callback skipped entirely (Safari is strict about this,
+    // Chrome usually but not always tolerates it), which silently breaks mic
+    // capture. Gain=0 prevents the user's voice looping back to the speaker.
+    const micSilentSink = micCtx.createGain();
+    micSilentSink.gain.value = 0;
+    micNode.connect(micSilentSink);
+    micSilentSink.connect(micCtx.destination);
 
     let closed = false;
     let teardownPromise: Promise<void> | null = null;

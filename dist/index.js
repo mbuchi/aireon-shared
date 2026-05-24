@@ -2149,6 +2149,10 @@ async function startVoiceCall(options) {
     processorOptions: { bufferSize: MIC_BUFFER_SIZE }
   });
   micSource.connect(micNode);
+  const micSilentSink = micCtx.createGain();
+  micSilentSink.gain.value = 0;
+  micNode.connect(micSilentSink);
+  micSilentSink.connect(micCtx.destination);
   let closed = false;
   let teardownPromise = null;
   const ws = new WebSocket(wsUrl);
