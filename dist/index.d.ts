@@ -4,6 +4,7 @@ import { LucideIcon } from 'lucide-react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import { User, UserManager } from 'oidc-client-ts';
 export { Coordinates, GeoJSONFeatureCollection, JsonError, ParcelTree, PoiDetail, RES_API_BASE_URL, ResApiClient, ResApiClientOptions, SignalRecord, SwissnovoImage, components, createResApiClient, operations, paths } from './api/index.js';
+export { GEMINI_FALLBACK_CHAIN, GeminiFallbackAttempt, GeminiFallbackOptions, GeminiFallbackResult, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './gemini/index.js';
 import 'openapi-fetch';
 
 type ChangeKind = 'new' | 'improved' | 'fixed' | 'breaking' | 'docs';
@@ -416,7 +417,11 @@ declare function buildParcelContextSummary(input: ParcelContextInput): string;
 interface GeminiCallOptions {
     /** Gemini API key — supplied by the consuming app from its Vite env. */
     apiKey: string;
-    /** Model id; defaults to gemini-3.1-flash-lite. */
+    /**
+     * Preferred model id. If supplied, it is tried first; on 429/5xx the call
+     * falls through the default chain (gemini-3.5-flash → gemini-3.1-flash-lite
+     * → gemini-3-flash-preview). Omit to use only the default chain.
+     */
     model?: string;
     /** App name woven into the system prompt (e.g. "Valoo"). */
     appName?: string;

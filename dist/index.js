@@ -1,4 +1,6 @@
 import './chunk-6YKTLPIC.js';
+import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
+export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -1763,7 +1765,6 @@ Hub:
 - toolbox \u2014 the suite dashboard: search and launch every SwissNovo tool. https://swissnovo-toolbox.vercel.app/`;
 
 // src/claire/geminiClient.ts
-var DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite";
 var GEMINI_ENDPOINT = (model, key) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
   key
 )}`;
@@ -1910,33 +1911,32 @@ ${parcelContext}`;
     role: turn.role === "assistant" ? "model" : "user",
     parts: [{ text: turn.content }]
   }));
-  const res = await fetch(
-    GEMINI_ENDPOINT(model || DEFAULT_GEMINI_MODEL, apiKey),
-    {
+  const body = JSON.stringify({
+    systemInstruction: { role: "system", parts: [{ text: systemText }] },
+    contents,
+    generationConfig: {
+      temperature: 0.55,
+      topP: 0.9,
+      maxOutputTokens: 800
+    },
+    safetySettings: []
+  });
+  const { response: res } = await fetchGeminiWithFallback({
+    apiKey,
+    model,
+    buildUrl: (m, k) => GEMINI_ENDPOINT(m, k),
+    requestInit: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { role: "system", parts: [{ text: systemText }] },
-        contents,
-        generationConfig: {
-          temperature: 0.55,
-          topP: 0.9,
-          maxOutputTokens: 800
-        },
-        safetySettings: []
-      }),
-      signal
-    }
-  );
+      body
+    },
+    signal
+  });
   let data;
   try {
     data = await res.json();
   } catch {
     throw new Error(`Gemini request failed (${res.status})`);
-  }
-  if (!res.ok) {
-    const msg = data?.error?.message ?? `Gemini request failed (${res.status})`;
-    throw new Error(msg);
   }
   if (data.promptFeedback?.blockReason) {
     throw new Error(`Response blocked: ${data.promptFeedback.blockReason}`);

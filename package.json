@@ -23,6 +23,10 @@
     "./signal-collect": {
       "types": "./dist/signal/handler.d.ts",
       "default": "./dist/signal/handler.js"
+    },
+    "./gemini": {
+      "types": "./dist/gemini/index.d.ts",
+      "default": "./dist/gemini/index.js"
     }
   },
   "files": [

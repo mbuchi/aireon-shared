@@ -158,3 +158,15 @@ export type {
   SwissnovoImage,
   Coordinates,
 } from './api';
+
+export {
+  GEMINI_FALLBACK_CHAIN,
+  isRetriableGeminiStatus,
+  buildGeminiModelChain,
+  fetchGeminiWithFallback,
+} from './gemini';
+export type {
+  GeminiFallbackOptions,
+  GeminiFallbackAttempt,
+  GeminiFallbackResult,
+} from './gemini';

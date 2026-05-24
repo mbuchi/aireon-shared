@@ -6,8 +6,7 @@ import {
   SWISSNOVO_SUITE_BLURB,
   SWISSNOVO_APP_CATALOG,
 } from './claireAppCatalog';
-
-const DEFAULT_GEMINI_MODEL = 'gemini-3.1-flash-lite';
+import { fetchGeminiWithFallback } from '../gemini/fallback';
 
 const GEMINI_ENDPOINT = (model: string, key: string) =>
   `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
@@ -156,7 +155,11 @@ ${SWISSNOVO_APP_CATALOG}`;
 export interface GeminiCallOptions {
   /** Gemini API key — supplied by the consuming app from its Vite env. */
   apiKey: string;
-  /** Model id; defaults to gemini-3.1-flash-lite. */
+  /**
+   * Preferred model id. If supplied, it is tried first; on 429/5xx the call
+   * falls through the default chain (gemini-3.5-flash → gemini-3.1-flash-lite
+   * → gemini-3-flash-preview). Omit to use only the default chain.
+   */
   model?: string;
   /** App name woven into the system prompt (e.g. "Valoo"). */
   appName?: string;
@@ -208,35 +211,34 @@ export async function generateParcelChatReply({
     parts: [{ text: turn.content }],
   }));
 
-  const res = await fetch(
-    GEMINI_ENDPOINT(model || DEFAULT_GEMINI_MODEL, apiKey),
-    {
+  const body = JSON.stringify({
+    systemInstruction: { role: 'system', parts: [{ text: systemText }] },
+    contents,
+    generationConfig: {
+      temperature: 0.55,
+      topP: 0.9,
+      maxOutputTokens: 800,
+    },
+    safetySettings: [],
+  });
+
+  const { response: res } = await fetchGeminiWithFallback({
+    apiKey,
+    model,
+    buildUrl: (m, k) => GEMINI_ENDPOINT(m, k),
+    requestInit: {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { role: 'system', parts: [{ text: systemText }] },
-        contents,
-        generationConfig: {
-          temperature: 0.55,
-          topP: 0.9,
-          maxOutputTokens: 800,
-        },
-        safetySettings: [],
-      }),
-      signal,
+      body,
     },
-  );
+    signal,
+  });
 
   let data: GeminiResponse;
   try {
     data = (await res.json()) as GeminiResponse;
   } catch {
     throw new Error(`Gemini request failed (${res.status})`);
-  }
-
-  if (!res.ok) {
-    const msg = data?.error?.message ?? `Gemini request failed (${res.status})`;
-    throw new Error(msg);
   }
 
   if (data.promptFeedback?.blockReason) {
