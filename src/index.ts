@@ -77,11 +77,14 @@ export {
   ElevenLabsConfigError,
 } from './claire/elevenLabsClient';
 export type { SpeechOptions } from './claire/elevenLabsClient';
-export {
-  fetchVoiceCallToken,
-  registerVoiceCallContext,
-} from './claire/elevenLabsCall';
-export type { VoiceCallContextPayload } from './claire/elevenLabsCall';
+export { startVoiceCall } from './claire/voiceCall';
+export type {
+  CallMode,
+  CallRole,
+  StartVoiceCallOptions,
+  VoiceCallCallbacks,
+  VoiceCallSession,
+} from './claire/voiceCall';
 export {
   loadClaireConversation,
   saveClaireConversation,

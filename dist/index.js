@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom';
 import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Phone, PhoneOff, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
-import { VoiceConversation, Conversation } from '@elevenlabs/client';
 
 // src/releaseNotes/types.ts
 var KIND_META = {
@@ -2004,65 +2003,290 @@ async function synthesizeSpeech({
   }
   return res.blob();
 }
-var voiceErrorEventPatched = false;
-function patchVoiceErrorEvent() {
-  if (voiceErrorEventPatched) return;
-  const proto = Object.getPrototypeOf(
-    VoiceConversation.prototype
-  );
-  if (!proto || typeof proto.handleErrorEvent !== "function") {
-    voiceErrorEventPatched = true;
-    return;
+
+// src/claire/voiceWorklets.ts
+var MIC_WORKLET_SOURCE = `
+class ClaireMicProcessor extends AudioWorkletProcessor {
+    constructor(options) {
+        super();
+        const opts = (options && options.processorOptions) || {};
+        // 1600 samples at 16 kHz = 100 ms. Smaller buffers raise mic-to-cloud
+        // latency; larger buffers raise WebSocket framing overhead.
+        this.bufferSize = opts.bufferSize || 1600;
+        this.buffer = new Int16Array(this.bufferSize);
+        this.index = 0;
+    }
+    process(inputs) {
+        const input = inputs[0];
+        if (!input || input.length === 0) return true;
+        const channel = input[0];
+        if (!channel) return true;
+        for (let i = 0; i < channel.length; i++) {
+            let s = channel[i];
+            if (s > 1) s = 1; else if (s < -1) s = -1;
+            this.buffer[this.index++] = s < 0 ? s * 0x8000 : s * 0x7fff;
+            if (this.index >= this.bufferSize) {
+                this.port.postMessage(this.buffer.slice(0, this.index));
+                this.index = 0;
+            }
+        }
+        return true;
+    }
+}
+registerProcessor('claire-mic-processor', ClaireMicProcessor);
+`;
+var SPEAKER_WORKLET_SOURCE = `
+class ClaireSpeakerProcessor extends AudioWorkletProcessor {
+    constructor() {
+        super();
+        this.queue = [];
+        this.current = null;
+        this.idx = 0;
+        this.port.onmessage = (event) => {
+            const d = event.data;
+            if (!d) return;
+            if (d.type === 'audio' && d.samples) {
+                this.queue.push(d.samples);
+            } else if (d.type === 'clear') {
+                this.queue = [];
+                this.current = null;
+                this.idx = 0;
+            }
+        };
+    }
+    process(_inputs, outputs) {
+        const output = outputs[0];
+        if (!output || output.length === 0) return true;
+        const channel = output[0];
+        for (let i = 0; i < channel.length; i++) {
+            while (!this.current || this.idx >= this.current.length) {
+                if (this.queue.length === 0) {
+                    this.current = null;
+                    break;
+                }
+                this.current = this.queue.shift();
+                this.idx = 0;
+            }
+            channel[i] = this.current ? this.current[this.idx++] / 0x8000 : 0;
+        }
+        return true;
+    }
+}
+registerProcessor('claire-speaker-processor', ClaireSpeakerProcessor);
+`;
+
+// src/claire/voiceCall.ts
+var DEFAULT_WS_URL = "wss://res.zeroo.ch/res_api/claire/voice/ws";
+var MIC_BUFFER_SIZE = 1600;
+var MIC_SAMPLE_RATE = 16e3;
+var SPEAKER_SAMPLE_RATE = 24e3;
+function generateConversationId() {
+  const c = typeof globalThis !== "undefined" ? globalThis.crypto : void 0;
+  if (c && typeof c.randomUUID === "function") {
+    return c.randomUUID();
   }
-  const original = proto.handleErrorEvent;
-  proto.handleErrorEvent = function patchedHandleErrorEvent(event) {
-    const e = event;
-    if (e && typeof e === "object" && e.error_event) {
-      return original.call(this, event);
-    }
-    let summary = "Voice agent error";
+  return `cv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+async function registerWorklet(ctx, source) {
+  const blob = new Blob([source], { type: "application/javascript" });
+  const url = URL.createObjectURL(blob);
+  try {
+    await ctx.audioWorklet.addModule(url);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+async function startVoiceCall(options) {
+  const conversationId = generateConversationId();
+  const wsUrl = options.wsUrl || DEFAULT_WS_URL;
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+    throw new Error("Voice calls require a browser with mic support.");
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        channelCount: 1,
+        sampleRate: MIC_SAMPLE_RATE,
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    });
+  } catch {
+    throw new Error("Microphone permission was denied or unavailable.");
+  }
+  const AudioCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtor) {
+    stream.getTracks().forEach((t) => t.stop());
+    throw new Error("Voice calls require AudioContext support.");
+  }
+  const micCtx = new AudioCtor({ sampleRate: MIC_SAMPLE_RATE });
+  const playCtx = new AudioCtor({ sampleRate: SPEAKER_SAMPLE_RATE });
+  try {
+    await Promise.all([
+      registerWorklet(micCtx, MIC_WORKLET_SOURCE),
+      registerWorklet(playCtx, SPEAKER_WORKLET_SOURCE)
+    ]);
+  } catch (err) {
+    stream.getTracks().forEach((t) => t.stop());
+    await micCtx.close().catch(() => {
+    });
+    await playCtx.close().catch(() => {
+    });
+    throw new Error(
+      err instanceof Error ? `Could not initialise audio worklets: ${err.message}` : "Could not initialise audio worklets."
+    );
+  }
+  await Promise.all([
+    micCtx.state === "suspended" ? micCtx.resume() : Promise.resolve(),
+    playCtx.state === "suspended" ? playCtx.resume() : Promise.resolve()
+  ]);
+  const speakerNode = new AudioWorkletNode(playCtx, "claire-speaker-processor");
+  speakerNode.connect(playCtx.destination);
+  const micSource = micCtx.createMediaStreamSource(stream);
+  const micNode = new AudioWorkletNode(micCtx, "claire-mic-processor", {
+    processorOptions: { bufferSize: MIC_BUFFER_SIZE }
+  });
+  micSource.connect(micNode);
+  let closed = false;
+  let teardownPromise = null;
+  const ws = new WebSocket(wsUrl);
+  ws.binaryType = "arraybuffer";
+  micNode.port.onmessage = (event) => {
+    if (closed || ws.readyState !== WebSocket.OPEN) return;
+    const samples = event.data;
+    if (!samples || samples.length === 0) return;
     try {
-      summary = e?.message ? String(e.message) : JSON.stringify(event);
-    } catch {
-    }
-    console.error("[claire-voice] malformed error event from agent:", event);
-    try {
-      this.onError?.(`Server error: ${summary}`, { rawEvent: event });
-    } catch {
-    }
-    try {
-      void this.endSession?.();
+      ws.send(samples.buffer);
     } catch {
     }
   };
-  voiceErrorEventPatched = true;
-}
-patchVoiceErrorEvent();
-async function fetchVoiceCallToken(signal) {
-  const res = await fetch("/api/claire-voice/token", { signal });
-  if (!res.ok) {
-    let detail = `Token request failed (${res.status})`;
+  function teardown() {
+    if (teardownPromise) return teardownPromise;
+    teardownPromise = (async () => {
+      closed = true;
+      try {
+        micNode.port.onmessage = null;
+      } catch {
+      }
+      try {
+        micNode.disconnect();
+      } catch {
+      }
+      try {
+        micSource.disconnect();
+      } catch {
+      }
+      try {
+        speakerNode.port.postMessage({ type: "clear" });
+      } catch {
+      }
+      try {
+        speakerNode.disconnect();
+      } catch {
+      }
+      try {
+        stream.getTracks().forEach((t) => t.stop());
+      } catch {
+      }
+      try {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "end" }));
+        }
+      } catch {
+      }
+      try {
+        ws.close();
+      } catch {
+      }
+      await micCtx.close().catch(() => {
+      });
+      await playCtx.close().catch(() => {
+      });
+      options.onDisconnect?.();
+    })();
+    return teardownPromise;
+  }
+  ws.addEventListener("open", () => {
     try {
-      const body = await res.json();
-      if (body?.error) detail = body.error;
+      ws.send(
+        JSON.stringify({
+          type: "setup",
+          conversationId,
+          appName: options.appName,
+          language: (options.language || "de").toLowerCase(),
+          address: options.address || "",
+          parcelContext: options.parcelContext || ""
+        })
+      );
+      options.onDebug?.({ type: "setup_sent", conversationId });
     } catch {
+      options.onError?.("Failed to send setup frame.");
+      void teardown();
     }
-    throw new Error(detail);
-  }
-  const data = await res.json();
-  if (!data.token) throw new Error("Token endpoint returned no token.");
-  return data.token;
-}
-async function registerVoiceCallContext(payload, signal) {
-  try {
-    await fetch("/api/claire-voice/context", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal
-    });
-  } catch {
-  }
+  });
+  ws.addEventListener("message", (event) => {
+    if (closed) return;
+    if (typeof event.data === "string") {
+      let msg;
+      try {
+        msg = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      const type = msg.type;
+      if (type === "connected") {
+        options.onConnect?.({ conversationId });
+      } else if (type === "mode") {
+        const mode = msg.mode;
+        if (mode === "listening" || mode === "speaking") {
+          options.onModeChange?.({ mode });
+        }
+      } else if (type === "transcript") {
+        const role = msg.role;
+        const text = msg.text;
+        if ((role === "user" || role === "agent") && typeof text === "string") {
+          options.onMessage?.({ role, message: text });
+        }
+      } else if (type === "interrupted") {
+        try {
+          speakerNode.port.postMessage({ type: "clear" });
+        } catch {
+        }
+        options.onInterrupted?.();
+      } else if (type === "error") {
+        options.onError?.(
+          typeof msg.message === "string" ? msg.message : "Voice call error."
+        );
+        void teardown();
+      } else if (type === "closed") {
+        options.onDebug?.({ type: "closed", reason: msg.reason });
+        void teardown();
+      }
+    } else if (event.data instanceof ArrayBuffer) {
+      const samples = new Int16Array(event.data);
+      try {
+        speakerNode.port.postMessage({ type: "audio", samples });
+      } catch {
+      }
+    }
+  });
+  ws.addEventListener("close", () => {
+    if (!closed) void teardown();
+  });
+  ws.addEventListener("error", () => {
+    if (!closed) {
+      options.onError?.("Voice connection failed.");
+      void teardown();
+    }
+  });
+  return {
+    conversationId,
+    async endSession() {
+      await teardown();
+    }
+  };
 }
 
 // src/signal/client.ts
@@ -2849,18 +3073,14 @@ var ClaireAssistant = ({
     setCallError(null);
     setCallStatus("connecting");
     try {
-      const token = await fetchVoiceCallToken();
-      const conv = await Conversation.startSession({
-        conversationToken: token,
-        connectionType: "webrtc",
-        onConnect: ({ conversationId }) => {
+      const language = typeof document !== "undefined" && document.documentElement.lang || "de";
+      const conv = await startVoiceCall({
+        appName,
+        parcelContext: fullContext,
+        address: headerAddress || official.address,
+        language,
+        onConnect: () => {
           setCallStatus("connected");
-          void registerVoiceCallContext({
-            conversationId,
-            context: fullContext,
-            appName,
-            address: headerAddress || official.address
-          });
         },
         onDisconnect: () => {
           conversationRef.current = null;
@@ -3964,4 +4184,4 @@ function ProfileModal({ user, onClose, dark = false }) {
   );
 }
 
-export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, ElevenLabsConfigError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, fetchVoiceCallToken, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, plainSpeechText, registerVoiceCallContext, saveClaireConversation, sendClaireMessageSignal, stripAuthParams, subscribe as subscribeProfile, synthesizeSpeech, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, ElevenLabsConfigError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, loadClaireConversation, pictureOf, plainSpeechText, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, stripAuthParams, subscribe as subscribeProfile, synthesizeSpeech, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

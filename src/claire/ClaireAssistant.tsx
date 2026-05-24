@@ -19,7 +19,6 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
-import { Conversation } from '@elevenlabs/client';
 import {
   type ChatTurn,
   GeminiConfigError,
@@ -27,10 +26,7 @@ import {
   generateParcelChatReply,
 } from './geminiClient';
 import { synthesizeSpeech } from './elevenLabsClient';
-import {
-  fetchVoiceCallToken,
-  registerVoiceCallContext,
-} from './elevenLabsCall';
+import { startVoiceCall, type VoiceCallSession } from './voiceCall';
 import { sendClaireMessageSignal } from './signal';
 import { fetchClaireContext } from './claireContext';
 import { fetchClairePOIs } from './clairePOIs';
@@ -81,12 +77,11 @@ export interface ClaireAssistantProps {
   /** Optional ElevenLabs model override (defaults to eleven_turbo_v2_5). */
   elevenLabsModel?: string;
   /**
-   * Enable Claire's full voice-call mode (ElevenLabs Speech Engine). When
-   * true, a phone button in the header opens a live spoken conversation
-   * — the host app must expose `/api/claire-voice/token` and
-   * `/api/claire-voice/context` proxies to project_RES. With no proxies
-   * wired the call simply fails to start; with this flag false (default)
-   * the button never renders.
+   * Enable Claire's full voice-call mode (Gemini Live via the project_RES
+   * WebSocket bridge at wss://res.zeroo.ch/res_api/claire/voice/ws). When
+   * true, a phone button in the header opens a live spoken conversation;
+   * with this flag false (default) the button never renders. The host app
+   * needs no proxies — the browser opens the WS directly.
    */
   voiceCallEnabled?: boolean;
   /**
@@ -258,9 +253,9 @@ const ClaireAssistant = ({
     voiceEnabledRef.current = voiceEnabled;
   }, [voiceEnabled]);
 
-  // Claire's voice-call mode (ElevenLabs Speech Engine). The chat-card
-  // overlays a live-call UI while a call is active; the mic, playback and
-  // turn-taking are owned by @elevenlabs/client.
+  // Claire's voice-call mode (Gemini Live via the project_RES WS bridge).
+  // The chat-card overlays a live-call UI while a call is active; mic,
+  // playback and transport are owned by the shared `startVoiceCall`.
   type CallStatus = 'idle' | 'connecting' | 'connected' | 'ending';
   type CallMode = 'listening' | 'speaking' | null;
   const [callStatus, setCallStatus] = useState<CallStatus>('idle');
@@ -273,9 +268,7 @@ const ClaireAssistant = ({
     { id: string; role: 'user' | 'agent'; text: string }[]
   >([]);
   const voiceTranscriptRef = useRef<HTMLDivElement>(null);
-  const conversationRef = useRef<Awaited<
-    ReturnType<typeof Conversation.startSession>
-  > | null>(null);
+  const conversationRef = useRef<VoiceCallSession | null>(null);
 
   const { isAuthenticated, getAccessToken } = useAuth();
 
@@ -482,28 +475,26 @@ const ClaireAssistant = ({
   );
 
   // Open a live spoken conversation with Claire. The mic / playback /
-  // turn-taking are owned by @elevenlabs/client; this orchestrates the
-  // token round-trip and registers per-parcel context against the
-  // Speech Engine conversation id so project_RES can ground the answer.
+  // transport are owned by `startVoiceCall`; this just orchestrates the
+  // status machine and surfaces transcripts in the overlay.
   const startCall = useCallback(async () => {
     if (callStatus !== 'idle') return;
     setCallError(null);
     setCallStatus('connecting');
     try {
-      const token = await fetchVoiceCallToken();
-      const conv = await Conversation.startSession({
-        conversationToken: token,
-        connectionType: 'webrtc',
-        onConnect: ({ conversationId }) => {
+      // Read the page-level UI language so Gemini Live speaks back in the
+      // same one. Defaults to German (suite default); the server clamps
+      // anything unknown to de-DE so an unexpected tag never breaks the call.
+      const language =
+        (typeof document !== 'undefined' && document.documentElement.lang) ||
+        'de';
+      const conv = await startVoiceCall({
+        appName,
+        parcelContext: fullContext,
+        address: headerAddress || official.address,
+        language,
+        onConnect: () => {
           setCallStatus('connected');
-          // Register parcel context for this conversation. Best-effort —
-          // a failed registration just makes Claire less grounded.
-          void registerVoiceCallContext({
-            conversationId,
-            context: fullContext,
-            appName,
-            address: headerAddress || official.address,
-          });
         },
         onDisconnect: () => {
           conversationRef.current = null;
