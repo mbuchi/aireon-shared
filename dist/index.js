@@ -1844,7 +1844,27 @@ var FIELD_LABELS = {
   rf_h_roof_min: "Min roof elevation (m)",
   rf_h_roof_eaves: "Eaves elevation (m)",
   rf_h_ground: "Ground elevation (m)",
-  derived_height: "Derived building height (m)"
+  derived_height: "Derived building height (m)",
+  // Geopool-specific keys (Zoning, taxes, vacancy, accessibility)
+  tax_sum: "Total local municipal tax rate (\u2030)",
+  tax_canton: "Canton tax factor",
+  tax_fso_name: "Tax municipality name",
+  cz_util_now: "Current zoning utilization ratio",
+  cz_util_est_score: "Zoning utilization score",
+  gfa_now: "Current Gross Floor Area (GFA) (m\xB2)",
+  gfa_max: "Maximum allowed Gross Floor Area (GFA) (m\xB2)",
+  vol_max: "Maximum allowed building volume (m\xB3)",
+  ratio_s: "Built parcel ratio (%)",
+  ratio_s_free: "Free/available built parcel ratio (%)",
+  ratio_v: "Volume parcel ratio (%)",
+  ratio_v_free: "Free/available volume parcel ratio (%)",
+  acc_ewap_pubt: "Public transit accessibility travel time (min)",
+  acc_ewap_road: "Private vehicle accessibility travel time (min)",
+  tt_agglo_pubt_score: "Transit accessibility quality score",
+  tt_agglo_road_score: "Road accessibility quality score",
+  vac_all: "Local overall vacancy rate (%)",
+  vac_new: "Local vacancy rate for new construction (%)",
+  vac_old: "Local vacancy rate for existing buildings (%)"
 };
 function formatValue(key, raw) {
   if (raw === null || raw === void 0 || raw === "") return null;
