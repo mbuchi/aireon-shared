@@ -1,7 +1,7 @@
 import './chunk-6YKTLPIC.js';
+export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
-export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Phone, PhoneOff, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
@@ -3552,56 +3552,84 @@ var ClaireAssistant = ({
             ]
           }
         ),
-        callStatus !== "idle" && /* @__PURE__ */ jsxs("div", { className: "absolute inset-x-0 bottom-0 top-[58px] flex flex-col items-center justify-center px-4 bg-[#0b0f15]/95 backdrop-blur-sm", children: [
-          /* @__PURE__ */ jsx(
-            "div",
-            {
-              className: `w-20 h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/30 transition-transform ${callMode === "speaking" ? "scale-105 animate-pulse" : ""}`,
-              children: /* @__PURE__ */ jsx(
-                "img",
+        callStatus !== "idle" && (() => {
+          const visualMode = callStatus === "connected" && callMode === "listening" ? "listening" : "speaking";
+          const statusLabel = callStatus === "connecting" ? "Calling Claire\u2026" : callStatus === "ending" ? "Ending call\u2026" : visualMode === "speaking" ? "Claire is speaking" : "Listening to you";
+          const subtitle2 = callStatus === "connecting" ? "Connecting\u2026" : callStatus === "ending" ? " " : visualMode === "speaking" ? "Live voice call" : "Speak naturally \u2014 Claire is listening";
+          return /* @__PURE__ */ jsxs("div", { className: "absolute inset-x-0 bottom-0 top-[58px] flex flex-col items-center justify-start px-4 pt-5 pb-4 bg-gradient-to-b from-[#0b0f15]/95 via-[#0b0f15]/95 to-[#0b0f15]/95 backdrop-blur-md", children: [
+            /* @__PURE__ */ jsxs("div", { className: "relative w-44 h-44 flex items-center justify-center shrink-0", children: [
+              visualMode === "speaking" && /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsx("span", { className: "claire-ripple claire-ripple-1" }),
+                /* @__PURE__ */ jsx("span", { className: "claire-ripple claire-ripple-2" }),
+                /* @__PURE__ */ jsx("span", { className: "claire-ripple claire-ripple-3" })
+              ] }),
+              /* @__PURE__ */ jsx(
+                "span",
                 {
-                  src: CLAIRE_AVATAR,
-                  alt: "",
-                  className: "w-full h-full rounded-2xl object-cover"
+                  className: visualMode === "speaking" ? "claire-halo claire-halo-speaking" : "claire-halo claire-halo-listening"
                 }
-              )
-            }
-          ),
-          /* @__PURE__ */ jsx("div", { className: "mt-4 text-sm font-semibold text-white", children: callStatus === "connecting" ? "Calling Claire\u2026" : callStatus === "ending" ? "Ending call\u2026" : callMode === "speaking" ? "Claire is speaking" : "Listening\u2026" }),
-          /* @__PURE__ */ jsx("div", { className: "mt-1 text-[11px] text-amber-200/70 min-h-[14px]", children: callStatus === "connected" ? "Speak naturally \u2014 this is a live voice call." : "\xA0" }),
-          voiceTurns.length > 0 && /* @__PURE__ */ jsx(
-            "div",
-            {
-              ref: voiceTranscriptRef,
-              className: "mt-4 w-full max-w-[22rem] max-h-[12rem] overflow-y-auto px-3 py-2 rounded-lg bg-white/[0.04] ring-1 ring-white/[0.06] text-[12px] leading-snug text-left space-y-1.5",
-              children: voiceTurns.map((t) => /* @__PURE__ */ jsxs(
+              ),
+              /* @__PURE__ */ jsxs(
                 "div",
                 {
-                  className: t.role === "user" ? "text-amber-200/90" : "text-gray-100",
+                  className: "relative w-24 h-24 rounded-full flex items-center justify-center ring-1 transition-shadow duration-500 " + (visualMode === "speaking" ? "bg-gradient-to-br from-amber-300/35 via-orange-400/25 to-rose-500/20 ring-amber-200/50 shadow-[0_0_48px_-4px_rgba(251,191,36,0.55)] claire-core-speaking" : "bg-gradient-to-br from-amber-300/15 via-amber-400/10 to-rose-500/10 ring-amber-300/25 shadow-[0_0_24px_-6px_rgba(251,191,36,0.3)] claire-core-listening"),
                   children: [
-                    /* @__PURE__ */ jsx("span", { className: "font-semibold mr-1", children: t.role === "user" ? "You:" : "Claire:" }),
-                    t.text
+                    /* @__PURE__ */ jsx(
+                      "img",
+                      {
+                        src: CLAIRE_AVATAR,
+                        alt: "",
+                        className: "w-[88%] h-[88%] rounded-full object-cover"
+                      }
+                    ),
+                    /* @__PURE__ */ jsx(
+                      "span",
+                      {
+                        className: "absolute bottom-0.5 right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-[#0b0f15] " + (visualMode === "speaking" ? "bg-amber-300 claire-dot-speaking" : "bg-emerald-400")
+                      }
+                    )
                   ]
-                },
-                t.id
-              ))
-            }
-          ),
-          /* @__PURE__ */ jsxs(
-            "button",
-            {
-              type: "button",
-              onClick: () => void endCall(),
-              disabled: callStatus === "connecting" || callStatus === "ending",
-              className: "mt-5 inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-[12px] font-semibold text-white bg-rose-500 hover:bg-rose-400 disabled:opacity-60 transition-colors shadow-[0_4px_12px_-4px_rgba(244,63,94,0.6)]",
-              children: [
-                /* @__PURE__ */ jsx(PhoneOff, { size: 13 }),
-                " End call"
-              ]
-            }
-          ),
-          callError && /* @__PURE__ */ jsx("div", { className: "mt-3 text-[11px] text-rose-300 text-center max-w-[18rem]", children: callError })
-        ] })
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "mt-3 text-center", children: [
+              /* @__PURE__ */ jsx("div", { className: "text-[15px] font-semibold text-white tracking-tight transition-opacity duration-300", children: statusLabel }),
+              /* @__PURE__ */ jsx("div", { className: "mt-1 text-[10.5px] font-medium uppercase tracking-[0.14em] text-amber-200/70 min-h-[14px]", children: subtitle2 })
+            ] }),
+            voiceTurns.length > 0 && /* @__PURE__ */ jsx(
+              "div",
+              {
+                ref: voiceTranscriptRef,
+                className: "chat-scroll mt-3 w-full max-w-[22rem] max-h-[9rem] overflow-y-auto px-3 py-2 rounded-xl bg-white/[0.035] ring-1 ring-white/[0.06] text-[12px] leading-snug text-left space-y-1.5",
+                children: voiceTurns.map((t) => /* @__PURE__ */ jsxs(
+                  "div",
+                  {
+                    className: t.role === "user" ? "text-amber-200/90" : "text-gray-100",
+                    children: [
+                      /* @__PURE__ */ jsx("span", { className: "font-semibold mr-1", children: t.role === "user" ? "You:" : "Claire:" }),
+                      t.text
+                    ]
+                  },
+                  t.id
+                ))
+              }
+            ),
+            /* @__PURE__ */ jsxs(
+              "button",
+              {
+                type: "button",
+                onClick: () => void endCall(),
+                disabled: callStatus === "connecting" || callStatus === "ending",
+                className: "mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-semibold text-white bg-gradient-to-br from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 disabled:opacity-60 transition-all shadow-[0_8px_24px_-8px_rgba(244,63,94,0.7)] active:scale-95",
+                children: [
+                  /* @__PURE__ */ jsx(PhoneOff, { size: 13 }),
+                  " End call"
+                ]
+              }
+            ),
+            callError && /* @__PURE__ */ jsx("div", { className: "mt-3 text-[11px] text-rose-300 text-center max-w-[18rem]", children: callError })
+          ] });
+        })()
       ]
     }
   );
@@ -3641,6 +3669,125 @@ var ClaireAssistant = ({
         @keyframes chatCardPop {
           from { opacity: 0; transform: translateY(12px) scale(0.96); }
           to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Voice-call orb \u2014 two distinct visual states:
+           \u2022 listening: a single calm breathing halo (slow, low-amplitude).
+           \u2022 speaking: multiple concentric ripples expanding outward, plus a
+             tighter brighter breathing halo and an intensified core glow. */
+        .claire-halo {
+          position: absolute;
+          inset: 0;
+          margin: auto;
+          border-radius: 9999px;
+          pointer-events: none;
+          will-change: transform, opacity;
+        }
+        .claire-halo-listening {
+          width: 8.5rem;
+          height: 8.5rem;
+          background: radial-gradient(
+            circle,
+            rgba(251, 191, 36, 0.18) 0%,
+            rgba(251, 191, 36, 0.08) 55%,
+            rgba(251, 191, 36, 0) 75%
+          );
+          animation: claireBreathSlow 3.6s ease-in-out infinite;
+        }
+        .claire-halo-speaking {
+          width: 9.5rem;
+          height: 9.5rem;
+          background: radial-gradient(
+            circle,
+            rgba(251, 191, 36, 0.32) 0%,
+            rgba(244, 114, 22, 0.18) 50%,
+            rgba(244, 63, 94, 0.05) 80%,
+            rgba(244, 63, 94, 0) 100%
+          );
+          animation: claireBreathFast 1.4s ease-in-out infinite;
+        }
+        @keyframes claireBreathSlow {
+          0%, 100% { transform: scale(1); opacity: 0.55; }
+          50% { transform: scale(1.06); opacity: 0.85; }
+        }
+        @keyframes claireBreathFast {
+          0%, 100% { transform: scale(1); opacity: 0.7; }
+          50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .claire-ripple {
+          position: absolute;
+          inset: 0;
+          margin: auto;
+          width: 6rem;
+          height: 6rem;
+          border-radius: 9999px;
+          border: 1.5px solid rgba(251, 191, 36, 0.55);
+          background: radial-gradient(
+            circle,
+            rgba(251, 191, 36, 0.08) 0%,
+            rgba(251, 191, 36, 0) 70%
+          );
+          pointer-events: none;
+          opacity: 0;
+          animation: claireRipple 1.8s cubic-bezier(0, 0.2, 0.4, 1) infinite;
+          will-change: transform, opacity, border-color;
+        }
+        .claire-ripple-1 { animation-delay: 0s; }
+        .claire-ripple-2 { animation-delay: 0.55s; }
+        .claire-ripple-3 { animation-delay: 1.1s; }
+        @keyframes claireRipple {
+          0% {
+            transform: scale(0.85);
+            opacity: 0.9;
+            border-color: rgba(251, 191, 36, 0.65);
+          }
+          70% {
+            opacity: 0.18;
+            border-color: rgba(244, 114, 22, 0.35);
+          }
+          100% {
+            transform: scale(2.6);
+            opacity: 0;
+            border-color: rgba(244, 63, 94, 0);
+          }
+        }
+
+        .claire-core-listening {
+          animation: claireCoreListening 3.6s ease-in-out infinite;
+        }
+        @keyframes claireCoreListening {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.015); }
+        }
+        .claire-core-speaking {
+          animation: claireCoreSpeaking 1.4s ease-in-out infinite;
+        }
+        @keyframes claireCoreSpeaking {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 36px -6px rgba(251, 191, 36, 0.45);
+          }
+          50% {
+            transform: scale(1.06);
+            box-shadow: 0 0 64px -2px rgba(251, 191, 36, 0.75);
+          }
+        }
+
+        .claire-dot-speaking {
+          animation: claireDotPulse 1s ease-in-out infinite;
+        }
+        @keyframes claireDotPulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.35); opacity: 0.7; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .claire-halo, .claire-ripple,
+          .claire-core-listening, .claire-core-speaking,
+          .claire-dot-speaking {
+            animation: none;
+          }
         }
       ` })
     ] }),
