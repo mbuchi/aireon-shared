@@ -1,7 +1,7 @@
 import './chunk-6YKTLPIC.js';
-export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
+export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Phone, PhoneOff, Volume2, VolumeX, Loader2, AlertCircle, Send, Check } from 'lucide-react';
@@ -1817,7 +1817,22 @@ var FIELD_LABELS = {
   parzelle: "Parcel number",
   nummer: "Number",
   owner: "Owner",
-  is_sell: "Listed for sale"
+  is_sell: "Listed for sale",
+  // Noise-specific keys for boom app
+  noise_source: "Noise source type",
+  noise_period: "Noise evaluation period",
+  noise_layer: "Environmental noise model layer",
+  noise_band: "Sampled noise exposure level (dB(A))",
+  noise_sensitivity: "Zoning noise sensitivity level (ES)",
+  noise_limits: "Legal noise limit values (Planning/Immission/Alarm)",
+  noise_verdict: "Noise limit compliance verdict",
+  // Solar-specific keys for soolar app
+  dominantklasse: "Roof solar suitability level (1-5)",
+  totalaream2: "Suitable roof area for solar (m\xB2)",
+  totalyieldkwhyr: "Estimated annual PV solar yield (kWh/yr)",
+  meanirradiationkwhm2yr: "Mean annual solar irradiation (kWh/m\xB2/yr)",
+  totalrevenuechfyr: "Estimated annual solar revenue (CHF/yr)",
+  roof_count: "Total roof surfaces on building"
 };
 function formatValue(key, raw) {
   if (raw === null || raw === void 0 || raw === "") return null;

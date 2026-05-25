@@ -75,6 +75,23 @@ const FIELD_LABELS: Record<string, string> = {
   nummer: 'Number',
   owner: 'Owner',
   is_sell: 'Listed for sale',
+  
+  // Noise-specific keys for boom app
+  noise_source: 'Noise source type',
+  noise_period: 'Noise evaluation period',
+  noise_layer: 'Environmental noise model layer',
+  noise_band: 'Sampled noise exposure level (dB(A))',
+  noise_sensitivity: 'Zoning noise sensitivity level (ES)',
+  noise_limits: 'Legal noise limit values (Planning/Immission/Alarm)',
+  noise_verdict: 'Noise limit compliance verdict',
+
+  // Solar-specific keys for soolar app
+  dominantklasse: 'Roof solar suitability level (1-5)',
+  totalaream2: 'Suitable roof area for solar (m²)',
+  totalyieldkwhyr: 'Estimated annual PV solar yield (kWh/yr)',
+  meanirradiationkwhm2yr: 'Mean annual solar irradiation (kWh/m²/yr)',
+  totalrevenuechfyr: 'Estimated annual solar revenue (CHF/yr)',
+  roof_count: 'Total roof surfaces on building',
 };
 
 function formatValue(key: string, raw: unknown): string | null {
