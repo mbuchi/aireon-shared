@@ -1832,7 +1832,19 @@ var FIELD_LABELS = {
   totalyieldkwhyr: "Estimated annual PV solar yield (kWh/yr)",
   meanirradiationkwhm2yr: "Mean annual solar irradiation (kWh/m\xB2/yr)",
   totalrevenuechfyr: "Estimated annual solar revenue (CHF/yr)",
-  roof_count: "Total roof surfaces on building"
+  roof_count: "Total roof surfaces on building",
+  // Building footprint / 3D height keys for footprint app
+  rf_volume_lod22: "Building 3D volume (m\xB3)",
+  rf_area: "Building footprint area (m\xB2)",
+  rf_nr_floors: "Building floor count",
+  rf_h_roof_ridge: "Roof ridge elevation (m)",
+  rf_h_roof_max: "Max roof elevation (m)",
+  rf_h_roof_70p: "70th-percentile roof height (m)",
+  rf_h_roof_50p: "50th-percentile roof height (m)",
+  rf_h_roof_min: "Min roof elevation (m)",
+  rf_h_roof_eaves: "Eaves elevation (m)",
+  rf_h_ground: "Ground elevation (m)",
+  derived_height: "Derived building height (m)"
 };
 function formatValue(key, raw) {
   if (raw === null || raw === void 0 || raw === "") return null;
