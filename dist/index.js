@@ -4,7 +4,7 @@ export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, 
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Phone, PhoneOff, AlertCircle, Send, Check } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Phone, PhoneOff, AlertCircle, Send, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 
@@ -541,7 +541,7 @@ function ReleaseNotesButton({
         "aria-label": `${t.whatsNew} \u2014 v${currentVersion}`,
         className: `relative hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors text-gray-600 hover:text-red-700 hover:bg-red-50 dark:text-gray-300 dark:hover:text-red-300 dark:hover:bg-red-500/10 ${className ?? ""}`,
         children: [
-          /* @__PURE__ */ jsx(Tag, { size: 18 }),
+          /* @__PURE__ */ jsx(CheckCircle, { size: 18 }),
           hasUnread && /* @__PURE__ */ jsx("span", { className: "absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" })
         ]
       }
@@ -3728,7 +3728,7 @@ function Skeleton({
   as
 }) {
   useSkeletonStyles();
-  const Tag3 = as ?? "div";
+  const Tag2 = as ?? "div";
   const css = {
     width: toDim(width),
     height: toDim(height) ?? (circle ? toDim(width) : void 0),
@@ -3738,7 +3738,7 @@ function Skeleton({
     ...style
   };
   return /* @__PURE__ */ jsx(
-    Tag3,
+    Tag2,
     {
       className: `swn-skeleton${className ? ` ${className}` : ""}`,
       style: css,
