@@ -38,11 +38,16 @@ export function LocaleSelector({
   ariaLabel,
   className,
 }: LocaleSelectorProps): JSX.Element {
+  // Inline font-family pins Varela Round (the suite logo font) so the chip
+  // reads as part of the brand cluster instead of falling back to the OS
+  // default sans. Every app already loads the font via the Google Fonts
+  // link in its index.html; sans-serif is the safety fallback.
   return (
     <select
       value={locale}
       onChange={(e) => onChange(e.target.value as Locale)}
       aria-label={ariaLabel ?? 'Select language'}
+      style={{ fontFamily: "'Varela Round', sans-serif" }}
       className={[
         'h-9 text-xs font-semibold text-gray-500 dark:text-gray-400',
         'bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg px-1.5',
@@ -57,6 +62,7 @@ export function LocaleSelector({
         <option
           key={l}
           value={l}
+          style={{ fontFamily: "'Varela Round', sans-serif" }}
           className="bg-white dark:bg-gray-900"
         >
           {LOCALE_LABELS[l]}
