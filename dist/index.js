@@ -581,6 +581,7 @@ function LocaleSelector({
       value: locale,
       onChange: (e) => onChange(e.target.value),
       "aria-label": ariaLabel ?? "Select language",
+      style: { fontFamily: "'Varela Round', sans-serif" },
       className: [
         "h-9 text-xs font-semibold text-gray-500 dark:text-gray-400",
         "bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg px-1.5",
@@ -592,6 +593,7 @@ function LocaleSelector({
         "option",
         {
           value: l,
+          style: { fontFamily: "'Varela Round', sans-serif" },
           className: "bg-white dark:bg-gray-900",
           children: LOCALE_LABELS[l]
         },
