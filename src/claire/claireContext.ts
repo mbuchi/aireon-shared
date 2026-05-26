@@ -17,6 +17,10 @@ const IDENTIFY_API =
 const GWR_LAYER = 'ch.bfs.gebaeude_wohnungs_register';
 const BAUZONEN_LAYER = 'ch.are.bauzonen';
 const PLZ_LAYER = 'ch.swisstopo-vd.ortschaftenverzeichnis_plz';
+// Cadastral parcels — used to resolve the EGRID (and parcel number) for any
+// click point, so apps that don't already carry parcel_id in their tile props
+// (boom, soolar) still get the active parcel surfaced in Claire's sub-header.
+const CADASTRE_LAYER = 'ch.kantone.cadastralwebmap-farbe';
 
 // GWR code catalogues (BFS Merkmalskatalog) — only the fields a property
 // assistant actually needs, decoded to English.
@@ -155,6 +159,14 @@ export interface ClaireContext {
   text: string;
   /** GWR street address ("Fliegaufstrasse 7, 8280 Kreuzlingen"), when found. */
   address?: string;
+  /**
+   * Cadastral EGRID for the parcel under the click point (e.g. `CH123456789012`).
+   * Returned for any click on Swiss territory, so Claire's sub-header can show
+   * a parcel ID even when the host app didn't pass `properties.parcel_id`.
+   */
+  parcelId?: string;
+  /** Local cadastral parcel number ("1234"), when available. */
+  parcelNumber?: string;
 }
 
 /**
@@ -174,7 +186,7 @@ export async function fetchClaireContext(
     imageDisplay: '1024,768,96',
     mapExtent: `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`,
     tolerance: '6',
-    layers: `all:${GWR_LAYER},${BAUZONEN_LAYER},${PLZ_LAYER}`,
+    layers: `all:${GWR_LAYER},${BAUZONEN_LAYER},${PLZ_LAYER},${CADASTRE_LAYER}`,
     sr: '4326',
     returnGeometry: 'false',
     lang: 'en',
@@ -192,6 +204,8 @@ export async function fetchClaireContext(
 
   const sections: string[] = [];
   let address: string | undefined;
+  let parcelId: string | undefined;
+  let parcelNumber: string | undefined;
 
   // GWR — closest building (first result).
   const gwr = results.find((r) => r.layerBodId === GWR_LAYER);
@@ -236,9 +250,19 @@ export async function fetchClaireContext(
     sections.push(`Official zoning & locality (swisstopo / ARE):\n${misc.join('\n')}`);
   }
 
+  // Cadastral parcel — EGRID + local parcel number (closest match).
+  const cad = results.find((r) => r.layerBodId === CADASTRE_LAYER);
+  if (cad) {
+    const p = cad.properties ?? cad.attributes ?? {};
+    // Same attribute keys RES uses server-side; egris_egrid is the
+    // suite-canonical parcel_id.
+    parcelId = str(p.egris_egrid) ?? str(p.identnd) ?? undefined;
+    parcelNumber = str(p.number) ?? undefined;
+  }
+
   const text =
     sections.length === 0
       ? ''
       : `Authoritative Swiss federal records for this location:\n\n${sections.join('\n\n')}`;
-  return { text, address };
+  return { text, address, parcelId, parcelNumber };
 }

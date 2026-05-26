@@ -233,7 +233,11 @@ const ClaireAssistant = ({
 
   const configured = useMemo(() => Boolean(geminiApiKey), [geminiApiKey]);
 
-  const parcelId = useMemo(() => resolveParcelId(properties), [properties]);
+  // Parcel ID is preferred from the host app's tile properties, but for apps
+  // that don't carry one (boom, soolar — click-anywhere on raster overlays)
+  // we fall back to the EGRID resolved from the cadastral identify call inside
+  // `fetchClaireContext`. Same fallback shape as `displayAddress` below.
+  const propsParcelId = useMemo(() => resolveParcelId(properties), [properties]);
 
   const parcelContext = useMemo(
     () =>
@@ -251,7 +255,11 @@ const ClaireAssistant = ({
   // parcel context — best-effort, so it never blocks or breaks the chat.
   // Also yields the GWR street address, used as a fallback when the host
   // app's tile data carries no address field.
-  const [official, setOfficial] = useState<{ text: string; address?: string }>({
+  const [official, setOfficial] = useState<{
+    text: string;
+    address?: string;
+    parcelId?: string;
+  }>({
     text: '',
   });
   useEffect(() => {
@@ -268,6 +276,9 @@ const ClaireAssistant = ({
       controller.abort();
     };
   }, [lngLat.lng, lngLat.lat]);
+
+  // Merged parcel id: host-provided wins, cadastral EGRID is the fallback.
+  const parcelId = propsParcelId ?? official.parcelId ?? null;
 
   // Surrounding OSM POIs (schools, transit, shops, etc.) fetched from the
   // host app's `/api/claire-pois` proxy → RES `/score/poi-osm` (local

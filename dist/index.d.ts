@@ -525,6 +525,14 @@ interface ClaireContext {
     text: string;
     /** GWR street address ("Fliegaufstrasse 7, 8280 Kreuzlingen"), when found. */
     address?: string;
+    /**
+     * Cadastral EGRID for the parcel under the click point (e.g. `CH123456789012`).
+     * Returned for any click on Swiss territory, so Claire's sub-header can show
+     * a parcel ID even when the host app didn't pass `properties.parcel_id`.
+     */
+    parcelId?: string;
+    /** Local cadastral parcel number ("1234"), when available. */
+    parcelNumber?: string;
 }
 /**
  * Fetches authoritative federal records for a coordinate. Returns the context

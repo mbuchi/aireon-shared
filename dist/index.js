@@ -2338,6 +2338,7 @@ var IDENTIFY_API = "https://api3.geo.admin.ch/rest/services/api/MapServer/identi
 var GWR_LAYER = "ch.bfs.gebaeude_wohnungs_register";
 var BAUZONEN_LAYER = "ch.are.bauzonen";
 var PLZ_LAYER = "ch.swisstopo-vd.ortschaftenverzeichnis_plz";
+var CADASTRE_LAYER = "ch.kantone.cadastralwebmap-farbe";
 var GKAT = {
   "1010": "Provisional accommodation",
   "1020": "Residential building (residential use only)",
@@ -2454,7 +2455,7 @@ async function fetchClaireContext(lng, lat, signal) {
     imageDisplay: "1024,768,96",
     mapExtent: `${lng - delta},${lat - delta},${lng + delta},${lat + delta}`,
     tolerance: "6",
-    layers: `all:${GWR_LAYER},${BAUZONEN_LAYER},${PLZ_LAYER}`,
+    layers: `all:${GWR_LAYER},${BAUZONEN_LAYER},${PLZ_LAYER},${CADASTRE_LAYER}`,
     sr: "4326",
     returnGeometry: "false",
     lang: "en"
@@ -2470,6 +2471,8 @@ async function fetchClaireContext(lng, lat, signal) {
   }
   const sections = [];
   let address;
+  let parcelId;
+  let parcelNumber;
   const gwr = results.find((r) => r.layerBodId === GWR_LAYER);
   if (gwr) {
     const p = gwr.properties ?? gwr.attributes ?? {};
@@ -2504,10 +2507,16 @@ ${lines.join("\n")}`);
     sections.push(`Official zoning & locality (swisstopo / ARE):
 ${misc.join("\n")}`);
   }
+  const cad = results.find((r) => r.layerBodId === CADASTRE_LAYER);
+  if (cad) {
+    const p = cad.properties ?? cad.attributes ?? {};
+    parcelId = str(p.egris_egrid) ?? str(p.identnd) ?? void 0;
+    parcelNumber = str(p.number) ?? void 0;
+  }
   const text = sections.length === 0 ? "" : `Authoritative Swiss federal records for this location:
 
 ${sections.join("\n\n")}`;
-  return { text, address };
+  return { text, address, parcelId, parcelNumber };
 }
 
 // src/claire/claireScore.ts
@@ -2885,7 +2894,7 @@ var ClaireAssistant = ({
   const conversationRef = useRef(null);
   const { isAuthenticated, getAccessToken } = useAuth();
   const configured = useMemo(() => Boolean(geminiApiKey), [geminiApiKey]);
-  const parcelId = useMemo(() => resolveParcelId(properties), [properties]);
+  const propsParcelId = useMemo(() => resolveParcelId(properties), [properties]);
   const parcelContext = useMemo(
     () => buildParcelContextSummary({
       properties,
@@ -2914,6 +2923,7 @@ var ClaireAssistant = ({
       controller.abort();
     };
   }, [lngLat.lng, lngLat.lat]);
+  const parcelId = propsParcelId ?? official.parcelId ?? null;
   const [pois, setPois] = useState("");
   useEffect(() => {
     const controller = new AbortController();
