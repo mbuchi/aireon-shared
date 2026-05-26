@@ -1,7 +1,7 @@
 import './chunk-6YKTLPIC.js';
-export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
+export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Phone, PhoneOff, AlertCircle, Send, Check } from 'lucide-react';
@@ -3160,7 +3160,7 @@ var ClaireAssistant = ({
   const sendDisabled = !input.trim() || loading;
   const showQuickPrompts = messages.length === 0 && !loading && !historyLoading;
   const displayAddress = headerAddress || official.address;
-  const subtitle = contextLoading && !displayAddress ? "Syncing parcel\u2026" : displayAddress ? `About ${displayAddress}` : parcelId ? `Parcel ${parcelId}` : "Powered by Gemini";
+  const subtitle = contextLoading ? "Syncing parcel\u2026" : "Powered by Gemini";
   const launcherPos = "right-6 bottom-6";
   const cardPos = "inset-x-3 top-20 bottom-3 md:inset-x-auto md:top-auto md:bottom-6 md:right-6 md:left-auto md:w-[23rem] md:h-auto md:max-h-[min(78vh,560px)]";
   const launcher = /* @__PURE__ */ jsxs(
@@ -3260,6 +3260,37 @@ var ClaireAssistant = ({
                 }
               )
             ]
+          }
+        ),
+        (displayAddress || parcelId || contextLoading) && /* @__PURE__ */ jsx(
+          "div",
+          {
+            className: `shrink-0 px-3.5 py-2 ${"border-b border-white/[0.06] bg-white/[0.015]" }`,
+            children: contextLoading && !displayAddress && !parcelId ? /* @__PURE__ */ jsx("div", { className: `text-[11px] animate-pulse ${"text-gray-600" }`, children: "Loading location\u2026" }) : /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-1.5", children: [
+              /* @__PURE__ */ jsx(
+                MapPin,
+                {
+                  size: 11,
+                  className: `shrink-0 mt-0.5 ${"text-amber-400/70" }`
+                }
+              ),
+              /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+                displayAddress && /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    className: `text-[11.5px] leading-snug font-medium break-words ${"text-gray-200" }`,
+                    children: displayAddress
+                  }
+                ),
+                parcelId && /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    className: `text-[10px] font-mono mt-0.5 ${"text-gray-500" }`,
+                    children: parcelId
+                  }
+                )
+              ] })
+            ] })
           }
         ),
         /* @__PURE__ */ jsxs(

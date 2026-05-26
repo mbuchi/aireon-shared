@@ -12,6 +12,7 @@ import { createPortal } from 'react-dom';
 import {
   AlertCircle,
   Loader2,
+  MapPin,
   Phone,
   PhoneOff,
   Send,
@@ -589,13 +590,7 @@ const ClaireAssistant = ({
     messages.length === 0 && !loading && !historyLoading;
 
   const displayAddress = headerAddress || official.address;
-  const subtitle = contextLoading && !displayAddress
-    ? 'Syncing parcel…'
-    : displayAddress
-      ? `About ${displayAddress}`
-      : parcelId
-        ? `Parcel ${parcelId}`
-        : 'Powered by Gemini';
+  const subtitle = contextLoading ? 'Syncing parcel…' : 'Powered by Gemini';
 
   // A compact circular launcher anchored to the bottom-right corner. It may
   // overlap the parcel info panel — accepted for now per product direction.
@@ -718,6 +713,50 @@ const ClaireAssistant = ({
           <X size={16} />
         </button>
       </div>
+
+      {/* Parcel context strip — address + parcel ID, sits between header and messages */}
+      {(displayAddress || parcelId || contextLoading) && (
+        <div
+          className={`shrink-0 px-3.5 py-2 ${
+            darkMode
+              ? 'border-b border-white/[0.06] bg-white/[0.015]'
+              : 'border-b border-gray-200/70 bg-gray-50/40'
+          }`}
+        >
+          {contextLoading && !displayAddress && !parcelId ? (
+            <div className={`text-[11px] animate-pulse ${darkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+              Loading location…
+            </div>
+          ) : (
+            <div className="flex items-start gap-1.5">
+              <MapPin
+                size={11}
+                className={`shrink-0 mt-0.5 ${darkMode ? 'text-amber-400/70' : 'text-amber-600/70'}`}
+              />
+              <div className="min-w-0">
+                {displayAddress && (
+                  <div
+                    className={`text-[11.5px] leading-snug font-medium break-words ${
+                      darkMode ? 'text-gray-200' : 'text-gray-800'
+                    }`}
+                  >
+                    {displayAddress}
+                  </div>
+                )}
+                {parcelId && (
+                  <div
+                    className={`text-[10px] font-mono mt-0.5 ${
+                      darkMode ? 'text-gray-500' : 'text-gray-400'
+                    }`}
+                  >
+                    {parcelId}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Messages */}
       <div
