@@ -80,10 +80,14 @@ export type {
   VoiceCallSession,
 } from './claire/voiceCall';
 export {
+  listClaireConversations,
   loadClaireConversation,
   saveClaireConversation,
 } from './claire/claireConversation';
-export type { ClaireTurn } from './claire/claireConversation';
+export type {
+  ClaireConversationSummary,
+  ClaireTurn,
+} from './claire/claireConversation';
 export { sendClaireMessageSignal } from './claire/signal';
 export { fetchClaireContext } from './claire/claireContext';
 export type { ClaireContext } from './claire/claireContext';
