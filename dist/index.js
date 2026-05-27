@@ -4,7 +4,7 @@ export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, 
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Phone, PhoneOff, AlertCircle, Send, Check } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 
@@ -3249,6 +3249,21 @@ var ClaireAssistant = ({
                   }
                 )
               ] }),
+              appName !== "doorway" && /* @__PURE__ */ jsxs(
+                "a",
+                {
+                  href: `https://swissnovo-doorway.vercel.app/?lat=${lngLat.lat}&lng=${lngLat.lng}`,
+                  target: "_blank",
+                  rel: "noopener noreferrer",
+                  "aria-label": "Open this address in doorway studio",
+                  title: "Open in doorway studio \u2014 chat with Claire using picked data sources",
+                  className: "inline-flex items-center gap-1 px-2 h-8 rounded-lg shrink-0 transition-colors text-[11px] font-semibold uppercase tracking-wider text-amber-200/80 ring-1 ring-amber-300/25 hover:text-amber-100 hover:bg-amber-400/10 hover:ring-amber-300/40",
+                  children: [
+                    /* @__PURE__ */ jsx(Sparkles, { size: 12 }),
+                    /* @__PURE__ */ jsx("span", { children: "Studio" })
+                  ]
+                }
+              ),
               voiceCallEnabled && /* @__PURE__ */ jsx(
                 "button",
                 {

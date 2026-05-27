@@ -16,6 +16,7 @@ import {
   Phone,
   PhoneOff,
   Send,
+  Sparkles,
   X,
 } from 'lucide-react';
 import {
@@ -691,6 +692,23 @@ const ClaireAssistant = ({
             <span className="truncate">{subtitle}</span>
           </div>
         </div>
+        {/* Studio — hands the current parcel off to the doorway "Claire
+            studio" app (chat-first UI with user-picked data sources). Opens
+            in a new tab so the user keeps their place here. Suppressed when
+            the host IS doorway to avoid a self-link. */}
+        {appName !== 'doorway' && (
+          <a
+            href={`https://swissnovo-doorway.vercel.app/?lat=${lngLat.lat}&lng=${lngLat.lng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Open this address in doorway studio"
+            title="Open in doorway studio — chat with Claire using picked data sources"
+            className="inline-flex items-center gap-1 px-2 h-8 rounded-lg shrink-0 transition-colors text-[11px] font-semibold uppercase tracking-wider text-amber-200/80 ring-1 ring-amber-300/25 hover:text-amber-100 hover:bg-amber-400/10 hover:ring-amber-300/40"
+          >
+            <Sparkles size={12} />
+            <span>Studio</span>
+          </a>
+        )}
         {voiceCallEnabled && (
           <button
             type="button"
