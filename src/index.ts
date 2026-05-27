@@ -107,6 +107,9 @@ export type {
   SignalTarget,
 } from './signal/client';
 
+export { LocalStorageCache, IndexedDBCache } from './cache';
+export type { IndexedDBCacheOptions } from './cache';
+
 export { Skeleton, SkeletonText, SkeletonGroup } from './skeleton/Skeleton';
 export type {
   SkeletonProps,
