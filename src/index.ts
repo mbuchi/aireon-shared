@@ -64,12 +64,14 @@ export type { ClaireAssistantProps } from './claire/ClaireAssistant';
 export {
   buildParcelContextSummary,
   generateParcelChatReply,
+  streamParcelChatReply,
   GeminiConfigError,
 } from './claire/geminiClient';
 export type {
   ChatTurn,
   ParcelContextInput,
   GeminiCallOptions,
+  StreamParcelChatReplyOptions,
 } from './claire/geminiClient';
 export { startVoiceCall } from './claire/voiceCall';
 export type {
