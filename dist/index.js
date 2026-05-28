@@ -1770,6 +1770,9 @@ Hub:
 var GEMINI_ENDPOINT = (model, key) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(
   key
 )}`;
+var GEMINI_STREAM_ENDPOINT = (model, key) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(
+  key
+)}`;
 var FIELD_LABELS = {
   estimated_price_m2: "Estimated price per m\xB2 (CHF)",
   estimated_price: "Estimated total value (CHF)",
@@ -1941,6 +1944,26 @@ var GeminiConfigError = class extends Error {
     this.name = "GeminiConfigError";
   }
 };
+function buildClaireRequestBody(appName, parcelContext, history) {
+  const systemText = `${systemInstruction(appName)}
+
+Selected parcel context:
+${parcelContext}`;
+  const contents = history.map((turn) => ({
+    role: turn.role === "assistant" ? "model" : "user",
+    parts: [{ text: turn.content }]
+  }));
+  return JSON.stringify({
+    systemInstruction: { role: "system", parts: [{ text: systemText }] },
+    contents,
+    generationConfig: {
+      temperature: 0.55,
+      topP: 0.9,
+      maxOutputTokens: 800
+    },
+    safetySettings: []
+  });
+}
 async function generateParcelChatReply({
   apiKey,
   model,
@@ -1952,24 +1975,7 @@ async function generateParcelChatReply({
   if (!apiKey) throw new GeminiConfigError();
   if (history.length === 0)
     throw new Error("history must contain at least one user message");
-  const systemText = `${systemInstruction(appName)}
-
-Selected parcel context:
-${parcelContext}`;
-  const contents = history.map((turn) => ({
-    role: turn.role === "assistant" ? "model" : "user",
-    parts: [{ text: turn.content }]
-  }));
-  const body = JSON.stringify({
-    systemInstruction: { role: "system", parts: [{ text: systemText }] },
-    contents,
-    generationConfig: {
-      temperature: 0.55,
-      topP: 0.9,
-      maxOutputTokens: 800
-    },
-    safetySettings: []
-  });
+  const body = buildClaireRequestBody(appName, parcelContext, history);
   const { response: res } = await fetchGeminiWithFallback({
     apiKey,
     model,
@@ -1993,6 +1999,89 @@ ${parcelContext}`;
   const text = data.candidates?.flatMap((c) => c.content?.parts ?? []).map((p) => p.text ?? "").join("").trim();
   if (!text) throw new Error("Empty response from Gemini.");
   return text;
+}
+async function streamParcelChatReply({
+  apiKey,
+  model,
+  appName,
+  parcelContext,
+  history,
+  signal,
+  onDelta
+}) {
+  if (!apiKey) throw new GeminiConfigError();
+  if (history.length === 0)
+    throw new Error("history must contain at least one user message");
+  const body = buildClaireRequestBody(appName, parcelContext, history);
+  const { response: res } = await fetchGeminiWithFallback({
+    apiKey,
+    model,
+    buildUrl: (m, k) => GEMINI_STREAM_ENDPOINT(m, k),
+    requestInit: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream"
+      },
+      body
+    },
+    signal,
+    // The whole stream can legitimately take >15 s for long answers; the
+    // per-attempt timeout in the fallback layer would abort us mid-reply.
+    // The caller's `signal` is the only abort mechanism for streaming.
+    timeoutMs: 0
+  });
+  if (!res.body) {
+    throw new Error("Gemini streaming response has no body.");
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let buffer = "";
+  let fullText = "";
+  const consumeEvent = (raw) => {
+    const lines = raw.split("\n");
+    for (const line of lines) {
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === "[DONE]") continue;
+      let frame;
+      try {
+        frame = JSON.parse(payload);
+      } catch {
+        continue;
+      }
+      if (frame.promptFeedback?.blockReason) {
+        throw new Error(`Response blocked: ${frame.promptFeedback.blockReason}`);
+      }
+      const delta = frame.candidates?.flatMap((c) => c.content?.parts ?? []).map((p) => p.text ?? "").join("");
+      if (delta) {
+        fullText += delta;
+        onDelta(delta);
+      }
+    }
+  };
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let sep;
+      while ((sep = buffer.indexOf("\n\n")) !== -1) {
+        const eventChunk = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        if (eventChunk.trim()) consumeEvent(eventChunk);
+      }
+    }
+    if (buffer.trim()) consumeEvent(buffer);
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+    }
+  }
+  const trimmed = fullText.trim();
+  if (!trimmed) throw new Error("Empty response from Gemini.");
+  return trimmed;
 }
 
 // src/claire/voiceWorklets.ts
@@ -4509,4 +4598,4 @@ function ProfileModal({ user, onClose, dark = false }) {
   );
 }
 
-export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

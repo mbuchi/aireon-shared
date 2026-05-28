@@ -13,6 +13,14 @@ const GEMINI_ENDPOINT = (model: string, key: string) =>
     key,
   )}`;
 
+// Streaming uses the same v1beta resource with the SSE wire format. Gemini
+// returns one `data: {…}` frame per delta; the SSE stream ends with a
+// `data: [DONE]` line (some models omit it — we tolerate both).
+const GEMINI_STREAM_ENDPOINT = (model: string, key: string) =>
+  `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(
+    key,
+  )}`;
+
 export interface ChatTurn {
   role: 'user' | 'assistant';
   content: string;
@@ -243,6 +251,30 @@ export class GeminiConfigError extends Error {
   }
 }
 
+// Shared between the unary + streaming call paths so the prompt, generation
+// config and safety settings stay byte-identical.
+function buildClaireRequestBody(
+  appName: string | undefined,
+  parcelContext: string,
+  history: ChatTurn[],
+): string {
+  const systemText = `${systemInstruction(appName)}\n\nSelected parcel context:\n${parcelContext}`;
+  const contents = history.map((turn) => ({
+    role: turn.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: turn.content }],
+  }));
+  return JSON.stringify({
+    systemInstruction: { role: 'system', parts: [{ text: systemText }] },
+    contents,
+    generationConfig: {
+      temperature: 0.55,
+      topP: 0.9,
+      maxOutputTokens: 800,
+    },
+    safetySettings: [],
+  });
+}
+
 export async function generateParcelChatReply({
   apiKey,
   model,
@@ -255,23 +287,7 @@ export async function generateParcelChatReply({
   if (history.length === 0)
     throw new Error('history must contain at least one user message');
 
-  const systemText = `${systemInstruction(appName)}\n\nSelected parcel context:\n${parcelContext}`;
-
-  const contents = history.map((turn) => ({
-    role: turn.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: turn.content }],
-  }));
-
-  const body = JSON.stringify({
-    systemInstruction: { role: 'system', parts: [{ text: systemText }] },
-    contents,
-    generationConfig: {
-      temperature: 0.55,
-      topP: 0.9,
-      maxOutputTokens: 800,
-    },
-    safetySettings: [],
-  });
+  const body = buildClaireRequestBody(appName, parcelContext, history);
 
   const { response: res } = await fetchGeminiWithFallback({
     apiKey,
@@ -304,4 +320,128 @@ export async function generateParcelChatReply({
 
   if (!text) throw new Error('Empty response from Gemini.');
   return text;
+}
+
+export interface StreamParcelChatReplyOptions extends GeminiCallOptions {
+  /**
+   * Called for each token (or token group) as Gemini emits it. Frame
+   * boundaries are not stable — buffer the result yourself if you need
+   * the complete reply once the stream ends.
+   */
+  onDelta: (delta: string) => void;
+}
+
+/**
+ * Streaming variant of {@link generateParcelChatReply}. Invokes `onDelta`
+ * for every incremental chunk Gemini emits over SSE and resolves with the
+ * full concatenated reply once the stream closes.
+ *
+ * Same fallback chain semantics as the unary call: if the first model
+ * returns a retriable failure before the body opens, the next model in the
+ * chain takes over (fetchGeminiWithFallback handles this transparently).
+ * Once the body is open and tokens have started flowing, mid-stream
+ * failures surface as an error — we don't restart from the top.
+ *
+ * Note: Gemini does not stream prompt-feedback blocks, so a blocked
+ * response shows up as an empty body + a non-200 status, which the
+ * fallback layer surfaces as an error before any delta fires.
+ */
+export async function streamParcelChatReply({
+  apiKey,
+  model,
+  appName,
+  parcelContext,
+  history,
+  signal,
+  onDelta,
+}: StreamParcelChatReplyOptions): Promise<string> {
+  if (!apiKey) throw new GeminiConfigError();
+  if (history.length === 0)
+    throw new Error('history must contain at least one user message');
+
+  const body = buildClaireRequestBody(appName, parcelContext, history);
+
+  const { response: res } = await fetchGeminiWithFallback({
+    apiKey,
+    model,
+    buildUrl: (m, k) => GEMINI_STREAM_ENDPOINT(m, k),
+    requestInit: {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+      },
+      body,
+    },
+    signal,
+    // The whole stream can legitimately take >15 s for long answers; the
+    // per-attempt timeout in the fallback layer would abort us mid-reply.
+    // The caller's `signal` is the only abort mechanism for streaming.
+    timeoutMs: 0,
+  });
+
+  if (!res.body) {
+    throw new Error('Gemini streaming response has no body.');
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+  let fullText = '';
+
+  // Standard SSE framing: events are separated by a blank line. Inside an
+  // event, lines starting with `data: ` carry the payload; we ignore
+  // `event:` / `id:` / `retry:` and any comment lines.
+  const consumeEvent = (raw: string) => {
+    const lines = raw.split('\n');
+    for (const line of lines) {
+      if (!line.startsWith('data:')) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      let frame: GeminiResponse;
+      try {
+        frame = JSON.parse(payload) as GeminiResponse;
+      } catch {
+        continue;
+      }
+      if (frame.promptFeedback?.blockReason) {
+        throw new Error(`Response blocked: ${frame.promptFeedback.blockReason}`);
+      }
+      const delta = frame.candidates
+        ?.flatMap((c) => c.content?.parts ?? [])
+        .map((p) => p.text ?? '')
+        .join('');
+      if (delta) {
+        fullText += delta;
+        onDelta(delta);
+      }
+    }
+  };
+
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      // Split on the SSE event delimiter — a blank line. Hold any partial
+      // trailing event back for the next chunk.
+      let sep: number;
+      while ((sep = buffer.indexOf('\n\n')) !== -1) {
+        const eventChunk = buffer.slice(0, sep);
+        buffer = buffer.slice(sep + 2);
+        if (eventChunk.trim()) consumeEvent(eventChunk);
+      }
+    }
+    if (buffer.trim()) consumeEvent(buffer);
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+      /* noop */
+    }
+  }
+
+  const trimmed = fullText.trim();
+  if (!trimmed) throw new Error('Empty response from Gemini.');
+  return trimmed;
 }
