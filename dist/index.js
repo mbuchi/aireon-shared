@@ -794,7 +794,8 @@ function AuthProvider({
   loginDescription,
   loginFeatures,
   loginBlocking = false,
-  loginPromptOnFirstVisit = false
+  loginPromptOnFirstVisit = false,
+  silentSso = true
 }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -811,7 +812,10 @@ function AuthProvider({
     return () => clearTimeout(t);
   }, []);
   useEffect(() => {
-    const onLoaded = (u) => setUser(u);
+    const onLoaded = (u) => {
+      setUser(u);
+      if (!silentSso) userManager.stopSilentRenew();
+    };
     const onUnloaded = () => setUser(null);
     const onExpired = () => {
       userManager.removeUser().finally(() => setUser(null));
@@ -819,12 +823,13 @@ function AuthProvider({
     userManager.events.addUserLoaded(onLoaded);
     userManager.events.addUserUnloaded(onUnloaded);
     userManager.events.addAccessTokenExpired(onExpired);
+    if (!silentSso) userManager.stopSilentRenew();
     return () => {
       userManager.events.removeUserLoaded(onLoaded);
       userManager.events.removeUserUnloaded(onUnloaded);
       userManager.events.removeAccessTokenExpired(onExpired);
     };
-  }, []);
+  }, [silentSso]);
   useEffect(() => {
     if (initStarted.current) return;
     initStarted.current = true;
@@ -856,7 +861,7 @@ function AuthProvider({
         }
         if (existing?.expired) await userManager.removeUser().catch(() => {
         });
-        if (sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== "1") {
+        if (silentSso && sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== "1") {
           sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
           try {
             const silent = await Promise.race([
@@ -876,7 +881,7 @@ function AuthProvider({
         finish(null);
       }
     })();
-  }, []);
+  }, [silentSso]);
   const isAuthenticatedNow = !!user && !user.expired;
   useEffect(() => {
     if (!loginPromptOnFirstVisit || isLoading || firstVisitDecided.current) return;

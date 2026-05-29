@@ -308,13 +308,31 @@ interface AuthProviderProps {
     loginBlocking?: boolean;
     /** Auto-open the modal once for an anonymous first-time visitor. */
     loginPromptOnFirstVisit?: boolean;
+    /**
+     * Run the hidden-iframe silent SSO on mount and keep `automaticSilentRenew`
+     * active. Defaults to `true` (the suite-standard behaviour).
+     *
+     * Zitadel serves every authorize page with `Content-Security-Policy:
+     * frame-ancestors 'none'`, so the silent-SSO iframe is *always* blocked — it
+     * can never reach `silent-callback.html`. The death-switch below keeps that
+     * from stranding the app, but the blocked frame still logs a scary
+     * `Framing '…zitadel.cloud' violates … frame-ancestors 'none'` console error
+     * on every load and adds a multi-second settle delay before the app falls to
+     * anonymous. For a public, anonymous-first app (where cross-origin SSO is the
+     * only thing the iframe could ever buy, and it's CSP-dead anyway) pass
+     * `false`: the app then settles instantly from the locally-persisted session
+     * (or to anonymous) with no iframe, no console error, and no renew churn.
+     * Interactive `login()`/`register()` (full-page redirects) are unaffected.
+     */
+    silentSso?: boolean;
 }
 /**
- * Wraps the app, runs the suite-standard hidden-iframe silent SSO on mount,
- * and exposes auth state via {@link useAuth}. Apps must also ship a
+ * Wraps the app, runs the suite-standard hidden-iframe silent SSO on mount
+ * (unless {@link AuthProviderProps.silentSso} is `false`), and exposes auth
+ * state via {@link useAuth}. Apps that keep silent SSO on must also ship a
  * `public/silent-callback.html` (served at `/silent-callback.html`).
  */
-declare function AuthProvider({ children, appName, loginDescription, loginFeatures, loginBlocking, loginPromptOnFirstVisit, }: AuthProviderProps): react_jsx_runtime.JSX.Element;
+declare function AuthProvider({ children, appName, loginDescription, loginFeatures, loginBlocking, loginPromptOnFirstVisit, silentSso, }: AuthProviderProps): react_jsx_runtime.JSX.Element;
 /** Auth state + actions. Must be called inside an {@link AuthProvider}. */
 declare function useAuth(): AuthContextValue;
 

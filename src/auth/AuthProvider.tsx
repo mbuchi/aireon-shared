@@ -65,6 +65,23 @@ export interface AuthProviderProps {
   loginBlocking?: boolean;
   /** Auto-open the modal once for an anonymous first-time visitor. */
   loginPromptOnFirstVisit?: boolean;
+  /**
+   * Run the hidden-iframe silent SSO on mount and keep `automaticSilentRenew`
+   * active. Defaults to `true` (the suite-standard behaviour).
+   *
+   * Zitadel serves every authorize page with `Content-Security-Policy:
+   * frame-ancestors 'none'`, so the silent-SSO iframe is *always* blocked — it
+   * can never reach `silent-callback.html`. The death-switch below keeps that
+   * from stranding the app, but the blocked frame still logs a scary
+   * `Framing '…zitadel.cloud' violates … frame-ancestors 'none'` console error
+   * on every load and adds a multi-second settle delay before the app falls to
+   * anonymous. For a public, anonymous-first app (where cross-origin SSO is the
+   * only thing the iframe could ever buy, and it's CSP-dead anyway) pass
+   * `false`: the app then settles instantly from the locally-persisted session
+   * (or to anonymous) with no iframe, no console error, and no renew churn.
+   * Interactive `login()`/`register()` (full-page redirects) are unaffected.
+   */
+  silentSso?: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -81,8 +98,9 @@ function computeInitials(name: string, email: string): string {
 }
 
 /**
- * Wraps the app, runs the suite-standard hidden-iframe silent SSO on mount,
- * and exposes auth state via {@link useAuth}. Apps must also ship a
+ * Wraps the app, runs the suite-standard hidden-iframe silent SSO on mount
+ * (unless {@link AuthProviderProps.silentSso} is `false`), and exposes auth
+ * state via {@link useAuth}. Apps that keep silent SSO on must also ship a
  * `public/silent-callback.html` (served at `/silent-callback.html`).
  */
 export function AuthProvider({
@@ -92,6 +110,7 @@ export function AuthProvider({
   loginFeatures,
   loginBlocking = false,
   loginPromptOnFirstVisit = false,
+  silentSso = true,
 }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -126,8 +145,18 @@ export function AuthProvider({
   // userManager events run on every mount: even when the init IIFE settled
   // on a stale (now-unmounted) instance, a real userLoaded event still hits
   // the live mount via this listener.
+  //
+  // When `silentSso` is off we also cancel `automaticSilentRenew`: the shared
+  // userManager singleton is constructed with `automaticSilentRenew: true`, so
+  // oidc-client-ts arms an iframe-based renew timer as soon as a user loads.
+  // That iframe hits the same CSP-blocked Zitadel authorize page, so for an
+  // opted-out app we tear the timer back down on mount and after every load —
+  // stopSilentRenew() is a safe no-op when nothing is scheduled.
   useEffect(() => {
-    const onLoaded = (u: User) => setUser(u);
+    const onLoaded = (u: User) => {
+      setUser(u);
+      if (!silentSso) userManager.stopSilentRenew();
+    };
     const onUnloaded = () => setUser(null);
     const onExpired = () => {
       userManager.removeUser().finally(() => setUser(null));
@@ -135,12 +164,13 @@ export function AuthProvider({
     userManager.events.addUserLoaded(onLoaded);
     userManager.events.addUserUnloaded(onUnloaded);
     userManager.events.addAccessTokenExpired(onExpired);
+    if (!silentSso) userManager.stopSilentRenew();
     return () => {
       userManager.events.removeUserLoaded(onLoaded);
       userManager.events.removeUserUnloaded(onUnloaded);
       userManager.events.removeAccessTokenExpired(onExpired);
     };
-  }, []);
+  }, [silentSso]);
 
   useEffect(() => {
     if (initStarted.current) return;
@@ -179,8 +209,10 @@ export function AuthProvider({
         // Hidden-iframe silent SSO with a 6s race timeout as defence-in-depth.
         // A positive resolution lets the app settle to authenticated promptly
         // rather than waiting the full 8s on the death-switch when the
-        // network round-trip is just slow.
-        if (sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== '1') {
+        // network round-trip is just slow. Skipped entirely when `silentSso`
+        // is off — see the prop docs: the CSP-blocked iframe can never succeed,
+        // so an opted-out app settles straight from local storage to anonymous.
+        if (silentSso && sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== '1') {
           sessionStorage.setItem(SSO_ATTEMPTED_KEY, '1');
           try {
             const silent = await Promise.race([
@@ -201,7 +233,7 @@ export function AuthProvider({
         finish(null);
       }
     })();
-  }, []);
+  }, [silentSso]);
 
   const isAuthenticatedNow = !!user && !user.expired;
 
