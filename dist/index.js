@@ -1743,7 +1743,7 @@ Building, terrain & environment:
 Regulations & legal:
 - xploore \u2014 finds building regulations, zoning plans and rules for a parcel. https://xploore.vercel.app/
 - handbook \u2014 planning-document dataroom with AI summaries and regulation Q&A. https://swissnovo-handbook.vercel.app/
-- roolez \u2014 AI-powered analysis and interpretation of building regulations. https://roolez.vercel.app/
+- roolez \u2014 AI-powered analysis and interpretation of building regulations. https://roolez-collector.vercel.app/
 - lookup \u2014 OEREB control center for public-law restriction queries. https://swissnovo-lookup.vercel.app/
 
 Monitoring & market signals:
