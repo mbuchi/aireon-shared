@@ -109,6 +109,25 @@ export type {
   SignalTarget,
 } from './signal/client';
 
+export {
+  createErrorLogger,
+  installErrorLogging,
+  ErrorLogBoundary,
+  BugReportButton,
+  BUG_REPORT_STRINGS,
+  getBugReportStrings,
+} from './errorlog';
+export type {
+  ErrorLogger,
+  ErrorLoggerOptions,
+  ErrorLogContext,
+  ErrorSeverity,
+  ErrorKind,
+  ErrorLogBoundaryProps,
+  BugReportButtonProps,
+  BugReportStrings,
+} from './errorlog';
+
 export { LocalStorageCache, IndexedDBCache } from './cache';
 export type { IndexedDBCacheOptions } from './cache';
 

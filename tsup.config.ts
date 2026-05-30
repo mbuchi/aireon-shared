@@ -9,6 +9,7 @@ export default defineConfig({
     'src/index.ts',
     'src/api/index.ts',
     'src/signal/handler.ts',
+    'src/errorlog/handler.ts',
     'src/gemini/index.ts',
   ],
   format: ['esm'],

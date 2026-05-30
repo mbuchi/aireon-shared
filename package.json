@@ -1,6 +1,6 @@
 {
   "name": "@swissnovo/shared",
-  "version": "0.41.0",
+  "version": "0.42.0",
   "description": "Shared UI components and utilities for the SwissNovo app suite.",
   "type": "module",
   "license": "UNLICENSED",
@@ -23,6 +23,10 @@
     "./signal-collect": {
       "types": "./dist/signal/handler.d.ts",
       "default": "./dist/signal/handler.js"
+    },
+    "./errorlog-collect": {
+      "types": "./dist/errorlog/handler.d.ts",
+      "default": "./dist/errorlog/handler.js"
     },
     "./gemini": {
       "types": "./dist/gemini/index.d.ts",
