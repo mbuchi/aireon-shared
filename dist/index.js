@@ -1964,7 +1964,15 @@ ${parcelContext}`;
     generationConfig: {
       temperature: 0.55,
       topP: 0.9,
-      maxOutputTokens: 800
+      // The Gemini 3.x flash models in the fallback chain emit hidden
+      // "thinking" tokens that count against maxOutputTokens. At 800 the
+      // reasoning pass alone could exhaust the budget, so the visible answer
+      // was cut off mid-sentence (finishReason MAX_TOKENS) — both the unary
+      // apps and streaming Studio share this body, so both were affected.
+      // 2048 leaves ample room for the answer after thinking. Billing is on
+      // tokens actually generated, so the higher ceiling is free for the
+      // concise replies the system prompt asks for.
+      maxOutputTokens: 2048
     },
     safetySettings: []
   });
