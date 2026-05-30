@@ -2985,12 +2985,48 @@ function resolveParcelId(props) {
   }
   return null;
 }
+var HEADING_RE = /^(#{1,6})\s+(.+?)\s*#*\s*$/;
+function headingClass(level, first) {
+  const size = level <= 1 ? "text-[14.5px]" : level === 2 ? "text-[13.5px]" : "text-[13px]";
+  return `${first ? "" : "mt-3"} mb-0.5 font-semibold tracking-tight ${size}`;
+}
 function renderAssistantText(text) {
-  const paragraphs = text.split(/\n{2,}/);
-  return paragraphs.map((para, pi) => /* @__PURE__ */ jsx("p", { className: pi === 0 ? "" : "mt-2", children: para.split(/\n/).map((line, li, arr) => /* @__PURE__ */ jsxs("span", { children: [
-    renderInlineBold(line),
-    li < arr.length - 1 ? /* @__PURE__ */ jsx("br", {}) : null
-  ] }, li)) }, pi));
+  const blocks = [];
+  let para = [];
+  const flushPara = () => {
+    if (para.length === 0) return;
+    const lines = para;
+    para = [];
+    blocks.push(
+      /* @__PURE__ */ jsx("p", { className: blocks.length === 0 ? "" : "mt-2", children: lines.map((line, li) => /* @__PURE__ */ jsxs("span", { children: [
+        renderInlineBold(line),
+        li < lines.length - 1 ? /* @__PURE__ */ jsx("br", {}) : null
+      ] }, li)) }, `p-${blocks.length}`)
+    );
+  };
+  for (const raw of text.split(/\n/)) {
+    const line = raw.replace(/\s+$/, "");
+    const heading = HEADING_RE.exec(line);
+    if (heading) {
+      flushPara();
+      blocks.push(
+        /* @__PURE__ */ jsx(
+          "p",
+          {
+            className: headingClass(heading[1].length, blocks.length === 0),
+            children: renderInlineBold(heading[2])
+          },
+          `h-${blocks.length}`
+        )
+      );
+    } else if (line.trim() === "") {
+      flushPara();
+    } else {
+      para.push(line);
+    }
+  }
+  flushPara();
+  return blocks;
 }
 function renderInlineBold(line) {
   const parts = line.split(/(\*\*[^*]+\*\*)/g);

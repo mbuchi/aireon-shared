@@ -142,20 +142,65 @@ function resolveParcelId(props: Record<string, unknown>): string | null {
   return null;
 }
 
-// Minimal inline formatter: paragraphs, line breaks, and **bold**. Keeps
-// rendering safe (no dangerouslySetInnerHTML) and lightweight.
+// Minimal block formatter: ATX headings (`#`–`######`), paragraphs, line
+// breaks, and **bold**. Headings render as styled bold text, so model output
+// like "### Zoning Context" reads as a real heading instead of literal hashes.
+// Stays render-safe (no dangerouslySetInnerHTML) and lightweight.
+//   group 1 = leading hashes (level); group 2 = heading text (closing #'s and
+//   surrounding whitespace stripped). A space after the hashes is required, so
+//   "#hashtag" stays plain text.
+const HEADING_RE = /^(#{1,6})\s+(.+?)\s*#*\s*$/;
+
+function headingClass(level: number, first: boolean): string {
+  const size =
+    level <= 1 ? 'text-[14.5px]' : level === 2 ? 'text-[13.5px]' : 'text-[13px]';
+  return `${first ? '' : 'mt-3'} mb-0.5 font-semibold tracking-tight ${size}`;
+}
+
 function renderAssistantText(text: string): ReactNode {
-  const paragraphs = text.split(/\n{2,}/);
-  return paragraphs.map((para, pi) => (
-    <p key={pi} className={pi === 0 ? '' : 'mt-2'}>
-      {para.split(/\n/).map((line, li, arr) => (
-        <span key={li}>
-          {renderInlineBold(line)}
-          {li < arr.length - 1 ? <br /> : null}
-        </span>
-      ))}
-    </p>
-  ));
+  const blocks: ReactNode[] = [];
+  let para: string[] = [];
+
+  // Emit the buffered run of plain lines as one paragraph (single newlines
+  // become <br>, blank lines and headings flush the buffer).
+  const flushPara = () => {
+    if (para.length === 0) return;
+    const lines = para;
+    para = [];
+    blocks.push(
+      <p key={`p-${blocks.length}`} className={blocks.length === 0 ? '' : 'mt-2'}>
+        {lines.map((line, li) => (
+          <span key={li}>
+            {renderInlineBold(line)}
+            {li < lines.length - 1 ? <br /> : null}
+          </span>
+        ))}
+      </p>,
+    );
+  };
+
+  for (const raw of text.split(/\n/)) {
+    const line = raw.replace(/\s+$/, '');
+    const heading = HEADING_RE.exec(line);
+    if (heading) {
+      flushPara();
+      blocks.push(
+        <p
+          key={`h-${blocks.length}`}
+          className={headingClass(heading[1].length, blocks.length === 0)}
+        >
+          {renderInlineBold(heading[2])}
+        </p>,
+      );
+    } else if (line.trim() === '') {
+      flushPara();
+    } else {
+      para.push(line);
+    }
+  }
+  flushPara();
+
+  return blocks;
 }
 
 function renderInlineBold(line: string): ReactNode {
