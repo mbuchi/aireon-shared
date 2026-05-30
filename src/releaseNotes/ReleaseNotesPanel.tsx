@@ -138,7 +138,7 @@ export default function ReleaseNotesPanel({
       />
 
       <div
-        className={`relative w-full max-w-3xl h-full overflow-hidden flex flex-col bg-white dark:bg-[#0B0F1A] text-gray-900 dark:text-gray-100 border-l border-gray-200 dark:border-white/[0.06] shadow-2xl transition-transform duration-200 ${
+        className={`relative w-full max-w-3xl h-full overflow-hidden flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-l border-gray-200 dark:border-white/[0.06] shadow-2xl transition-transform duration-200 ${
           visible ? 'translate-x-0' : 'translate-x-6'
         }`}
       >

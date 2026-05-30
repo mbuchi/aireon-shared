@@ -39,7 +39,7 @@ const GENDER_OPTIONS: Array<{ value: Gender; label: string }> = [
 
 const FIELD_CLASS =
   'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ' +
-  'focus:outline-none focus:ring-2 focus:ring-red-500 ' +
+  'focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ' +
   'dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100';
 
 /** The standard SwissNovo profile modal. Render it only while open. */
@@ -84,13 +84,15 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
     <div
       className={`${dark ? 'dark ' : ''}fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm`}
       onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Profile"
     >
+      {/* role="dialog" lives on the panel, not the backdrop, so assistive tech
+          announces the content card as the dialog rather than the overlay. */}
       <div
         className="relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Profile"
         style={{ animation: 'swn-profile-in 0.22s cubic-bezier(0.34,1.56,0.64,1) both' }}
       >
         {/* Suite accent strip — matches LoginModal */}

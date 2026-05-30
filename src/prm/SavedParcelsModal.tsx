@@ -501,12 +501,19 @@ function ConfirmDelete({ t, onCancel, onConfirm }: {
   t: SavedParcelsStrings; onCancel: () => void; onConfirm: () => void;
 }) {
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-5 max-w-sm w-full">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t.confirmDeleteTitle}</h3>
-        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{t.confirmDeleteBody}</p>
+    <div className="absolute inset-0 z-20 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="swn-confirm-del-title"
+        aria-describedby="swn-confirm-del-body"
+        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-5 max-w-sm w-full"
+      >
+        <h3 id="swn-confirm-del-title" className="text-sm font-semibold text-gray-900 dark:text-white">{t.confirmDeleteTitle}</h3>
+        <p id="swn-confirm-del-body" className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">{t.confirmDeleteBody}</p>
         <div className="mt-4 flex justify-end gap-2">
           <button onClick={onCancel}
+            autoFocus
             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700">
             {t.cancel}
           </button>

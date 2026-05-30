@@ -210,7 +210,7 @@ function ReleaseNotesPanel({
           /* @__PURE__ */ jsxs(
             "div",
             {
-              className: `relative w-full max-w-3xl h-full overflow-hidden flex flex-col bg-white dark:bg-[#0B0F1A] text-gray-900 dark:text-gray-100 border-l border-gray-200 dark:border-white/[0.06] shadow-2xl transition-transform duration-200 ${visible ? "translate-x-0" : "translate-x-6"}`,
+              className: `relative w-full max-w-3xl h-full overflow-hidden flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-l border-gray-200 dark:border-white/[0.06] shadow-2xl transition-transform duration-200 ${visible ? "translate-x-0" : "translate-x-6"}`,
               children: [
                 /* @__PURE__ */ jsxs("div", { className: "relative shrink-0 px-6 pt-6 pb-5 border-b border-gray-200 dark:border-white/[0.06]", children: [
                   /* @__PURE__ */ jsx(
@@ -734,7 +734,7 @@ function LoginModal({
                   "button",
                   {
                     onClick: login,
-                    className: "w-full py-2.5 px-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400",
+                    className: "w-full py-2.5 px-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900",
                     children: "Sign in"
                   }
                 )
@@ -1695,28 +1695,39 @@ function TagEditor({ tags, onChange, t }) {
   ] });
 }
 function ConfirmDelete({ t, onCancel, onConfirm }) {
-  return /* @__PURE__ */ jsx("div", { className: "absolute inset-0 z-10 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm", children: /* @__PURE__ */ jsxs("div", { className: "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-5 max-w-sm w-full", children: [
-    /* @__PURE__ */ jsx("h3", { className: "text-sm font-semibold text-gray-900 dark:text-white", children: t.confirmDeleteTitle }),
-    /* @__PURE__ */ jsx("p", { className: "mt-1.5 text-xs text-gray-500 dark:text-gray-400", children: t.confirmDeleteBody }),
-    /* @__PURE__ */ jsxs("div", { className: "mt-4 flex justify-end gap-2", children: [
-      /* @__PURE__ */ jsx(
-        "button",
-        {
-          onClick: onCancel,
-          className: "px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700",
-          children: t.cancel
-        }
-      ),
-      /* @__PURE__ */ jsx(
-        "button",
-        {
-          onClick: onConfirm,
-          className: "px-3 py-1.5 rounded-lg text-xs font-medium bg-red-600 hover:bg-red-500 text-white",
-          children: t.delete
-        }
-      )
-    ] })
-  ] }) });
+  return /* @__PURE__ */ jsx("div", { className: "absolute inset-0 z-20 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm", children: /* @__PURE__ */ jsxs(
+    "div",
+    {
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": "swn-confirm-del-title",
+      "aria-describedby": "swn-confirm-del-body",
+      className: "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-5 max-w-sm w-full",
+      children: [
+        /* @__PURE__ */ jsx("h3", { id: "swn-confirm-del-title", className: "text-sm font-semibold text-gray-900 dark:text-white", children: t.confirmDeleteTitle }),
+        /* @__PURE__ */ jsx("p", { id: "swn-confirm-del-body", className: "mt-1.5 text-xs text-gray-500 dark:text-gray-400", children: t.confirmDeleteBody }),
+        /* @__PURE__ */ jsxs("div", { className: "mt-4 flex justify-end gap-2", children: [
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: onCancel,
+              autoFocus: true,
+              className: "px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700",
+              children: t.cancel
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              onClick: onConfirm,
+              className: "px-3 py-1.5 rounded-lg text-xs font-medium bg-red-600 hover:bg-red-500 text-white",
+              children: t.delete
+            }
+          )
+        ] })
+      ]
+    }
+  ) });
 }
 
 // src/claire/claireAppCatalog.ts
@@ -4435,7 +4446,7 @@ var GENDER_OPTIONS = [
   { value: "other", label: "Other" },
   { value: "unspecified", label: "Prefer not to say" }
 ];
-var FIELD_CLASS = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
+var FIELD_CLASS = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 function ProfileModal({ user, onClose, dark = false }) {
   const { profile, avatarId, avatarUrl: chosenUrl, setAvatarId, updateProfile: updateProfile2 } = useUserProfile(user);
   const [draft, setDraft] = useState({
@@ -4467,15 +4478,15 @@ function ProfileModal({ user, onClose, dark = false }) {
       {
         className: `${dark ? "dark " : ""}fixed inset-0 z-[200] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm`,
         onClick: onClose,
-        role: "dialog",
-        "aria-modal": "true",
-        "aria-label": "Profile",
         children: [
           /* @__PURE__ */ jsxs(
             "div",
             {
               className: "relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900",
               onClick: (e) => e.stopPropagation(),
+              role: "dialog",
+              "aria-modal": "true",
+              "aria-label": "Profile",
               style: { animation: "swn-profile-in 0.22s cubic-bezier(0.34,1.56,0.64,1) both" },
               children: [
                 /* @__PURE__ */ jsx("div", { className: "h-1.5 shrink-0 bg-gradient-to-r from-red-500 via-red-600 to-rose-700" }),
