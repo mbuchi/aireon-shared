@@ -1,5 +1,5 @@
 import * as react from 'react';
-import { ReactNode, MutableRefObject, CSSProperties, ElementType } from 'react';
+import { ReactNode, MutableRefObject, Component, ErrorInfo, CSSProperties, ElementType } from 'react';
 import { LucideIcon } from 'lucide-react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import { User, UserManager } from 'oidc-client-ts';
@@ -30,7 +30,7 @@ declare const KIND_META: Record<ChangeKind, {
 }>;
 
 /** Languages supported across the SwissNovo suite. */
-type Locale$1 = 'de' | 'en' | 'fr' | 'it';
+type Locale$2 = 'de' | 'en' | 'fr' | 'it';
 interface ReleaseNotesStrings {
     /** Panel <h1>, followed by the brand wordmark. */
     whatsNewIn: string;
@@ -67,14 +67,14 @@ interface ReleaseNotesStrings {
     /** Change-kind labels (badges + filter chips). */
     kind: Record<ChangeKind, string>;
 }
-declare const RELEASE_NOTES_STRINGS: Record<Locale$1, ReleaseNotesStrings>;
-declare const getReleaseNotesStrings: (locale?: Locale$1) => ReleaseNotesStrings;
+declare const RELEASE_NOTES_STRINGS: Record<Locale$2, ReleaseNotesStrings>;
+declare const getReleaseNotesStrings: (locale?: Locale$2) => ReleaseNotesStrings;
 
 interface ReleaseNotesPanelProps {
     /** Called when the panel finishes its close animation. */
     onClose: () => void;
     /** UI language for the panel chrome. Defaults to English. */
-    locale?: Locale$1;
+    locale?: Locale$2;
     /** The app's release history, newest first. */
     releases: Release[];
     /** GitHub repo URL, used to link PRs (e.g. https://github.com/mbuchi/boom). */
@@ -96,7 +96,7 @@ interface ReleaseNotesButtonProps {
     /** The app's release history, newest first. */
     releases: Release[];
     /** UI language for the button + panel chrome. Defaults to English. */
-    locale?: Locale$1;
+    locale?: Locale$2;
     /** localStorage key for unread tracking — namespace per app, e.g. "boom:lastSeenReleaseVersion". */
     storageKey: string;
     /** GitHub repo URL, used to link PRs. */
@@ -116,9 +116,9 @@ declare function ReleaseNotesButton({ releases, locale, storageKey, repoUrl, bra
 
 interface LocaleSelectorProps {
     /** Currently active locale. */
-    locale: Locale$1;
+    locale: Locale$2;
     /** Called with the newly chosen locale when the user changes selection. */
-    onChange: (locale: Locale$1) => void;
+    onChange: (locale: Locale$2) => void;
     /** Accessible label for screen readers. Defaults to "Select language". */
     ariaLabel?: string;
     /** Extra class names appended to the default styling. */
@@ -182,7 +182,7 @@ declare const PROOM_APP_URL = "https://swissnovo-proom.vercel.app";
 declare const TOOLBOX_APP_URL = "https://swissnovo-toolbox.vercel.app";
 declare const GEOPOOL_APP_URL = "https://swissnovo-geopool.vercel.app";
 
-type Locale = 'de' | 'en' | 'fr' | 'it';
+type Locale$1 = 'de' | 'en' | 'fr' | 'it';
 interface SavedParcelsStrings {
     title: string;
     refresh: string;
@@ -218,12 +218,12 @@ interface SavedParcelsStrings {
     state: Record<PrmState, string>;
     priority: Record<PrmPriority, string>;
 }
-declare const SAVED_PARCELS_STRINGS: Record<Locale, SavedParcelsStrings>;
-declare const getSavedParcelsStrings: (locale?: Locale) => SavedParcelsStrings;
+declare const SAVED_PARCELS_STRINGS: Record<Locale$1, SavedParcelsStrings>;
+declare const getSavedParcelsStrings: (locale?: Locale$1) => SavedParcelsStrings;
 
 interface SavedParcelsModalProps {
     /** Locale for the modal's UI text. Defaults to 'en'. */
-    locale?: Locale;
+    locale?: Locale$1;
     /** Close the modal. */
     onClose: () => void;
     /**
@@ -682,6 +682,150 @@ interface SignalClient {
  */
 declare function createSignalClient(options: SignalClientOptions): SignalClient;
 
+type ErrorSeverity = 'error' | 'warning' | 'info';
+type ErrorKind = 'runtime' | 'promise' | 'react' | 'console' | 'network' | 'user_report';
+/** Live context attached to every captured event (selected parcel, signed-in user). */
+interface ErrorLogContext {
+    /** Human-readable address in context. */
+    address?: string;
+    /** Parcel EGRID in context. */
+    parcelId?: string;
+    /** WGS84 latitude in context. */
+    lat?: number;
+    /** WGS84 longitude in context. */
+    lng?: number;
+    /** Reporter email, if signed in. */
+    email?: string;
+    /** Free-form extra context, merged into `meta_data`. */
+    metaData?: Record<string, unknown>;
+}
+interface ErrorLoggerOptions {
+    /** App name recorded as `app_name` on every log (e.g. "valoo"). */
+    appName: string;
+    /** Endpoint to POST to. Defaults to the app's `/api/errorlog-collect` proxy. */
+    endpoint?: string;
+    /** Pull live context (selected parcel, signed-in email) at capture time. */
+    getContext?: () => ErrorLogContext | undefined;
+    /** Max events sent per page session (flood guard). Default 25. */
+    maxEventsPerSession?: number;
+}
+interface ErrorLogger {
+    /**
+     * Fire-and-forget: report one error. Accepts an Error, a string, or anything
+     * thrown. Never throws. De-duplicated and rate-limited within the session.
+     */
+    capture(error: unknown, extra?: {
+        severity?: ErrorSeverity;
+        kind?: ErrorKind;
+        source?: string;
+        metaData?: Record<string, unknown>;
+    }): void;
+    /**
+     * Submit a user bug report. Awaitable — resolves `true` on success so a
+     * report form can show confirmation. Always recorded as a distinct row.
+     */
+    report(input: {
+        message: string;
+        email?: string;
+        metaData?: Record<string, unknown>;
+    }): Promise<boolean>;
+    /**
+     * Attach global `error` + `unhandledrejection` listeners. Idempotent.
+     * Returns an uninstall function.
+     */
+    install(): () => void;
+}
+/**
+ * Create an error logger bound to one app name.
+ *
+ * @example
+ * const logger = createErrorLogger({ appName: 'valoo' });
+ * logger.install();                 // capture global errors
+ * logger.capture(err, { kind: 'network' });
+ */
+declare function createErrorLogger(options: ErrorLoggerOptions): ErrorLogger;
+/**
+ * One-liner setup: create a logger, attach global handlers, and return it.
+ * Drop into an app entrypoint (e.g. `main.tsx`):
+ *
+ *   installErrorLogging({ appName: 'valoo' });
+ */
+declare function installErrorLogging(options: ErrorLoggerOptions): ErrorLogger;
+
+interface ErrorLogBoundaryProps {
+    children: ReactNode;
+    /** Logger used to report caught errors (from `createErrorLogger`). */
+    logger?: Pick<ErrorLogger, 'capture'>;
+    /**
+     * Custom fallback. Either a node, or a render function receiving the error
+     * and a `reset` callback that clears the boundary and re-renders children.
+     */
+    fallback?: ReactNode | ((error: Error, reset: () => void) => ReactNode);
+    /** Extra callback after an error is caught (e.g. local logging). */
+    onError?: (error: Error, info: ErrorInfo) => void;
+    /** Force dark styling on the default fallback. Default auto-detect. */
+    darkMode?: boolean;
+}
+interface State {
+    error: Error | null;
+}
+declare class ErrorLogBoundary extends Component<ErrorLogBoundaryProps, State> {
+    state: State;
+    static getDerivedStateFromError(error: Error): State;
+    componentDidCatch(error: Error, info: ErrorInfo): void;
+    reset: () => void;
+    render(): ReactNode;
+}
+
+type Locale = 'de' | 'en' | 'fr' | 'it';
+interface BugReportStrings {
+    /** Floating button label + aria-label. */
+    button: string;
+    /** Dialog heading. */
+    title: string;
+    /** Short helper line under the heading. */
+    subtitle: string;
+    /** Description textarea placeholder. */
+    messagePlaceholder: string;
+    /** Email input label. */
+    emailLabel: string;
+    /** Email input placeholder. */
+    emailPlaceholder: string;
+    /** Submit button (idle). */
+    send: string;
+    /** Submit button (in-flight). */
+    sending: string;
+    /** Success confirmation. */
+    successTitle: string;
+    successBody: string;
+    /** Failure message. */
+    error: string;
+    /** Close button / icon aria-label. */
+    close: string;
+    /** Dialog aria-label. */
+    dialogLabel: string;
+}
+declare const BUG_REPORT_STRINGS: Record<Locale, BugReportStrings>;
+declare function getBugReportStrings(locale: Locale | string | undefined): BugReportStrings;
+
+interface BugReportButtonProps {
+    /** The app's error logger (from `createErrorLogger` / `installErrorLogging`). */
+    logger: Pick<ErrorLogger, 'report'>;
+    /** UI language. Default `de`. */
+    locale?: Locale | string;
+    /** Pre-fill the email field (e.g. the signed-in user's address). */
+    email?: string;
+    /** Corner to dock the button. Default `bottom-left` (keeps clear of Claire). */
+    position?: 'bottom-left' | 'bottom-right';
+    /** Force dark styling. Defaults to auto-detect (`<html class="dark">`). */
+    darkMode?: boolean;
+    /** Render into a custom container instead of `document.body`. */
+    container?: Element | null;
+    /** Extra metadata attached to every report (e.g. app version). */
+    metaData?: Record<string, unknown>;
+}
+declare function BugReportButton({ logger, locale, email, position, darkMode, container, metaData, }: BugReportButtonProps): react.ReactPortal | null;
+
 /**
  * Suite-wide client-side cache primitives. Two flavours:
  *
@@ -901,4 +1045,4 @@ declare function initialsOf(user: User | null | undefined): string;
 /** The provider-supplied profile picture URL, if any. */
 declare function pictureOf(user: User | null | undefined): string | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClaireTurn, type CreatePrmInput, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LocalStorageCache, type Locale$1 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, type VoiceCallCallbacks, type VoiceCallSession, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClaireTurn, type CreatePrmInput, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseUserProfileResult, type VoiceCallCallbacks, type VoiceCallSession, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };

@@ -2,9 +2,9 @@ import './chunk-6YKTLPIC.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
-import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, useInsertionEffect } from 'react';
+import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Check } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 
@@ -3908,6 +3908,502 @@ var ClaireAssistant = ({
 };
 var ClaireAssistant_default = ClaireAssistant;
 
+// src/errorlog/client.ts
+var DEFAULT_ENDPOINT2 = "/api/errorlog-collect";
+var DEFAULT_MAX_EVENTS = 25;
+var DEDUPE_WINDOW_MS = 6e4;
+var NOISE = [
+  "ResizeObserver loop",
+  "Script error.",
+  // opaque cross-origin error, no actionable info
+  "Non-Error promise rejection captured",
+  "Load failed"
+  // generic Safari fetch abort on navigation
+];
+function isNoise(message, source) {
+  if (source && /(^|\/\/)(chrome|moz|safari-web)-extension:\/\//.test(source)) {
+    return true;
+  }
+  return NOISE.some((n) => message.includes(n));
+}
+function normaliseError(error) {
+  if (error instanceof Error) {
+    return { message: error.message || error.name || "Error", stack: error.stack };
+  }
+  if (typeof error === "string") return { message: error };
+  if (error && typeof error === "object") {
+    const maybe = error;
+    if (typeof maybe.message === "string") {
+      return {
+        message: maybe.message,
+        stack: typeof maybe.stack === "string" ? maybe.stack : void 0
+      };
+    }
+    try {
+      return { message: JSON.stringify(error).slice(0, 500) };
+    } catch {
+      return { message: "Unserialisable error" };
+    }
+  }
+  return { message: String(error) };
+}
+function createErrorLogger(options) {
+  const appName = options.appName.toLowerCase();
+  const endpoint = options.endpoint ?? DEFAULT_ENDPOINT2;
+  const maxEvents = options.maxEventsPerSession ?? DEFAULT_MAX_EVENTS;
+  let sent = 0;
+  const recent = /* @__PURE__ */ new Map();
+  function buildBody(message, severity, kind, stack, source, metaData, emailOverride) {
+    const ctx = (() => {
+      try {
+        return options.getContext?.();
+      } catch {
+        return void 0;
+      }
+    })();
+    const meta = { ...ctx?.metaData ?? {}, ...metaData ?? {} };
+    return {
+      app_name: appName,
+      message,
+      severity,
+      kind,
+      stack,
+      source,
+      page_url: typeof location !== "undefined" ? location.href : void 0,
+      user_agent: typeof navigator !== "undefined" ? navigator.userAgent : void 0,
+      user_email: emailOverride ?? ctx?.email,
+      target_address: ctx?.address,
+      parcel_id: ctx?.parcelId,
+      target_lat: ctx?.lat,
+      target_lng: ctx?.lng,
+      meta_data: Object.keys(meta).length ? meta : void 0
+    };
+  }
+  function post(body) {
+    try {
+      return fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        // Survive page unload — errors often fire as the user navigates away.
+        keepalive: true
+      }).catch((err) => {
+        console.error("Error log dispatch failed:", err);
+        return null;
+      });
+    } catch (err) {
+      console.error("Error log dispatch failed:", err);
+      return Promise.resolve(null);
+    }
+  }
+  const capture = (error, extra) => {
+    try {
+      const { message, stack } = normaliseError(error);
+      const source = extra?.source;
+      if (!message || isNoise(message, source)) return;
+      if (sent >= maxEvents) return;
+      const fp = `${message}|${source ?? ""}|${extra?.kind ?? "runtime"}`;
+      const now = Date.now();
+      const last = recent.get(fp);
+      if (last && now - last < DEDUPE_WINDOW_MS) return;
+      recent.set(fp, now);
+      sent += 1;
+      void post(
+        buildBody(
+          message,
+          extra?.severity ?? "error",
+          extra?.kind ?? "runtime",
+          stack,
+          source,
+          extra?.metaData
+        )
+      );
+    } catch {
+    }
+  };
+  const report = async (input) => {
+    try {
+      const message = (input.message ?? "").trim();
+      if (!message) return false;
+      const res = await post(
+        buildBody(message, "info", "user_report", void 0, void 0, input.metaData, input.email)
+      );
+      return Boolean(res && res.ok);
+    } catch {
+      return false;
+    }
+  };
+  const install = () => {
+    if (typeof window === "undefined") return () => {
+    };
+    const w = window;
+    if (w.__swissnovoErrorLogInstalled) return () => {
+    };
+    w.__swissnovoErrorLogInstalled = true;
+    const onError = (event) => {
+      const where = event.filename ? `${event.filename}:${event.lineno ?? 0}:${event.colno ?? 0}` : void 0;
+      capture(event.error ?? event.message, { kind: "runtime", source: where });
+    };
+    const onRejection = (event) => {
+      capture(event.reason ?? "Unhandled promise rejection", { kind: "promise" });
+    };
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
+      w.__swissnovoErrorLogInstalled = false;
+    };
+  };
+  return { capture, report, install };
+}
+function installErrorLogging(options) {
+  const logger = createErrorLogger(options);
+  logger.install();
+  return logger;
+}
+var ErrorLogBoundary = class extends Component {
+  constructor() {
+    super(...arguments);
+    this.state = { error: null };
+    this.reset = () => this.setState({ error: null });
+  }
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+  componentDidCatch(error, info) {
+    try {
+      this.props.logger?.capture(error, {
+        kind: "react",
+        severity: "error",
+        source: info.componentStack ?? void 0
+      });
+      this.props.onError?.(error, info);
+    } catch {
+    }
+  }
+  render() {
+    const { error } = this.state;
+    if (!error) return this.props.children;
+    const { fallback } = this.props;
+    if (typeof fallback === "function") return fallback(error, this.reset);
+    if (fallback !== void 0) return fallback;
+    const dark = this.props.darkMode ?? (typeof document !== "undefined" && document.documentElement.classList.contains("dark"));
+    return /* @__PURE__ */ jsx(
+      "div",
+      {
+        role: "alert",
+        style: {
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "2rem",
+          fontFamily: "var(--hood-font, Inter, system-ui, sans-serif)",
+          color: dark ? "#e2e8f0" : "#0f172a"
+        },
+        children: /* @__PURE__ */ jsxs(
+          "div",
+          {
+            style: {
+              maxWidth: "24rem",
+              textAlign: "center",
+              borderRadius: "1rem",
+              padding: "2rem",
+              background: dark ? "#1e293b" : "#ffffff",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+              border: `1px solid ${dark ? "#334155" : "#e2e8f0"}`
+            },
+            children: [
+              /* @__PURE__ */ jsx("h1", { style: { fontSize: "1.125rem", fontWeight: 600, margin: "0 0 0.5rem" }, children: "Etwas ist schiefgelaufen" }),
+              /* @__PURE__ */ jsx(
+                "p",
+                {
+                  style: {
+                    fontSize: "0.875rem",
+                    color: dark ? "#94a3b8" : "#64748b",
+                    margin: "0 0 1.25rem"
+                  },
+                  children: "Ein unerwarteter Fehler ist aufgetreten. Wir wurden benachrichtigt."
+                }
+              ),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => window.location.reload(),
+                  style: {
+                    minHeight: "44px",
+                    padding: "0 1.25rem",
+                    borderRadius: "0.5rem",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "0.875rem",
+                    fontWeight: 600,
+                    color: "#ffffff",
+                    background: "#e11d48"
+                  },
+                  children: "Seite neu laden"
+                }
+              )
+            ]
+          }
+        )
+      }
+    );
+  }
+};
+
+// src/errorlog/i18n.ts
+var BUG_REPORT_STRINGS = {
+  de: {
+    button: "Problem melden",
+    title: "Ein Problem melden",
+    subtitle: "Etwas funktioniert nicht? Beschreiben Sie es kurz \u2014 wir k\xFCmmern uns darum.",
+    messagePlaceholder: "Was ist passiert? Was haben Sie erwartet?",
+    emailLabel: "E-Mail (optional)",
+    emailPlaceholder: "sie@beispiel.ch",
+    send: "Senden",
+    sending: "Wird gesendet \u2026",
+    successTitle: "Danke!",
+    successBody: "Ihre Meldung ist bei uns eingegangen.",
+    error: "Senden fehlgeschlagen. Bitte sp\xE4ter erneut versuchen.",
+    close: "Schliessen",
+    dialogLabel: "Problem melden"
+  },
+  en: {
+    button: "Report a problem",
+    title: "Report a problem",
+    subtitle: "Something not working? Tell us briefly \u2014 we\u2019ll look into it.",
+    messagePlaceholder: "What happened? What did you expect?",
+    emailLabel: "Email (optional)",
+    emailPlaceholder: "you@example.ch",
+    send: "Send",
+    sending: "Sending \u2026",
+    successTitle: "Thank you!",
+    successBody: "Your report has reached us.",
+    error: "Could not send. Please try again later.",
+    close: "Close",
+    dialogLabel: "Report a problem"
+  },
+  fr: {
+    button: "Signaler un probl\xE8me",
+    title: "Signaler un probl\xE8me",
+    subtitle: "Quelque chose ne fonctionne pas ? D\xE9crivez-le bri\xE8vement \u2014 nous nous en occupons.",
+    messagePlaceholder: "Que s\u2019est-il pass\xE9 ? \xC0 quoi vous attendiez-vous ?",
+    emailLabel: "E-mail (facultatif)",
+    emailPlaceholder: "vous@exemple.ch",
+    send: "Envoyer",
+    sending: "Envoi \u2026",
+    successTitle: "Merci !",
+    successBody: "Votre signalement nous est bien parvenu.",
+    error: "\xC9chec de l\u2019envoi. Veuillez r\xE9essayer plus tard.",
+    close: "Fermer",
+    dialogLabel: "Signaler un probl\xE8me"
+  },
+  it: {
+    button: "Segnala un problema",
+    title: "Segnala un problema",
+    subtitle: "Qualcosa non funziona? Descrivilo brevemente \u2014 ce ne occupiamo noi.",
+    messagePlaceholder: "Cosa \xE8 successo? Cosa ti aspettavi?",
+    emailLabel: "E-mail (facoltativo)",
+    emailPlaceholder: "tu@esempio.ch",
+    send: "Invia",
+    sending: "Invio \u2026",
+    successTitle: "Grazie!",
+    successBody: "La tua segnalazione ci \xE8 arrivata.",
+    error: "Invio non riuscito. Riprova pi\xF9 tardi.",
+    close: "Chiudi",
+    dialogLabel: "Segnala un problema"
+  }
+};
+function getBugReportStrings(locale) {
+  if (locale && locale in BUG_REPORT_STRINGS) {
+    return BUG_REPORT_STRINGS[locale];
+  }
+  return BUG_REPORT_STRINGS.de;
+}
+function useDarkMode(forced) {
+  const [dark, setDark] = useState(() => {
+    if (typeof forced === "boolean") return forced;
+    if (typeof document === "undefined") return false;
+    return document.documentElement.classList.contains("dark");
+  });
+  useEffect(() => {
+    if (typeof forced === "boolean") {
+      setDark(forced);
+      return;
+    }
+    if (typeof document === "undefined") return;
+    const el = document.documentElement;
+    const update = () => setDark(el.classList.contains("dark"));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(el, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, [forced]);
+  return dark;
+}
+function BugReportButton({
+  logger,
+  locale = "de",
+  email = "",
+  position = "bottom-left",
+  darkMode,
+  container,
+  metaData
+}) {
+  const t = getBugReportStrings(locale);
+  const dark = useDarkMode(darkMode);
+  const [open, setOpen] = useState(false);
+  const [phase, setPhase] = useState("idle");
+  const [message, setMessage] = useState("");
+  const [emailValue, setEmailValue] = useState(email);
+  const textareaRef = useRef(null);
+  const titleId = useId();
+  useEffect(() => setEmailValue(email), [email]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const id = window.setTimeout(() => textareaRef.current?.focus(), 60);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.clearTimeout(id);
+    };
+  }, [open]);
+  const close = useCallback(() => {
+    setOpen(false);
+    window.setTimeout(() => {
+      setPhase("idle");
+      setMessage("");
+    }, 200);
+  }, []);
+  const submit = useCallback(async () => {
+    const text = message.trim();
+    if (!text || phase === "sending") return;
+    setPhase("sending");
+    const ok = await logger.report({
+      message: text,
+      email: emailValue.trim() || void 0,
+      metaData
+    });
+    setPhase(ok ? "success" : "error");
+    if (ok) window.setTimeout(close, 1800);
+  }, [message, emailValue, phase, logger, metaData, close]);
+  if (typeof document === "undefined") return null;
+  const target = container ?? document.body;
+  const corner = position === "bottom-right" ? "right-4 sm:right-5" : "left-4 sm:left-5";
+  const panelBg = dark ? "bg-slate-900 text-slate-100 ring-1 ring-white/10" : "bg-white text-slate-900 ring-1 ring-slate-200";
+  const inputCls = dark ? "bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500" : "bg-white border-slate-300 text-slate-900 placeholder:text-slate-400";
+  const launcher = /* @__PURE__ */ jsxs(
+    "button",
+    {
+      type: "button",
+      onClick: () => setOpen(true),
+      "aria-label": t.button,
+      className: `fixed bottom-4 sm:bottom-5 ${corner} z-[2147483000] inline-flex items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-semibold shadow-lg ring-1 ring-inset transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ` + (dark ? "bg-slate-800 text-rose-300 ring-white/10 hover:bg-slate-700 focus-visible:ring-offset-slate-900" : "bg-white text-rose-600 ring-rose-200 hover:bg-rose-50 focus-visible:ring-offset-white"),
+      children: [
+        /* @__PURE__ */ jsx(Bug, { className: "h-4 w-4", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsx("span", { className: "hidden sm:inline", children: t.button })
+      ]
+    }
+  );
+  const dialog = /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: "fixed inset-0 z-[2147483600] flex items-end justify-center p-4 sm:items-center",
+      role: "presentation",
+      onMouseDown: (e) => {
+        if (e.target === e.currentTarget) close();
+      },
+      children: [
+        /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-black/40 backdrop-blur-[2px]", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsxs(
+          "div",
+          {
+            role: "dialog",
+            "aria-modal": "true",
+            "aria-labelledby": titleId,
+            className: `relative w-full max-w-md rounded-2xl p-5 shadow-2xl ${panelBg}`,
+            children: [
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  onClick: close,
+                  "aria-label": t.close,
+                  className: "absolute right-3 top-3 rounded-lg p-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 " + (dark ? "text-slate-400 hover:bg-white/10" : "text-slate-400 hover:bg-slate-100"),
+                  children: /* @__PURE__ */ jsx(X, { className: "h-4 w-4", "aria-hidden": "true" })
+                }
+              ),
+              phase === "success" ? /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center gap-3 py-6 text-center", children: [
+                /* @__PURE__ */ jsx("span", { className: "flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300", children: /* @__PURE__ */ jsx(CheckCircle2, { className: "h-6 w-6", "aria-hidden": "true" }) }),
+                /* @__PURE__ */ jsx("h2", { id: titleId, className: "text-base font-semibold", children: t.successTitle }),
+                /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-500 dark:text-slate-400", children: t.successBody })
+              ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+                /* @__PURE__ */ jsxs("div", { className: "mb-3 flex items-center gap-2 pr-6", children: [
+                  /* @__PURE__ */ jsx("span", { className: "flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300", children: /* @__PURE__ */ jsx(Bug, { className: "h-4 w-4", "aria-hidden": "true" }) }),
+                  /* @__PURE__ */ jsx("h2", { id: titleId, className: "text-base font-semibold", children: t.title })
+                ] }),
+                /* @__PURE__ */ jsx("p", { className: "mb-3 text-sm text-slate-500 dark:text-slate-400", children: t.subtitle }),
+                /* @__PURE__ */ jsx(
+                  "textarea",
+                  {
+                    ref: textareaRef,
+                    value: message,
+                    onChange: (e) => setMessage(e.target.value),
+                    rows: 4,
+                    placeholder: t.messagePlaceholder,
+                    className: `w-full resize-none rounded-lg border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 ${inputCls}`
+                  }
+                ),
+                /* @__PURE__ */ jsx("label", { className: "mt-3 block text-xs font-medium text-slate-500 dark:text-slate-400", children: t.emailLabel }),
+                /* @__PURE__ */ jsx(
+                  "input",
+                  {
+                    type: "email",
+                    value: emailValue,
+                    onChange: (e) => setEmailValue(e.target.value),
+                    placeholder: t.emailPlaceholder,
+                    className: `mt-1 w-full rounded-lg border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 ${inputCls}`
+                  }
+                ),
+                phase === "error" && /* @__PURE__ */ jsx("p", { className: "mt-3 text-sm text-rose-600 dark:text-rose-400", children: t.error }),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => void submit(),
+                    disabled: !message.trim() || phase === "sending",
+                    className: "mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold text-white transition bg-rose-600 hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 " + (dark ? "focus-visible:ring-offset-slate-900" : "focus-visible:ring-offset-white"),
+                    children: phase === "sending" ? /* @__PURE__ */ jsxs(Fragment, { children: [
+                      /* @__PURE__ */ jsx(Loader2, { className: "h-4 w-4 animate-spin", "aria-hidden": "true" }),
+                      t.sending
+                    ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+                      /* @__PURE__ */ jsx(Send, { className: "h-4 w-4", "aria-hidden": "true" }),
+                      t.send
+                    ] })
+                  }
+                )
+              ] })
+            ]
+          }
+        )
+      ]
+    }
+  );
+  return createPortal(
+    /* @__PURE__ */ jsxs(Fragment, { children: [
+      launcher,
+      open && dialog
+    ] }),
+    target
+  );
+}
+
 // src/cache/clientCache.ts
 var LocalStorageCache = class {
   constructor(prefix, ttlMinutes = 60) {
@@ -4658,4 +5154,4 @@ function ProfileModal({ user, onClose, dark = false }) {
   );
 }
 
-export { AuthProvider, Avatar, ClaireAssistant_default as ClaireAssistant, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
