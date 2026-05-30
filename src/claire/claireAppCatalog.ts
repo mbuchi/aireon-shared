@@ -40,7 +40,7 @@ Building, terrain & environment:
 Regulations & legal:
 - xploore — finds building regulations, zoning plans and rules for a parcel. https://xploore.vercel.app/
 - handbook — planning-document dataroom with AI summaries and regulation Q&A. https://swissnovo-handbook.vercel.app/
-- roolez — AI-powered analysis and interpretation of building regulations. https://roolez.vercel.app/
+- roolez — AI-powered analysis and interpretation of building regulations. https://roolez-collector.vercel.app/
 - lookup — OEREB control center for public-law restriction queries. https://swissnovo-lookup.vercel.app/
 
 Monitoring & market signals:
