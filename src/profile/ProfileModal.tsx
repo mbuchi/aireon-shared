@@ -17,6 +17,7 @@ import { avatarOptions, avatarUrl } from './avatars';
 import { emailOf, fullNameOf, initialsOf } from './identity';
 import { useUserProfile } from './useUserProfile';
 import type { Gender, SwissnovoProfile } from './profileStore';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 export interface ProfileModalProps {
   /** The signed-in OIDC user. */
@@ -44,6 +45,7 @@ const FIELD_CLASS =
 
 /** The standard SwissNovo profile modal. Render it only while open. */
 export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps) {
+  const modalRef = useFocusTrap<HTMLDivElement>({ onEscape: onClose });
   const { profile, avatarId, avatarUrl: chosenUrl, setAvatarId, updateProfile } =
     useUserProfile(user);
 
@@ -88,6 +90,7 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
       {/* role="dialog" lives on the panel, not the backdrop, so assistive tech
           announces the content card as the dialog rather than the overlay. */}
       <div
+        ref={modalRef}
         className="relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900"
         onClick={(e) => e.stopPropagation()}
         role="dialog"

@@ -2,11 +2,73 @@ import './chunk-6YKTLPIC.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
-import { createContext, useState, useRef, useEffect, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
+import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
+
+function useFocusTrap(options = {}) {
+  const { active = true, onEscape, restoreFocus = true } = options;
+  const ref = useRef(null);
+  const previousFocus = useRef(null);
+  useEffect(() => {
+    if (!active) return;
+    if (typeof document !== "undefined") {
+      previousFocus.current = document.activeElement;
+    }
+    return () => {
+      if (restoreFocus && previousFocus.current && typeof previousFocus.current.focus === "function") {
+        previousFocus.current.focus();
+      }
+    };
+  }, [active, restoreFocus]);
+  useEffect(() => {
+    if (!active) return;
+    const element = ref.current;
+    if (!element) return;
+    const FOCUSABLE_SELECTOR = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]';
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && onEscape) {
+        onEscape();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusables2 = element.querySelectorAll(FOCUSABLE_SELECTOR);
+      if (focusables2.length === 0) return;
+      const first = focusables2[0];
+      const last = focusables2[focusables2.length - 1];
+      const activeElement = document.activeElement;
+      if (e.shiftKey) {
+        if (activeElement === first || !element.contains(activeElement)) {
+          last.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (activeElement === last || !element.contains(activeElement)) {
+          first.focus();
+          e.preventDefault();
+        }
+      }
+    };
+    const focusables = element.querySelectorAll(FOCUSABLE_SELECTOR);
+    if (focusables.length > 0) {
+      const timer = setTimeout(() => {
+        focusables[0].focus();
+      }, 50);
+      element.addEventListener("keydown", handleKeyDown);
+      return () => {
+        clearTimeout(timer);
+        element.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+    element.addEventListener("keydown", handleKeyDown);
+    return () => {
+      element.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [active, onEscape]);
+  return ref;
+}
 
 // src/releaseNotes/types.ts
 var KIND_META = {
@@ -134,6 +196,7 @@ function ReleaseNotesPanel({
   zIndex = TOP_Z_INDEX,
   closeRef
 }) {
+  const modalRef = useFocusTrap({ onEscape: handleClose });
   const t = getReleaseNotesStrings(locale);
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
@@ -146,7 +209,6 @@ function ReleaseNotesPanel({
     requestAnimationFrame(() => setVisible(true));
     if (closeRef) closeRef.current = handleClose;
     const onKey = (e) => {
-      if (e.key === "Escape") handleClose();
       if (e.key === "/" && document.activeElement?.tagName !== "INPUT") {
         e.preventDefault();
         searchRef.current?.focus();
@@ -158,10 +220,10 @@ function ReleaseNotesPanel({
       if (closeRef) closeRef.current = null;
     };
   }, []);
-  const handleClose = () => {
+  function handleClose() {
     setVisible(false);
     setTimeout(onClose, 200);
-  };
+  }
   const toggle = (v) => setOpenVersions((prev) => ({ ...prev, [v]: !prev[v] }));
   const filteredReleases = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -210,6 +272,7 @@ function ReleaseNotesPanel({
           /* @__PURE__ */ jsxs(
             "div",
             {
+              ref: modalRef,
               className: `relative w-full max-w-3xl h-full overflow-hidden flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-l border-gray-200 dark:border-white/[0.06] shadow-2xl transition-transform duration-200 ${visible ? "translate-x-0" : "translate-x-6"}`,
               children: [
                 /* @__PURE__ */ jsxs("div", { className: "relative shrink-0 px-6 pt-6 pb-5 border-b border-gray-200 dark:border-white/[0.06]", children: [
@@ -668,14 +731,10 @@ function LoginModal({
   login,
   register
 }) {
-  useEffect(() => {
-    if (!open || blocking) return;
-    const onEsc = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onEsc);
-    return () => document.removeEventListener("keydown", onEsc);
-  }, [open, blocking, onClose]);
+  const modalRef = useFocusTrap({
+    active: open,
+    onEscape: blocking ? void 0 : onClose
+  });
   if (!open) return null;
   return createPortal(
     /* @__PURE__ */ jsxs(
@@ -692,7 +751,7 @@ function LoginModal({
               onClick: blocking ? void 0 : onClose
             }
           ),
-          /* @__PURE__ */ jsxs("div", { className: "relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden", children: [
+          /* @__PURE__ */ jsxs("div", { ref: modalRef, className: "relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden", children: [
             /* @__PURE__ */ jsx("div", { className: "h-1.5 bg-gradient-to-r from-red-500 via-red-600 to-rose-700" }),
             /* @__PURE__ */ jsxs("div", { className: "px-8 pt-7 pb-6", children: [
               /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center text-center", children: [
@@ -1266,6 +1325,7 @@ function SavedParcelsModal({
   const [search, setSearch] = useState("");
   const [stateFilter, setStateFilter] = useState("all");
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const modalRef = useFocusTrap({ onEscape: onClose });
   const refresh = () => {
     if (!isAuthenticated || !accessToken) return;
     setLoading(true);
@@ -1273,13 +1333,6 @@ function SavedParcelsModal({
     fetchPrmRecords(accessToken).then(setRecords).catch((err) => setError(String(err?.message ?? err))).finally(() => setLoading(false));
   };
   useEffect(refresh, [accessToken, isAuthenticated]);
-  useEffect(() => {
-    const handler = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
   const handleSort = (key) => {
     if (sortKey === key) setSortAsc(!sortAsc);
     else {
@@ -1397,6 +1450,7 @@ function SavedParcelsModal({
     /* @__PURE__ */ jsxs(
       "div",
       {
+        ref: modalRef,
         className: "relative w-full max-w-5xl max-h-[85vh] rounded-2xl shadow-2xl border overflow-hidden flex flex-col bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700",
         style: { animation: "savedParcelsIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both" },
         children: [
@@ -4944,6 +4998,7 @@ var GENDER_OPTIONS = [
 ];
 var FIELD_CLASS = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 function ProfileModal({ user, onClose, dark = false }) {
+  const modalRef = useFocusTrap({ onEscape: onClose });
   const { profile, avatarId, avatarUrl: chosenUrl, setAvatarId, updateProfile: updateProfile2 } = useUserProfile(user);
   const [draft, setDraft] = useState({
     gender: profile.gender,
@@ -4978,6 +5033,7 @@ function ProfileModal({ user, onClose, dark = false }) {
           /* @__PURE__ */ jsxs(
             "div",
             {
+              ref: modalRef,
               className: "relative flex max-h-[90vh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900",
               onClick: (e) => e.stopPropagation(),
               role: "dialog",
@@ -5152,67 +5208,6 @@ function ProfileModal({ user, onClose, dark = false }) {
     ),
     document.body
   );
-}
-function useFocusTrap(options = {}) {
-  const { active = true, onEscape, restoreFocus = true } = options;
-  const ref = useRef(null);
-  const previousFocus = useRef(null);
-  useEffect(() => {
-    if (!active) return;
-    if (typeof document !== "undefined") {
-      previousFocus.current = document.activeElement;
-    }
-    return () => {
-      if (restoreFocus && previousFocus.current && typeof previousFocus.current.focus === "function") {
-        previousFocus.current.focus();
-      }
-    };
-  }, [active, restoreFocus]);
-  useEffect(() => {
-    if (!active) return;
-    const element = ref.current;
-    if (!element) return;
-    const FOCUSABLE_SELECTOR = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]';
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape" && onEscape) {
-        onEscape();
-        return;
-      }
-      if (e.key !== "Tab") return;
-      const focusables2 = element.querySelectorAll(FOCUSABLE_SELECTOR);
-      if (focusables2.length === 0) return;
-      const first = focusables2[0];
-      const last = focusables2[focusables2.length - 1];
-      const activeElement = document.activeElement;
-      if (e.shiftKey) {
-        if (activeElement === first || !element.contains(activeElement)) {
-          last.focus();
-          e.preventDefault();
-        }
-      } else {
-        if (activeElement === last || !element.contains(activeElement)) {
-          first.focus();
-          e.preventDefault();
-        }
-      }
-    };
-    const focusables = element.querySelectorAll(FOCUSABLE_SELECTOR);
-    if (focusables.length > 0) {
-      const timer = setTimeout(() => {
-        focusables[0].focus();
-      }, 50);
-      element.addEventListener("keydown", handleKeyDown);
-      return () => {
-        clearTimeout(timer);
-        element.removeEventListener("keydown", handleKeyDown);
-      };
-    }
-    element.addEventListener("keydown", handleKeyDown);
-    return () => {
-      element.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [active, onEscape]);
-  return ref;
 }
 
 export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useUserProfile, userManager };

@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import {
   X, Search, ChevronDown, ChevronUp, ExternalLink, GitPullRequest, Tag,
 } from 'lucide-react';
@@ -50,6 +51,7 @@ export default function ReleaseNotesPanel({
   zIndex = TOP_Z_INDEX,
   closeRef,
 }: ReleaseNotesPanelProps) {
+  const modalRef = useFocusTrap<HTMLDivElement>({ onEscape: handleClose });
   const t = getReleaseNotesStrings(locale);
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState('');
@@ -63,7 +65,6 @@ export default function ReleaseNotesPanel({
     requestAnimationFrame(() => setVisible(true));
     if (closeRef) closeRef.current = handleClose;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose();
       if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
         e.preventDefault();
         searchRef.current?.focus();
@@ -77,10 +78,10 @@ export default function ReleaseNotesPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleClose = () => {
+  function handleClose() {
     setVisible(false);
     setTimeout(onClose, 200);
-  };
+  }
 
   const toggle = (v: string) =>
     setOpenVersions((prev) => ({ ...prev, [v]: !prev[v] }));
@@ -138,6 +139,7 @@ export default function ReleaseNotesPanel({
       />
 
       <div
+        ref={modalRef}
         className={`relative w-full max-w-3xl h-full overflow-hidden flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-l border-gray-200 dark:border-white/[0.06] shadow-2xl transition-transform duration-200 ${
           visible ? 'translate-x-0' : 'translate-x-6'
         }`}

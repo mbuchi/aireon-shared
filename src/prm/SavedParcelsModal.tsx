@@ -4,6 +4,7 @@ import {
   Trash2, RefreshCw, Plus, Layers, LayoutGrid, Compass,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import {
   fetchPrmRecords,
   updatePrmState,
@@ -58,6 +59,8 @@ export function SavedParcelsModal({
   const [stateFilter, setStateFilter] = useState<PrmState | 'all'>('all');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
+  const modalRef = useFocusTrap<HTMLDivElement>({ onEscape: onClose });
+
   const refresh = () => {
     if (!isAuthenticated || !accessToken) return;
     setLoading(true);
@@ -69,14 +72,6 @@ export function SavedParcelsModal({
   };
 
   useEffect(refresh, [accessToken, isAuthenticated]);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [onClose]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortAsc(!sortAsc);
@@ -189,6 +184,7 @@ export function SavedParcelsModal({
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={onClose} />
       <div
+        ref={modalRef}
         className="relative w-full max-w-5xl max-h-[85vh] rounded-2xl shadow-2xl border overflow-hidden flex flex-col bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700"
         style={{ animation: 'savedParcelsIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both' }}
       >

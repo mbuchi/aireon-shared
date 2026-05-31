@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Lock, type LucideIcon } from 'lucide-react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 export interface LoginModalFeature {
   /** Optional leading icon. */
@@ -56,14 +56,10 @@ export default function LoginModal({
   login,
   register,
 }: LoginModalProps) {
-  useEffect(() => {
-    if (!open || blocking) return;
-    const onEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onEsc);
-    return () => document.removeEventListener('keydown', onEsc);
-  }, [open, blocking, onClose]);
+  const modalRef = useFocusTrap<HTMLDivElement>({
+    active: open,
+    onEscape: blocking ? undefined : onClose,
+  });
 
   if (!open) return null;
 
@@ -78,7 +74,7 @@ export default function LoginModal({
         onClick={blocking ? undefined : onClose}
       />
 
-      <div className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
+      <div ref={modalRef} className="relative w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
         <div className="h-1.5 bg-gradient-to-r from-red-500 via-red-600 to-rose-700" />
 
         <div className="px-8 pt-7 pb-6">
