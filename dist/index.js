@@ -70,6 +70,30 @@ function useFocusTrap(options = {}) {
   return ref;
 }
 
+// src/theme/zindex.ts
+var Z_INDEX = {
+  /** Bottom base level (e.g. underlying custom canvas) */
+  base: 0,
+  /** Deep layout/background layers */
+  bg: 10,
+  /** Content cards or relative layout elements */
+  content: 20,
+  /** Main navigation header and action bars */
+  header: 50,
+  /** Sidebar panels and drawer filters */
+  drawer: 1e3,
+  /** Modals, dialog backdrops, and overlay panels */
+  modal: 2e3,
+  /** Dropdown menu popovers and select lists */
+  dropdown: 3e3,
+  /** Tooltips, toast notifications, and popovers */
+  tooltip: 4e3,
+  /** Stacking level for full-screen screenshots / tour overlays */
+  overlay: 5e3,
+  /** Absolute top layer (e.g. error boundary crash panel or global loader) */
+  top: 2147483647
+};
+
 // src/releaseNotes/types.ts
 var KIND_META = {
   new: {
@@ -183,7 +207,7 @@ var RELEASE_NOTES_STRINGS = {
   }
 };
 var getReleaseNotesStrings = (locale = "en") => RELEASE_NOTES_STRINGS[locale] ?? RELEASE_NOTES_STRINGS.en;
-var TOP_Z_INDEX = 2147483647;
+var TOP_Z_INDEX = Z_INDEX.top;
 var FILTER_ORDER = ["new", "improved", "fixed", "breaking", "docs"];
 function ReleaseNotesPanel({
   onClose,
@@ -5210,4 +5234,4 @@ function ProfileModal({ user, onClose, dark = false }) {
   );
 }
 
-export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useUserProfile, userManager };
+export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useUserProfile, userManager };
