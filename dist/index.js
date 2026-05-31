@@ -5153,5 +5153,66 @@ function ProfileModal({ user, onClose, dark = false }) {
     document.body
   );
 }
+function useFocusTrap(options = {}) {
+  const { active = true, onEscape, restoreFocus = true } = options;
+  const ref = useRef(null);
+  const previousFocus = useRef(null);
+  useEffect(() => {
+    if (!active) return;
+    if (typeof document !== "undefined") {
+      previousFocus.current = document.activeElement;
+    }
+    return () => {
+      if (restoreFocus && previousFocus.current && typeof previousFocus.current.focus === "function") {
+        previousFocus.current.focus();
+      }
+    };
+  }, [active, restoreFocus]);
+  useEffect(() => {
+    if (!active) return;
+    const element = ref.current;
+    if (!element) return;
+    const FOCUSABLE_SELECTOR = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]';
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && onEscape) {
+        onEscape();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusables2 = element.querySelectorAll(FOCUSABLE_SELECTOR);
+      if (focusables2.length === 0) return;
+      const first = focusables2[0];
+      const last = focusables2[focusables2.length - 1];
+      const activeElement = document.activeElement;
+      if (e.shiftKey) {
+        if (activeElement === first || !element.contains(activeElement)) {
+          last.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (activeElement === last || !element.contains(activeElement)) {
+          first.focus();
+          e.preventDefault();
+        }
+      }
+    };
+    const focusables = element.querySelectorAll(FOCUSABLE_SELECTOR);
+    if (focusables.length > 0) {
+      const timer = setTimeout(() => {
+        focusables[0].focus();
+      }, 50);
+      element.addEventListener("keydown", handleKeyDown);
+      return () => {
+        clearTimeout(timer);
+        element.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+    element.addEventListener("keydown", handleKeyDown);
+    return () => {
+      element.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [active, onEscape]);
+  return ref;
+}
 
-export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useUserProfile, userManager };
+export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useUserProfile, userManager };

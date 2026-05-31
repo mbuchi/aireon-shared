@@ -192,3 +192,6 @@ export type {
   GeminiFallbackAttempt,
   GeminiFallbackResult,
 } from './gemini';
+
+export { useFocusTrap } from './hooks/useFocusTrap';
+export type { UseFocusTrapOptions } from './hooks/useFocusTrap';
