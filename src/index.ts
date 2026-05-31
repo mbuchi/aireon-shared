@@ -195,3 +195,6 @@ export type {
 
 export { useFocusTrap } from './hooks/useFocusTrap';
 export type { UseFocusTrapOptions } from './hooks/useFocusTrap';
+
+export { Z_INDEX } from './theme/zindex';
+export type { ZIndexKey } from './theme/zindex';

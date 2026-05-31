@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { Z_INDEX } from '../theme/zindex';
 import {
   X, Search, ChevronDown, ChevronUp, ExternalLink, GitPullRequest, Tag,
 } from 'lucide-react';
@@ -36,7 +37,7 @@ export interface ReleaseNotesPanelProps {
 }
 
 /** Max 32-bit signed int — keeps the modal above any app navbar/dropdown stacking context. */
-const TOP_Z_INDEX = 2147483647;
+const TOP_Z_INDEX = Z_INDEX.top;
 
 const FILTER_ORDER: ChangeKind[] = ['new', 'improved', 'fixed', 'breaking', 'docs'];
 
