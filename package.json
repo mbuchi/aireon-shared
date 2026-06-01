@@ -1,6 +1,6 @@
 {
   "name": "@swissnovo/shared",
-  "version": "0.43.2",
+  "version": "0.44.0",
   "description": "Shared UI components and utilities for the SwissNovo app suite.",
   "type": "module",
   "license": "UNLICENSED",
@@ -46,12 +46,19 @@
     "generate:api": "openapi-typescript ./openapi.json -o src/api/schema.ts"
   },
   "peerDependencies": {
+    "@openreplay/tracker": ">=16",
     "lucide-react": ">=0.300.0",
     "oidc-client-ts": ">=3",
     "react": ">=18",
     "react-dom": ">=18"
   },
+  "peerDependenciesMeta": {
+    "@openreplay/tracker": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@openreplay/tracker": "^18.0.10",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "lucide-react": "^0.344.0",
