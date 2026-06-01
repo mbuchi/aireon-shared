@@ -4482,6 +4482,77 @@ function BugReportButton({
   );
 }
 
+// src/openreplay/client.ts
+var DEFAULT_INGEST = "https://openreplay.zeroo.ch/ingest";
+var tracker = null;
+var started = false;
+var noopHandle = {
+  get started() {
+    return started;
+  },
+  identify(userId, metadata) {
+    identifyOpenReplayUser(userId, metadata);
+  },
+  stop() {
+    stopOpenReplay();
+  }
+};
+function initOpenReplay(options = {}) {
+  if (started || tracker) return noopHandle;
+  if (typeof window === "undefined") return noopHandle;
+  const projectKey = options.projectKey;
+  if (!projectKey) return noopHandle;
+  const ingestPoint = options.ingestPoint || DEFAULT_INGEST;
+  const trackerPkg = "@openreplay/tracker";
+  void (async () => {
+    try {
+      const mod = await import(
+        /* @vite-ignore */
+        trackerPkg
+      );
+      const Tracker = mod.default;
+      const instance = new Tracker({
+        projectKey,
+        ingestPoint,
+        obscureTextEmails: options.obscureTextEmails ?? true,
+        obscureTextNumbers: options.obscureTextNumbers ?? true,
+        obscureInputEmails: options.obscureInputEmails ?? true,
+        obscureInputNumbers: options.obscureInputNumbers ?? true,
+        obscureInputDates: options.obscureInputDates ?? true,
+        respectDoNotTrack: options.respectDoNotTrack ?? false,
+        ...options.trackerOptions ?? {}
+      });
+      tracker = instance;
+      await Promise.resolve(instance.start()).catch((err) => {
+        console.warn("[openreplay] start failed", err);
+      });
+      started = true;
+    } catch (err) {
+      console.warn("[openreplay] init skipped", err);
+      tracker = null;
+    }
+  })();
+  return noopHandle;
+}
+function identifyOpenReplayUser(userId, metadata) {
+  if (!tracker || !userId) return;
+  try {
+    tracker.setUserID(userId);
+    if (metadata) {
+      for (const [key, value] of Object.entries(metadata)) {
+        tracker.setMetadata(key, value);
+      }
+    }
+  } catch {
+  }
+}
+function stopOpenReplay() {
+  try {
+    tracker?.stop?.();
+  } catch {
+  }
+}
+
 // src/cache/clientCache.ts
 var LocalStorageCache = class {
   constructor(prefix, ttlMinutes = 60) {
@@ -5243,4 +5314,4 @@ function Portal({ children, container }) {
   return createPortal(children, target);
 }
 
-export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useUserProfile, userManager };
+export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useUserProfile, userManager };

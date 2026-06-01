@@ -826,6 +826,70 @@ interface BugReportButtonProps {
 }
 declare function BugReportButton({ logger, locale, email, position, darkMode, container, metaData, }: BugReportButtonProps): react.ReactPortal | null;
 
+interface OpenReplayOptions {
+    /**
+     * The OpenReplay project key (from Preferences → Projects). REQUIRED — when
+     * absent, `initOpenReplay` is a no-op, so the call can ship to production
+     * before a key exists and activate via env/config later.
+     */
+    projectKey?: string;
+    /**
+     * Ingest endpoint of the self-hosted instance.
+     * Default: https://openreplay.zeroo.ch/ingest
+     */
+    ingestPoint?: string;
+    /**
+     * Obscure all text nodes' emails (default true). Obscured content never
+     * leaves the browser.
+     */
+    obscureTextEmails?: boolean;
+    /** Obscure all text nodes' numbers (default true). */
+    obscureTextNumbers?: boolean;
+    /** Obscure email inputs (default true). */
+    obscureInputEmails?: boolean;
+    /** Obscure numeric inputs (default true). */
+    obscureInputNumbers?: boolean;
+    /** Obscure date inputs (default true). */
+    obscureInputDates?: boolean;
+    /** Respect the browser's Do Not Track setting (default false). */
+    respectDoNotTrack?: boolean;
+    /**
+     * Extra options passed straight through to the `new Tracker(...)` constructor,
+     * merged last (lets an app set anything we don't surface explicitly).
+     */
+    trackerOptions?: Record<string, unknown>;
+}
+interface OpenReplay {
+    /** True once the tracker has been constructed and start() invoked. */
+    readonly started: boolean;
+    /** Associate the current replay with a user id + optional string metadata. */
+    identify(userId: string, metadata?: Record<string, string>): void;
+    /** Stop recording (best-effort). */
+    stop(): void;
+}
+/**
+ * Initialise and start the OpenReplay tracker exactly once.
+ *
+ * Safe no-op (never throws, returns a handle) when:
+ *  - no `projectKey` is provided,
+ *  - running outside a browser (SSR),
+ *  - the `@openreplay/tracker` package isn't installed,
+ *  - or the tracker fails to construct/start.
+ *
+ * Returns synchronously; the tracker loads + starts asynchronously in the
+ * background. Use the returned handle (or the standalone functions) to identify
+ * the user once auth resolves.
+ */
+declare function initOpenReplay(options?: OpenReplayOptions): OpenReplay;
+/**
+ * Associate the current replay with an authenticated user (e.g. Zitadel email)
+ * plus optional string metadata. Safe to call before init / before the tracker
+ * has finished starting — no-ops until it's running.
+ */
+declare function identifyOpenReplayUser(userId: string, metadata?: Record<string, string>): void;
+/** Stop recording (best-effort). Safe to call when not started. */
+declare function stopOpenReplay(): void;
+
 /**
  * Suite-wide client-side cache primitives. Two flavours:
  *
@@ -1091,4 +1155,4 @@ interface PortalProps {
  */
 declare function Portal({ children, container }: PortalProps): react.ReactPortal | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClaireTurn, type CreatePrmInput, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseUserProfileResult, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClaireTurn, type CreatePrmInput, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, type OpenReplay, type OpenReplayOptions, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseUserProfileResult, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useUserProfile, userManager };

@@ -128,6 +128,13 @@ export type {
   BugReportStrings,
 } from './errorlog';
 
+export {
+  initOpenReplay,
+  identifyOpenReplayUser,
+  stopOpenReplay,
+} from './openreplay';
+export type { OpenReplay, OpenReplayOptions } from './openreplay';
+
 export { LocalStorageCache, IndexedDBCache } from './cache';
 export type { IndexedDBCacheOptions } from './cache';
 
