@@ -107,13 +107,15 @@ export function initOpenReplay(options: OpenReplayOptions = {}): OpenReplay {
 
   const ingestPoint = options.ingestPoint || DEFAULT_INGEST;
 
-  // Variable specifier → bundlers keep this as a runtime/code-split import and
-  // don't fail the build when the optional peer dep is absent.
-  const trackerPkg = '@openreplay/tracker';
-
   void (async () => {
     try {
-      const mod = (await import(/* @vite-ignore */ trackerPkg)) as {
+      // Literal-specifier dynamic import so the consuming app's bundler can
+      // resolve + code-split the tracker into a lazy chunk. Because the shared
+      // package is `sideEffects: false`, an app that never calls initOpenReplay
+      // tree-shakes this module out entirely (so apps that don't install the
+      // optional `@openreplay/tracker` peer dep still build); an app that DOES
+      // call it has opted in and installed the package, so this resolves.
+      const mod = (await import('@openreplay/tracker')) as {
         default: new (opts: Record<string, unknown>) => TrackerLike;
       };
       const Tracker = mod.default;

@@ -4503,13 +4503,9 @@ function initOpenReplay(options = {}) {
   const projectKey = options.projectKey;
   if (!projectKey) return noopHandle;
   const ingestPoint = options.ingestPoint || DEFAULT_INGEST;
-  const trackerPkg = "@openreplay/tracker";
   void (async () => {
     try {
-      const mod = await import(
-        /* @vite-ignore */
-        trackerPkg
-      );
+      const mod = await import('@openreplay/tracker');
       const Tracker = mod.default;
       const instance = new Tracker({
         projectKey,
