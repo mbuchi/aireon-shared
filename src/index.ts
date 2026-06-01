@@ -198,3 +198,7 @@ export type { UseFocusTrapOptions } from './hooks/useFocusTrap';
 
 export { Z_INDEX } from './theme/zindex';
 export type { ZIndexKey } from './theme/zindex';
+
+export { Portal } from './portal/Portal';
+export type { PortalProps } from './portal/Portal';
+
