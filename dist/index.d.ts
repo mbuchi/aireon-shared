@@ -1,5 +1,5 @@
 import * as react from 'react';
-import { ReactNode, MutableRefObject, Component, ErrorInfo, CSSProperties, ElementType } from 'react';
+import { ReactNode, MutableRefObject, Component, ErrorInfo, ImgHTMLAttributes, CSSProperties, ElementType } from 'react';
 import { LucideIcon } from 'lucide-react';
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import { User, UserManager } from 'oidc-client-ts';
@@ -959,6 +959,131 @@ declare class IndexedDBCache<T> {
     clear(): Promise<void>;
 }
 
+/** Which stored asset to resolve: the original (usually SVG) or the PNG raster. */
+type FlagImageMode = 'original' | 'png';
+/** One municipality flag record, mirroring the roolez_api response envelope. */
+interface FlagRecord {
+    /** Federal BFS municipality number (e.g. 261 = Zürich). */
+    bfs_code: number;
+    /** Municipality name as held in the roolez dataset. */
+    municipality_name: string;
+    /** Two-letter canton abbreviation, uppercase (e.g. "ZH"). */
+    canton: string;
+    /** Public Vercel Blob URL of the original asset (`.svg` for most), or null. */
+    storage_url: string | null;
+    /** Public Vercel Blob URL of the rasterised PNG, or null when not generated. */
+    png_storage_url: string | null;
+    /** Edge length in px of the square PNG, or null. */
+    png_size: number | null;
+    /** The URL for the requested `imageMode` — the field most callers render. */
+    flag_url: string | null;
+    /** Echoes the resolved image mode. */
+    imageMode: FlagImageMode;
+}
+interface FlagFetchOptions {
+    /** `'original'` (default) returns the SVG blob; `'png'` returns the raster. */
+    imageMode?: FlagImageMode;
+    /** Override the roolez_api base URL (defaults to {@link getFlagApiBase}). */
+    apiBase?: string;
+    /** Skip the local front-of-cache for this call (always hit the network). */
+    noCache?: boolean;
+}
+/** Raised when a flag fetch hits a transport/HTTP error (not a 404 "no flag"). */
+declare class FlagApiError extends Error {
+    readonly status?: number | undefined;
+    constructor(message: string, status?: number | undefined);
+}
+/** Current roolez_api base URL used by this client. */
+declare function getFlagApiBase(): string;
+/**
+ * Override the roolez_api base URL process-wide (e.g. to point at a preview or
+ * a self-hosted RES). Trailing slashes are stripped. Pass nothing or an empty
+ * string to reset to the default.
+ */
+declare function setFlagApiBase(base?: string | null): void;
+/** Clear every in-memory and persisted flag cache (testing / cache-busting). */
+declare function clearFlagCache(): void;
+/**
+ * Resolve the flag for a single municipality by its BFS code.
+ *
+ * Returns the {@link FlagRecord} (whose `flag_url` is the asset for the
+ * requested `imageMode`), or `null` when no flag exists for that code (or no
+ * PNG exists in `'png'` mode). Throws {@link FlagApiError} only on transport or
+ * server errors — a missing flag is `null`, never a throw.
+ */
+declare function getFlagByBfs(bfsCode: number, options?: FlagFetchOptions): Promise<FlagRecord | null>;
+/**
+ * Resolve every flag in a canton, ordered by BFS code. In `'png'` mode only
+ * municipalities with a generated PNG are returned. Returns `[]` on error or
+ * for an unknown canton.
+ */
+declare function getFlagsByCanton(canton: string, options?: FlagFetchOptions): Promise<FlagRecord[]>;
+/**
+ * Resolve every flag in the dataset (~2,000 municipalities), ordered by BFS
+ * code. This is a large response; prefer {@link getFlagByBfs} /
+ * {@link getFlagsByCanton} for targeted lookups. Returns `[]` on error.
+ */
+declare function getAllFlags(options?: FlagFetchOptions): Promise<FlagRecord[]>;
+/** True when a blob URL points at an SVG asset (its path ends in `.svg`). */
+declare function isSvgFlagUrl(url: string | null | undefined): boolean;
+/**
+ * Fetch the raw SVG markup for a flag from its `.svg` blob URL, with in-memory
+ * de-duplication and caching so concurrent callers (inline render, recolour,
+ * ZIP export) share one network round-trip. Returns `null` when the URL is not
+ * an SVG blob or the fetch fails.
+ *
+ * This is the generalised, app-agnostic form of roolez-api's internal
+ * `svgUtils.fetchSvgMarkup` — the "SVG flag extraction helper / flag cache"
+ * any suite app can now import instead of reimplementing.
+ */
+declare function fetchFlagSvgMarkup(url: string | null | undefined): Promise<string | null>;
+
+interface UseMunicipalityFlagResult {
+    /** The resolved flag, or `null` while loading / when none exists. */
+    flag: FlagRecord | null;
+    /** True while the lookup is in flight. */
+    loading: boolean;
+    /** Set when the lookup hit a transport/server error (not a missing flag). */
+    error: Error | null;
+}
+/**
+ * React hook resolving a single municipality flag by BFS code via
+ * {@link getFlagByBfs}. Re-fetches when `bfsCode` or `imageMode` change, and
+ * ignores stale responses if the inputs change mid-flight. A missing flag
+ * resolves to `flag: null` with no error.
+ *
+ * Pass `bfsCode = null/undefined` to stand the hook down (e.g. before a
+ * municipality is selected).
+ */
+declare function useMunicipalityFlag(bfsCode: number | null | undefined, options?: FlagFetchOptions): UseMunicipalityFlagResult;
+
+type ImgProps = Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'alt' | 'width' | 'height'>;
+interface MunicipalityFlagProps extends ImgProps {
+    /** BFS municipality code to resolve and render. */
+    bfsCode: number | null | undefined;
+    /** `'original'` (SVG, default) or `'png'`. SVG blobs render fine in `<img>`. */
+    imageMode?: FlagImageMode;
+    /** Square edge length in px. Defaults to 24. */
+    size?: number;
+    /** Override the roolez_api base URL (see `setFlagApiBase`). */
+    apiBase?: string;
+    /** Custom alt text. Defaults to "<municipality> flag". */
+    alt?: string;
+    /** Rendered while loading or when no flag exists. Defaults to a neutral box. */
+    fallback?: React.ReactNode;
+}
+/**
+ * Drop-in municipality-flag image. Resolves the flag for `bfsCode` via the
+ * shared roolez_api client and renders it as a square `<img>`. Shows the
+ * `fallback` (a neutral rounded box by default) while loading, when no flag
+ * exists, or if the asset fails to load. No token or per-app proxy required —
+ * the flag blob is public.
+ *
+ * @example
+ * <MunicipalityFlag bfsCode={261} size={32} />
+ */
+declare function MunicipalityFlag({ bfsCode, imageMode, size, apiBase, alt, fallback, style, ...imgProps }: MunicipalityFlagProps): react_jsx_runtime.JSX.Element;
+
 interface SkeletonProps {
     /** Width — number is treated as px. */
     width?: number | string;
@@ -1155,4 +1280,4 @@ interface PortalProps {
  */
 declare function Portal({ children, container }: PortalProps): react.ReactPortal | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClaireTurn, type CreatePrmInput, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, type OpenReplay, type OpenReplayOptions, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseUserProfileResult, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClaireTurn, type CreatePrmInput, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MunicipalityFlag, type MunicipalityFlagProps, type OpenReplay, type OpenReplayOptions, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseUserProfileResult, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useUserProfile, userManager };
