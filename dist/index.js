@@ -4747,6 +4747,213 @@ var IndexedDBCache = class {
     }
   }
 };
+
+// src/flags/client.ts
+var FlagApiError = class extends Error {
+  constructor(message, status) {
+    super(message);
+    this.status = status;
+    this.name = "FlagApiError";
+  }
+};
+var DEFAULT_FLAG_API_BASE = "https://res.zeroo.ch/roolez_api";
+var flagApiBase = DEFAULT_FLAG_API_BASE;
+function getFlagApiBase() {
+  return flagApiBase;
+}
+function setFlagApiBase(base) {
+  flagApiBase = base && base.trim() ? base.replace(/\/+$/, "") : DEFAULT_FLAG_API_BASE;
+}
+var metaCache = new LocalStorageCache("swissnovo-flags", 24 * 60);
+var recordPromises = /* @__PURE__ */ new Map();
+var listPromises = /* @__PURE__ */ new Map();
+var svgMarkupCache = /* @__PURE__ */ new Map();
+var svgMarkupPromises = /* @__PURE__ */ new Map();
+function clearFlagCache() {
+  metaCache.clear();
+  recordPromises.clear();
+  listPromises.clear();
+  svgMarkupCache.clear();
+  svgMarkupPromises.clear();
+}
+function normaliseMode(mode) {
+  return mode === "png" ? "png" : "original";
+}
+async function getJson(url) {
+  let response;
+  try {
+    response = await fetch(url);
+  } catch (err) {
+    throw new FlagApiError(
+      `Flag request failed: ${err instanceof Error ? err.message : "network error"}`
+    );
+  }
+  if (response.status === 404) return { __notFound: true };
+  if (!response.ok) {
+    throw new FlagApiError(`Flag request failed with ${response.status}`, response.status);
+  }
+  return response.json();
+}
+async function getFlagByBfs(bfsCode, options = {}) {
+  const mode = normaliseMode(options.imageMode);
+  const base = (options.apiBase ?? flagApiBase).replace(/\/+$/, "");
+  const cacheKey = `bfs:${base}:${bfsCode}:${mode}`;
+  if (!options.noCache) {
+    const cached = metaCache.get(cacheKey);
+    if (cached !== null) return cached;
+    const inflight = recordPromises.get(cacheKey);
+    if (inflight) return inflight;
+  }
+  const promise = (async () => {
+    const url = `${base}/get-flags-by-bfs-code?bfs_code=${encodeURIComponent(bfsCode)}&imageMode=${mode}`;
+    const body = await getJson(url);
+    const record = body && !body.__notFound && body.data ? body.data : null;
+    if (!options.noCache) metaCache.set(cacheKey, record);
+    return record;
+  })().finally(() => recordPromises.delete(cacheKey));
+  if (!options.noCache) recordPromises.set(cacheKey, promise);
+  return promise;
+}
+async function getFlagsByCanton(canton, options = {}) {
+  const mode = normaliseMode(options.imageMode);
+  const base = (options.apiBase ?? flagApiBase).replace(/\/+$/, "");
+  const code = canton.trim().toUpperCase();
+  const cacheKey = `canton:${base}:${code}:${mode}`;
+  if (!options.noCache) {
+    const inflight = listPromises.get(cacheKey);
+    if (inflight) return inflight;
+  }
+  const promise = (async () => {
+    const url = `${base}/get-flags-by-canton?canton=${encodeURIComponent(code)}&imageMode=${mode}`;
+    const body = await getJson(url);
+    return body && !body.__notFound && Array.isArray(body.data) ? body.data : [];
+  })().finally(() => listPromises.delete(cacheKey));
+  if (!options.noCache) listPromises.set(cacheKey, promise);
+  return promise;
+}
+async function getAllFlags(options = {}) {
+  const mode = normaliseMode(options.imageMode);
+  const base = (options.apiBase ?? flagApiBase).replace(/\/+$/, "");
+  const cacheKey = `all:${base}:${mode}`;
+  if (!options.noCache) {
+    const inflight = listPromises.get(cacheKey);
+    if (inflight) return inflight;
+  }
+  const promise = (async () => {
+    const url = `${base}/get-all-flags?imageMode=${mode}`;
+    const body = await getJson(url);
+    return body && !body.__notFound && Array.isArray(body.data) ? body.data : [];
+  })().finally(() => listPromises.delete(cacheKey));
+  if (!options.noCache) listPromises.set(cacheKey, promise);
+  return promise;
+}
+function isSvgFlagUrl(url) {
+  if (!url) return false;
+  return url.split("?")[0].toLowerCase().endsWith(".svg");
+}
+async function fetchFlagSvgMarkup(url) {
+  if (!isSvgFlagUrl(url)) return null;
+  const key = url;
+  if (svgMarkupCache.has(key)) return svgMarkupCache.get(key) ?? null;
+  const inflight = svgMarkupPromises.get(key);
+  if (inflight) return inflight;
+  const promise = (async () => {
+    try {
+      const response = await fetch(key);
+      if (!response.ok) return null;
+      const text = await response.text();
+      const markup = text.trim().startsWith("<") ? text : null;
+      svgMarkupCache.set(key, markup);
+      return markup;
+    } catch {
+      return null;
+    } finally {
+      svgMarkupPromises.delete(key);
+    }
+  })();
+  svgMarkupPromises.set(key, promise);
+  return promise;
+}
+function useMunicipalityFlag(bfsCode, options = {}) {
+  const [flag, setFlag] = useState(null);
+  const [loading, setLoading] = useState(bfsCode != null);
+  const [error, setError] = useState(null);
+  const { imageMode, apiBase, noCache } = options;
+  const requestId = useRef(0);
+  useEffect(() => {
+    if (bfsCode == null) {
+      setFlag(null);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+    const id = ++requestId.current;
+    setLoading(true);
+    setError(null);
+    getFlagByBfs(bfsCode, { imageMode, apiBase, noCache }).then((record) => {
+      if (id !== requestId.current) return;
+      setFlag(record);
+      setLoading(false);
+    }).catch((err) => {
+      if (id !== requestId.current) return;
+      setFlag(null);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      setLoading(false);
+    });
+    return () => {
+      requestId.current++;
+    };
+  }, [bfsCode, imageMode, apiBase, noCache]);
+  return { flag, loading, error };
+}
+function MunicipalityFlag({
+  bfsCode,
+  imageMode,
+  size = 24,
+  apiBase,
+  alt,
+  fallback,
+  style,
+  ...imgProps
+}) {
+  const { flag } = useMunicipalityFlag(bfsCode, { imageMode, apiBase });
+  const [broken, setBroken] = useState(false);
+  const boxStyle = {
+    width: size,
+    height: size,
+    display: "inline-block",
+    flexShrink: 0,
+    ...style
+  };
+  if (!flag?.flag_url || broken) {
+    if (fallback !== void 0) return /* @__PURE__ */ jsx(Fragment, { children: fallback });
+    return /* @__PURE__ */ jsx(
+      "span",
+      {
+        "aria-hidden": "true",
+        style: {
+          ...boxStyle,
+          borderRadius: 4,
+          background: "rgba(100,116,139,0.18)"
+        }
+      }
+    );
+  }
+  return /* @__PURE__ */ jsx(
+    "img",
+    {
+      src: flag.flag_url,
+      alt: alt ?? `${flag.municipality_name} flag`,
+      width: size,
+      height: size,
+      loading: "lazy",
+      decoding: "async",
+      onError: () => setBroken(true),
+      style: { ...boxStyle, objectFit: "contain" },
+      ...imgProps
+    }
+  );
+}
 var STYLE_ID = "swn-skeleton-styles";
 var STYLE_CONTENT = '.swn-skeleton{--swn-skeleton-color:rgba(15,23,42,0.09);border-radius:8px;background-color:var(--swn-skeleton-color);animation:swn-skeleton-blink 1.8s ease-in-out infinite}.swn-skeleton-group{display:flex;flex-direction:column}.dark .swn-skeleton,[data-theme="dark"] .swn-skeleton{--swn-skeleton-color:rgba(255,255,255,0.11)}@keyframes swn-skeleton-blink{0%,100%{opacity:1}50%{opacity:0.4}}@media (prefers-reduced-motion:reduce){.swn-skeleton{animation-duration:3s}}';
 function useSkeletonStyles() {
@@ -5310,4 +5517,4 @@ function Portal({ children, container }) {
   return createPortal(children, target);
 }
 
-export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAuthToken, getBugReportStrings, getExistingUser, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useUserProfile, userManager };
+export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MunicipalityFlag, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useUserProfile, userManager };

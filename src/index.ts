@@ -138,6 +138,27 @@ export type { OpenReplay, OpenReplayOptions } from './openreplay';
 export { LocalStorageCache, IndexedDBCache } from './cache';
 export type { IndexedDBCacheOptions } from './cache';
 
+export {
+  getFlagByBfs,
+  getFlagsByCanton,
+  getAllFlags,
+  fetchFlagSvgMarkup,
+  isSvgFlagUrl,
+  getFlagApiBase,
+  setFlagApiBase,
+  clearFlagCache,
+  FlagApiError,
+  useMunicipalityFlag,
+  MunicipalityFlag,
+} from './flags';
+export type {
+  FlagRecord,
+  FlagImageMode,
+  FlagFetchOptions,
+  UseMunicipalityFlagResult,
+  MunicipalityFlagProps,
+} from './flags';
+
 export { Skeleton, SkeletonText, SkeletonGroup } from './skeleton/Skeleton';
 export type {
   SkeletonProps,
