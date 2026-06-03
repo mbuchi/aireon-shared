@@ -32,6 +32,23 @@ content: [
 
 The red `oo` wordmark uses the `Varela Round` font — already loaded by every suite app.
 
+### Page title convention
+
+The browser tab `<title>` (and any runtime title source — an i18n `meta.title` key, or the
+toolbox catalog's `capabilityMatrix.title`) uses the format **`appname - Subtitle`** with a
+plain ASCII hyphen separator (`-`), never an em dash (`—`):
+
+```html
+<!-- do -->
+<title>room - Swiss Zoning Density Explorer</title>
+<!-- don't -->
+<title>room — Swiss Zoning Density Explorer</title>
+```
+
+Em dashes are fine as ordinary punctuation in descriptions, `og:title`, or `twitter:title` —
+the rule applies only to the app-name → subtitle separator in the browser title. New apps
+should ship the hyphen form from the start.
+
 ## Exports
 
 ### `ReleaseNotesButton` / `ReleaseNotesPanel`
