@@ -522,6 +522,17 @@ const ClaireAssistant = ({
     };
   }, [open]);
 
+  // Auto-grow the composer like ChatGPT: collapse to one row, then grow to
+  // fit the typed content up to a cap (after which the textarea scrolls).
+  // Keyed on `open` too so it sizes correctly the moment the card mounts the
+  // textarea, and re-runs on the reset to '' after a send.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 96)}px`;
+  }, [input, open]);
+
   const sendMessage = useCallback(
     async (text: string, source: 'composer' | 'quick_prompt' = 'composer') => {
       const trimmed = text.trim();
@@ -1002,7 +1013,7 @@ const ClaireAssistant = ({
               onKeyDown={onKeyDown}
               placeholder="Ask Claire about this parcel..."
               rows={1}
-              className={`flex-1 resize-none bg-transparent outline-none text-[12.5px] leading-snug py-1.5 max-h-24 ${
+              className={`flex-1 resize-none bg-transparent outline-none text-[12.5px] leading-snug min-h-8 py-2 max-h-24 overflow-y-auto ${
                 darkMode
                   ? 'text-gray-100 placeholder:text-gray-500'
                   : 'text-gray-900 placeholder:text-gray-400'

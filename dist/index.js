@@ -3333,6 +3333,12 @@ var ClaireAssistant = ({
       window.clearTimeout(focusTimer);
     };
   }, [open]);
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 96)}px`;
+  }, [input, open]);
   const sendMessage = useCallback(
     async (text, source = "composer") => {
       const trimmed = text.trim();
@@ -3715,7 +3721,7 @@ var ClaireAssistant = ({
                           onKeyDown,
                           placeholder: "Ask Claire about this parcel...",
                           rows: 1,
-                          className: `flex-1 resize-none bg-transparent outline-none text-[12.5px] leading-snug py-1.5 max-h-24 ${"text-gray-100 placeholder:text-gray-500" }`
+                          className: `flex-1 resize-none bg-transparent outline-none text-[12.5px] leading-snug min-h-8 py-2 max-h-24 overflow-y-auto ${"text-gray-100 placeholder:text-gray-500" }`
                         }
                       ),
                       /* @__PURE__ */ jsx(
