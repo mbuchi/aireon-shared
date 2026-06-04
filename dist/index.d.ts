@@ -1335,6 +1335,8 @@ interface DataTableProps<T> {
     stickyHeader?: boolean;
     density?: 'comfortable' | 'compact';
     onRowClick?: (row: T) => void;
+    /** Per-row conditional classes (e.g. selected/status highlighting). */
+    rowClassName?: (row: T, index: number) => string;
     getRowId?: (row: T, index: number) => string;
     className?: string;
     /** Override the empty-state node entirely. */
@@ -1344,7 +1346,7 @@ interface DataTableProps<T> {
     /** Accessible table caption (visually hidden). */
     ariaLabel?: string;
 }
-declare function DataTable<T>({ columns, data, loading, skeletonRows, enableSorting, enableGlobalFilter, pageSize, virtualize, estimateRowHeight, overscan, maxHeight, stickyHeader, density, onRowClick, getRowId, className, emptyMessage, strings, ariaLabel, }: DataTableProps<T>): JSX.Element;
+declare function DataTable<T>({ columns, data, loading, skeletonRows, enableSorting, enableGlobalFilter, pageSize, virtualize, estimateRowHeight, overscan, maxHeight, stickyHeader, density, onRowClick, rowClassName, getRowId, className, emptyMessage, strings, ariaLabel, }: DataTableProps<T>): JSX.Element;
 
 interface VirtualListProps<T> {
     items: T[];

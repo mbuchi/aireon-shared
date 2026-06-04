@@ -5555,6 +5555,7 @@ function DataTable({
   stickyHeader = true,
   density = "comfortable",
   onRowClick,
+  rowClassName,
   getRowId,
   className,
   emptyMessage,
@@ -5600,7 +5601,7 @@ function DataTable({
     "tr",
     {
       onClick: onRowClick ? () => onRowClick(row.original) : void 0,
-      className: `transition-colors ${onRowClick ? "cursor-pointer" : ""} hover:bg-gray-50 dark:hover:bg-gray-800/60`,
+      className: `transition-colors ${onRowClick ? "cursor-pointer" : ""} hover:bg-gray-50 dark:hover:bg-gray-800/60 ${rowClassName ? rowClassName(row.original, row.index) : ""}`,
       children: row.getVisibleCells().map((cell) => {
         const meta = cell.column.columnDef.meta;
         return /* @__PURE__ */ jsx(

@@ -97,6 +97,8 @@ export interface DataTableProps<T> {
   stickyHeader?: boolean;
   density?: 'comfortable' | 'compact';
   onRowClick?: (row: T) => void;
+  /** Per-row conditional classes (e.g. selected/status highlighting). */
+  rowClassName?: (row: T, index: number) => string;
   getRowId?: (row: T, index: number) => string;
   className?: string;
   /** Override the empty-state node entirely. */
@@ -129,6 +131,7 @@ export function DataTable<T>({
   stickyHeader = true,
   density = 'comfortable',
   onRowClick,
+  rowClassName,
   getRowId,
   className,
   emptyMessage,
@@ -192,7 +195,9 @@ export function DataTable<T>({
       onClick={onRowClick ? () => onRowClick(row.original) : undefined}
       className={`transition-colors ${
         onRowClick ? 'cursor-pointer' : ''
-      } hover:bg-gray-50 dark:hover:bg-gray-800/60`}
+      } hover:bg-gray-50 dark:hover:bg-gray-800/60 ${
+        rowClassName ? rowClassName(row.original, row.index) : ''
+      }`}
     >
       {row.getVisibleCells().map((cell) => {
         const meta = cell.column.columnDef.meta;
