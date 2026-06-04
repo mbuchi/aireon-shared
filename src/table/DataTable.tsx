@@ -107,6 +107,38 @@ export interface DataTableProps<T> {
   strings?: Partial<DataTableStrings>;
   /** Accessible table caption (visually hidden). */
   ariaLabel?: string;
+  /** Row hover passthrough (e.g. to highlight a linked map feature). */
+  onRowMouseEnter?: (row: T) => void;
+  onRowMouseLeave?: (row: T) => void;
+  /**
+   * Let table content overflow its container instead of scrolling — needed
+   * when cells render absolutely-positioned popovers/menus that would be
+   * clipped by a scroll container. Forced to scroll when `maxHeight` is set.
+   * Default false.
+   */
+  overflowVisible?: boolean;
+  /** Per-slot class overrides for theming (e.g. dark-slate apps). */
+  classNames?: DataTableClassNames;
+}
+
+/**
+ * Per-slot class overrides. Each REPLACES the default colour classes for that
+ * element (structural classes — padding, dividers, sticky, font — are always
+ * applied), so a bespoke-themed app can fully restyle the table.
+ */
+export interface DataTableClassNames {
+  /** Scroll/border wrapper. */
+  container?: string;
+  /** Header row background. */
+  thead?: string;
+  /** Header cell text colour. */
+  headerCell?: string;
+  /** Body background + row dividers. */
+  body?: string;
+  /** Row hover (and base) classes. */
+  row?: string;
+  /** Body cell text colour. */
+  cell?: string;
 }
 
 function toDim(v?: number | string): string | undefined {
@@ -137,8 +169,23 @@ export function DataTable<T>({
   emptyMessage,
   strings,
   ariaLabel,
+  onRowMouseEnter,
+  onRowMouseLeave,
+  overflowVisible = false,
+  classNames,
 }: DataTableProps<T>): JSX.Element {
   const s = { ...DATA_TABLE_STRINGS_EN, ...strings };
+  // Resolved theme classes — per-slot override or suite default.
+  const cx = {
+    container: classNames?.container ?? 'border border-gray-200 dark:border-gray-700',
+    thead: classNames?.thead ?? 'bg-gray-100 dark:bg-gray-800',
+    headerCell: classNames?.headerCell ?? 'text-gray-600 dark:text-gray-300',
+    body:
+      classNames?.body ??
+      'divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-900',
+    row: classNames?.row ?? 'hover:bg-gray-50 dark:hover:bg-gray-800/60',
+    cell: classNames?.cell ?? 'text-gray-800 dark:text-gray-200',
+  };
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
 
@@ -193,9 +240,9 @@ export function DataTable<T>({
     <tr
       key={row.id}
       onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-      className={`transition-colors ${
-        onRowClick ? 'cursor-pointer' : ''
-      } hover:bg-gray-50 dark:hover:bg-gray-800/60 ${
+      onMouseEnter={onRowMouseEnter ? () => onRowMouseEnter(row.original) : undefined}
+      onMouseLeave={onRowMouseLeave ? () => onRowMouseLeave(row.original) : undefined}
+      className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''} ${cx.row} ${
         rowClassName ? rowClassName(row.original, row.index) : ''
       }`}
     >
@@ -204,7 +251,7 @@ export function DataTable<T>({
         return (
           <td
             key={cell.id}
-            className={`${cellPad} whitespace-nowrap text-sm text-gray-800 dark:text-gray-200 ${alignClass(
+            className={`${cellPad} text-sm ${cx.cell} ${alignClass(
               meta?.align
             )} ${meta?.className ?? ''}`}
           >
@@ -237,13 +284,15 @@ export function DataTable<T>({
 
       <div
         ref={scrollRef}
-        className="overflow-auto rounded-lg border border-gray-200 dark:border-gray-700"
+        className={`rounded-lg ${
+          overflowVisible && maxHeight == null ? 'overflow-visible' : 'overflow-auto'
+        } ${cx.container}`}
         style={{ maxHeight: toDim(maxHeight) }}
       >
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           {ariaLabel && <caption className="sr-only">{ariaLabel}</caption>}
           <thead
-            className={`bg-gray-100 dark:bg-gray-800 ${
+            className={`${cx.thead} ${
               stickyHeader && maxHeight != null ? 'sticky top-0 z-10' : ''
             }`}
           >
@@ -265,7 +314,7 @@ export function DataTable<T>({
                             : 'none'
                           : undefined
                       }
-                      className={`${headPad} text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 whitespace-nowrap ${alignClass(
+                      className={`${headPad} text-xs font-semibold uppercase tracking-wider ${cx.headerCell} whitespace-nowrap ${alignClass(
                         meta?.align
                       )} ${meta?.headerClassName ?? ''}`}
                     >
@@ -305,7 +354,7 @@ export function DataTable<T>({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-900">
+          <tbody className={cx.body}>
             {loading ? (
               Array.from({ length: skeletonRows }).map((_, r) => (
                 <tr key={`sk-${r}`}>

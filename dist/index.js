@@ -5560,9 +5560,21 @@ function DataTable({
   className,
   emptyMessage,
   strings,
-  ariaLabel
+  ariaLabel,
+  onRowMouseEnter,
+  onRowMouseLeave,
+  overflowVisible = false,
+  classNames
 }) {
   const s = { ...DATA_TABLE_STRINGS_EN, ...strings };
+  const cx = {
+    container: classNames?.container ?? "border border-gray-200 dark:border-gray-700",
+    thead: classNames?.thead ?? "bg-gray-100 dark:bg-gray-800",
+    headerCell: classNames?.headerCell ?? "text-gray-600 dark:text-gray-300",
+    body: classNames?.body ?? "divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-900",
+    row: classNames?.row ?? "hover:bg-gray-50 dark:hover:bg-gray-800/60",
+    cell: classNames?.cell ?? "text-gray-800 dark:text-gray-200"
+  };
   const [sorting, setSorting] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const paginated = typeof pageSize === "number" && pageSize > 0;
@@ -5601,13 +5613,15 @@ function DataTable({
     "tr",
     {
       onClick: onRowClick ? () => onRowClick(row.original) : void 0,
-      className: `transition-colors ${onRowClick ? "cursor-pointer" : ""} hover:bg-gray-50 dark:hover:bg-gray-800/60 ${rowClassName ? rowClassName(row.original, row.index) : ""}`,
+      onMouseEnter: onRowMouseEnter ? () => onRowMouseEnter(row.original) : void 0,
+      onMouseLeave: onRowMouseLeave ? () => onRowMouseLeave(row.original) : void 0,
+      className: `transition-colors ${onRowClick ? "cursor-pointer" : ""} ${cx.row} ${rowClassName ? rowClassName(row.original, row.index) : ""}`,
       children: row.getVisibleCells().map((cell) => {
         const meta = cell.column.columnDef.meta;
         return /* @__PURE__ */ jsx(
           "td",
           {
-            className: `${cellPad} whitespace-nowrap text-sm text-gray-800 dark:text-gray-200 ${alignClass(
+            className: `${cellPad} text-sm ${cx.cell} ${alignClass(
               meta?.align
             )} ${meta?.className ?? ""}`,
             children: flexRender(cell.column.columnDef.cell, cell.getContext())
@@ -5644,14 +5658,14 @@ function DataTable({
       "div",
       {
         ref: scrollRef,
-        className: "overflow-auto rounded-lg border border-gray-200 dark:border-gray-700",
+        className: `rounded-lg ${overflowVisible && maxHeight == null ? "overflow-visible" : "overflow-auto"} ${cx.container}`,
         style: { maxHeight: toDim2(maxHeight) },
         children: /* @__PURE__ */ jsxs("table", { className: "min-w-full divide-y divide-gray-200 dark:divide-gray-700", children: [
           ariaLabel && /* @__PURE__ */ jsx("caption", { className: "sr-only", children: ariaLabel }),
           /* @__PURE__ */ jsx(
             "thead",
             {
-              className: `bg-gray-100 dark:bg-gray-800 ${stickyHeader && maxHeight != null ? "sticky top-0 z-10" : ""}`,
+              className: `${cx.thead} ${stickyHeader && maxHeight != null ? "sticky top-0 z-10" : ""}`,
               children: table.getHeaderGroups().map((headerGroup) => /* @__PURE__ */ jsx("tr", { children: headerGroup.headers.map((header) => {
                 const meta = header.column.columnDef.meta;
                 const canSort = header.column.getCanSort();
@@ -5660,7 +5674,7 @@ function DataTable({
                   "th",
                   {
                     "aria-sort": canSort ? sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : "none" : void 0,
-                    className: `${headPad} text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 whitespace-nowrap ${alignClass(
+                    className: `${headPad} text-xs font-semibold uppercase tracking-wider ${cx.headerCell} whitespace-nowrap ${alignClass(
                       meta?.align
                     )} ${meta?.headerClassName ?? ""}`,
                     children: header.isPlaceholder ? null : canSort ? /* @__PURE__ */ jsxs(
@@ -5692,7 +5706,7 @@ function DataTable({
               }) }, headerGroup.id))
             }
           ),
-          /* @__PURE__ */ jsx("tbody", { className: "divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-900", children: loading ? Array.from({ length: skeletonRows }).map((_, r) => /* @__PURE__ */ jsx("tr", { children: Array.from({ length: colCount }).map((__, c) => /* @__PURE__ */ jsx("td", { className: cellPad, children: /* @__PURE__ */ jsx(Skeleton, { height: 14, delay: `${(r + c) * 40}ms` }) }, c)) }, `sk-${r}`)) : rows.length === 0 ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx(
+          /* @__PURE__ */ jsx("tbody", { className: cx.body, children: loading ? Array.from({ length: skeletonRows }).map((_, r) => /* @__PURE__ */ jsx("tr", { children: Array.from({ length: colCount }).map((__, c) => /* @__PURE__ */ jsx("td", { className: cellPad, children: /* @__PURE__ */ jsx(Skeleton, { height: 14, delay: `${(r + c) * 40}ms` }) }, c)) }, `sk-${r}`)) : rows.length === 0 ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx(
             "td",
             {
               colSpan: colCount,
