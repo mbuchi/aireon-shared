@@ -230,3 +230,13 @@ export type { ZIndexKey } from './theme/zindex';
 export { Portal } from './portal/Portal';
 export type { PortalProps } from './portal/Portal';
 
+// Suite-default data primitives — TanStack Table / Virtual.
+export { DataTable, DATA_TABLE_STRINGS_EN } from './table/DataTable';
+export type { DataTableProps, DataTableStrings } from './table/DataTable';
+export { VirtualList } from './list/VirtualList';
+export type { VirtualListProps } from './list/VirtualList';
+// Re-export the TanStack building blocks apps need to define columns, so they
+// can import everything from '@swissnovo/shared' without a direct dependency.
+export { createColumnHelper, flexRender } from '@tanstack/react-table';
+export type { ColumnDef, Row, CellContext } from '@tanstack/react-table';
+

@@ -1,6 +1,6 @@
 {
   "name": "@swissnovo/shared",
-  "version": "0.47.0",
+  "version": "0.48.0",
   "description": "Shared UI components and utilities for the SwissNovo app suite.",
   "type": "module",
   "license": "UNLICENSED",
@@ -70,6 +70,8 @@
     "typescript": "^5.5.3"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/react-virtual": "^3.14.2",
     "openapi-fetch": "^0.13.8"
   }
 }

@@ -22,6 +22,8 @@ export default defineConfig({
     'lucide-react',
     'oidc-client-ts',
     'openapi-fetch',
+    '@tanstack/react-table',
+    '@tanstack/react-virtual',
     // Optional peer dep, loaded via dynamic import only when an app opts in to
     // OpenReplay session replay. Keep it external so it's never bundled here.
     '@openreplay/tracker',

@@ -5,6 +5,8 @@ import * as react_jsx_runtime from 'react/jsx-runtime';
 import { User, UserManager } from 'oidc-client-ts';
 export { Coordinates, GeoJSONFeatureCollection, JsonError, ParcelTree, PoiDetail, RES_API_BASE_URL, ResApiClient, ResApiClientOptions, SignalRecord, SwissnovoImage, components, createResApiClient, operations, paths } from './api/index.js';
 export { GEMINI_FALLBACK_CHAIN, GeminiFallbackAttempt, GeminiFallbackOptions, GeminiFallbackResult, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './gemini/index.js';
+import { RowData, ColumnDef } from '@tanstack/react-table';
+export { CellContext, ColumnDef, Row, createColumnHelper, flexRender } from '@tanstack/react-table';
 import 'openapi-fetch';
 
 type ChangeKind = 'new' | 'improved' | 'fixed' | 'breaking' | 'docs';
@@ -1280,4 +1282,92 @@ interface PortalProps {
  */
 declare function Portal({ children, container }: PortalProps): react.ReactPortal | null;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClaireTurn, type CreatePrmInput, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MunicipalityFlag, type MunicipalityFlagProps, type OpenReplay, type OpenReplayOptions, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseUserProfileResult, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useUserProfile, userManager };
+declare module '@tanstack/react-table' {
+    interface ColumnMeta<TData extends RowData, TValue> {
+        /** Horizontal alignment of the cell + header. */
+        align?: 'left' | 'right' | 'center';
+        /** Extra classes for body cells in this column. */
+        className?: string;
+        /** Extra classes for the header cell in this column. */
+        headerClassName?: string;
+    }
+}
+interface DataTableStrings {
+    searchPlaceholder: string;
+    /** Sort-button aria-label; `{column}` is replaced with the header text. */
+    sortBy: string;
+    empty: string;
+    firstPage: string;
+    previousPage: string;
+    nextPage: string;
+    lastPage: string;
+    page: string;
+    of: string;
+}
+declare const DATA_TABLE_STRINGS_EN: DataTableStrings;
+interface DataTableProps<T> {
+    columns: ColumnDef<T, any>[];
+    data: T[];
+    /** Show skeleton rows instead of data. */
+    loading?: boolean;
+    /** Skeleton row count while `loading`. Default 8. */
+    skeletonRows?: number;
+    /** Enable click-to-sort headers. Default true. */
+    enableSorting?: boolean;
+    /** Render a global search box above the table. Default false. */
+    enableGlobalFilter?: boolean;
+    /** When set, client-paginates with controls. Disables virtualization. */
+    pageSize?: number;
+    /**
+     * Row virtualization for large datasets. `true` forces it on; a number sets
+     * the row-count threshold above which it auto-enables. Default: auto > 100.
+     * Requires `maxHeight` (a bounded scroll container). Ignored when `pageSize`
+     * is set.
+     */
+    virtualize?: boolean | number;
+    /** Estimated row height (px) used when virtualizing. Default 44. */
+    estimateRowHeight?: number;
+    /** Overscan rows when virtualizing. Default 10. */
+    overscan?: number;
+    /** Scroll-container height. Required to virtualize; also enables sticky header. */
+    maxHeight?: number | string;
+    /** Sticky header (within the scroll container). Default true. */
+    stickyHeader?: boolean;
+    density?: 'comfortable' | 'compact';
+    onRowClick?: (row: T) => void;
+    getRowId?: (row: T, index: number) => string;
+    className?: string;
+    /** Override the empty-state node entirely. */
+    emptyMessage?: ReactNode;
+    /** Localized labels. Defaults to English. */
+    strings?: Partial<DataTableStrings>;
+    /** Accessible table caption (visually hidden). */
+    ariaLabel?: string;
+}
+declare function DataTable<T>({ columns, data, loading, skeletonRows, enableSorting, enableGlobalFilter, pageSize, virtualize, estimateRowHeight, overscan, maxHeight, stickyHeader, density, onRowClick, getRowId, className, emptyMessage, strings, ariaLabel, }: DataTableProps<T>): JSX.Element;
+
+interface VirtualListProps<T> {
+    items: T[];
+    renderItem: (item: T, index: number) => ReactNode;
+    /** Estimated item height (px) or a per-index estimator. Default 56. */
+    estimateSize?: number | ((index: number) => number);
+    /** Extra rows rendered above/below the viewport. Default 8. */
+    overscan?: number;
+    getItemKey?: (item: T, index: number) => string | number;
+    /** Called when the user scrolls near the bottom (infinite scroll). */
+    onEndReached?: () => void;
+    /** Distance from the bottom (px) that triggers `onEndReached`. Default 200. */
+    endReachedThreshold?: number;
+    /** Show skeleton rows instead of items. */
+    loading?: boolean;
+    /** Skeleton row count while `loading`. Default 8. */
+    skeletonRows?: number;
+    emptyMessage?: ReactNode;
+    className?: string;
+    /** Must establish a bounded height for virtualization to work. */
+    style?: CSSProperties;
+    ariaLabel?: string;
+}
+declare function VirtualList<T>({ items, renderItem, estimateSize, overscan, getItemKey, onEndReached, endReachedThreshold, loading, skeletonRows, emptyMessage, className, style, ariaLabel, }: VirtualListProps<T>): JSX.Element;
+
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClaireTurn, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MunicipalityFlag, type MunicipalityFlagProps, type OpenReplay, type OpenReplayOptions, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useUserProfile, userManager };

@@ -4,9 +4,12 @@ export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, 
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
+import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
+export { createColumnHelper, flexRender } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 function useFocusTrap(options = {}) {
   const { active = true, onEscape, restoreFocus = true } = options;
@@ -5522,5 +5525,353 @@ function Portal({ children, container }) {
   const target = container || document.body;
   return createPortal(children, target);
 }
+var DATA_TABLE_STRINGS_EN = {
+  searchPlaceholder: "Search\u2026",
+  sortBy: "Sort by {column}",
+  empty: "No data",
+  firstPage: "First page",
+  previousPage: "Previous page",
+  nextPage: "Next page",
+  lastPage: "Last page",
+  page: "Page",
+  of: "of"
+};
+function toDim2(v) {
+  return typeof v === "number" ? `${v}px` : v;
+}
+var alignClass = (a) => a === "right" ? "text-right" : a === "center" ? "text-center" : "text-left";
+function DataTable({
+  columns,
+  data,
+  loading = false,
+  skeletonRows = 8,
+  enableSorting = true,
+  enableGlobalFilter = false,
+  pageSize,
+  virtualize,
+  estimateRowHeight = 44,
+  overscan = 10,
+  maxHeight,
+  stickyHeader = true,
+  density = "comfortable",
+  onRowClick,
+  getRowId,
+  className,
+  emptyMessage,
+  strings,
+  ariaLabel
+}) {
+  const s = { ...DATA_TABLE_STRINGS_EN, ...strings };
+  const [sorting, setSorting] = useState([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const paginated = typeof pageSize === "number" && pageSize > 0;
+  const table = useReactTable({
+    data,
+    columns,
+    state: { sorting, globalFilter },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    enableSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: enableSorting ? getSortedRowModel() : void 0,
+    getFilteredRowModel: enableGlobalFilter ? getFilteredRowModel() : void 0,
+    getPaginationRowModel: paginated ? getPaginationRowModel() : void 0,
+    getRowId,
+    initialState: paginated ? { pagination: { pageIndex: 0, pageSize } } : void 0
+  });
+  const rows = table.getRowModel().rows;
+  const threshold = typeof virtualize === "number" ? virtualize : 100;
+  const doVirtualize = !paginated && maxHeight != null && (virtualize === true || virtualize !== false && rows.length > threshold);
+  const scrollRef = useRef(null);
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => estimateRowHeight,
+    overscan,
+    enabled: doVirtualize
+  });
+  const cellPad = density === "compact" ? "px-3 py-1.5" : "px-4 py-2.5";
+  const headPad = density === "compact" ? "px-3 py-2" : "px-4 py-3";
+  const colCount = table.getAllLeafColumns().length;
+  const virtualItems = doVirtualize ? rowVirtualizer.getVirtualItems() : [];
+  const paddingTop = doVirtualize && virtualItems.length ? virtualItems[0].start : 0;
+  const paddingBottom = doVirtualize && virtualItems.length ? rowVirtualizer.getTotalSize() - virtualItems[virtualItems.length - 1].end : 0;
+  const renderRow = (row) => /* @__PURE__ */ jsx(
+    "tr",
+    {
+      onClick: onRowClick ? () => onRowClick(row.original) : void 0,
+      className: `transition-colors ${onRowClick ? "cursor-pointer" : ""} hover:bg-gray-50 dark:hover:bg-gray-800/60`,
+      children: row.getVisibleCells().map((cell) => {
+        const meta = cell.column.columnDef.meta;
+        return /* @__PURE__ */ jsx(
+          "td",
+          {
+            className: `${cellPad} whitespace-nowrap text-sm text-gray-800 dark:text-gray-200 ${alignClass(
+              meta?.align
+            )} ${meta?.className ?? ""}`,
+            children: flexRender(cell.column.columnDef.cell, cell.getContext())
+          },
+          cell.id
+        );
+      })
+    },
+    row.id
+  );
+  return /* @__PURE__ */ jsxs("div", { className: `flex flex-col gap-3 ${className ?? ""}`, children: [
+    enableGlobalFilter && /* @__PURE__ */ jsxs("div", { className: "relative flex-shrink-0", children: [
+      /* @__PURE__ */ jsx(
+        Search,
+        {
+          size: 15,
+          "aria-hidden": "true",
+          className: "pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        "input",
+        {
+          type: "text",
+          value: globalFilter,
+          onChange: (e) => setGlobalFilter(e.target.value),
+          placeholder: s.searchPlaceholder,
+          "aria-label": s.searchPlaceholder,
+          className: "w-full max-w-xs rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx(
+      "div",
+      {
+        ref: scrollRef,
+        className: "overflow-auto rounded-lg border border-gray-200 dark:border-gray-700",
+        style: { maxHeight: toDim2(maxHeight) },
+        children: /* @__PURE__ */ jsxs("table", { className: "min-w-full divide-y divide-gray-200 dark:divide-gray-700", children: [
+          ariaLabel && /* @__PURE__ */ jsx("caption", { className: "sr-only", children: ariaLabel }),
+          /* @__PURE__ */ jsx(
+            "thead",
+            {
+              className: `bg-gray-100 dark:bg-gray-800 ${stickyHeader && maxHeight != null ? "sticky top-0 z-10" : ""}`,
+              children: table.getHeaderGroups().map((headerGroup) => /* @__PURE__ */ jsx("tr", { children: headerGroup.headers.map((header) => {
+                const meta = header.column.columnDef.meta;
+                const canSort = header.column.getCanSort();
+                const sorted = header.column.getIsSorted();
+                return /* @__PURE__ */ jsx(
+                  "th",
+                  {
+                    "aria-sort": canSort ? sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : "none" : void 0,
+                    className: `${headPad} text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 whitespace-nowrap ${alignClass(
+                      meta?.align
+                    )} ${meta?.headerClassName ?? ""}`,
+                    children: header.isPlaceholder ? null : canSort ? /* @__PURE__ */ jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: header.column.getToggleSortingHandler(),
+                        "aria-label": s.sortBy.replace(
+                          "{column}",
+                          typeof header.column.columnDef.header === "string" ? header.column.columnDef.header : header.column.id
+                        ),
+                        className: `group inline-flex items-center gap-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${meta?.align === "right" ? "flex-row-reverse" : ""}`,
+                        children: [
+                          flexRender(header.column.columnDef.header, header.getContext()),
+                          sorted === "desc" ? /* @__PURE__ */ jsx(ChevronDown, { size: 14, "aria-hidden": "true", className: "text-blue-500" }) : sorted === "asc" ? /* @__PURE__ */ jsx(ChevronUp, { size: 14, "aria-hidden": "true", className: "text-blue-500" }) : /* @__PURE__ */ jsx(
+                            ChevronDown,
+                            {
+                              size: 14,
+                              "aria-hidden": "true",
+                              className: "text-gray-300 opacity-0 transition-opacity group-hover:opacity-100 dark:text-gray-600"
+                            }
+                          )
+                        ]
+                      }
+                    ) : flexRender(header.column.columnDef.header, header.getContext())
+                  },
+                  header.id
+                );
+              }) }, headerGroup.id))
+            }
+          ),
+          /* @__PURE__ */ jsx("tbody", { className: "divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-900", children: loading ? Array.from({ length: skeletonRows }).map((_, r) => /* @__PURE__ */ jsx("tr", { children: Array.from({ length: colCount }).map((__, c) => /* @__PURE__ */ jsx("td", { className: cellPad, children: /* @__PURE__ */ jsx(Skeleton, { height: 14, delay: `${(r + c) * 40}ms` }) }, c)) }, `sk-${r}`)) : rows.length === 0 ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx(
+            "td",
+            {
+              colSpan: colCount,
+              className: "px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400",
+              children: emptyMessage ?? s.empty
+            }
+          ) }) : doVirtualize ? /* @__PURE__ */ jsxs(Fragment, { children: [
+            paddingTop > 0 && /* @__PURE__ */ jsx("tr", { style: { height: paddingTop }, "aria-hidden": "true" }),
+            virtualItems.map((vi) => renderRow(rows[vi.index])),
+            paddingBottom > 0 && /* @__PURE__ */ jsx("tr", { style: { height: paddingBottom }, "aria-hidden": "true" })
+          ] }) : rows.map(renderRow) })
+        ] })
+      }
+    ),
+    paginated && rows.length > 0 && /* @__PURE__ */ jsxs("div", { className: "flex flex-shrink-0 items-center justify-between gap-3 py-1", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1", children: [
+        /* @__PURE__ */ jsx(
+          PagerButton,
+          {
+            onClick: () => table.setPageIndex(0),
+            disabled: !table.getCanPreviousPage(),
+            label: s.firstPage,
+            children: /* @__PURE__ */ jsx(ChevronsLeft, { size: 16, "aria-hidden": "true" })
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          PagerButton,
+          {
+            onClick: () => table.previousPage(),
+            disabled: !table.getCanPreviousPage(),
+            label: s.previousPage,
+            children: /* @__PURE__ */ jsx(ChevronLeft, { size: 16, "aria-hidden": "true" })
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          PagerButton,
+          {
+            onClick: () => table.nextPage(),
+            disabled: !table.getCanNextPage(),
+            label: s.nextPage,
+            children: /* @__PURE__ */ jsx(ChevronRight, { size: 16, "aria-hidden": "true" })
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          PagerButton,
+          {
+            onClick: () => table.setPageIndex(table.getPageCount() - 1),
+            disabled: !table.getCanNextPage(),
+            label: s.lastPage,
+            children: /* @__PURE__ */ jsx(ChevronsRight, { size: 16, "aria-hidden": "true" })
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs("span", { className: "text-sm text-gray-600 dark:text-gray-400", children: [
+        s.page,
+        " ",
+        /* @__PURE__ */ jsx("strong", { className: "text-gray-900 dark:text-gray-100", children: table.getState().pagination.pageIndex + 1 }),
+        " ",
+        s.of,
+        " ",
+        /* @__PURE__ */ jsx("strong", { className: "text-gray-900 dark:text-gray-100", children: table.getPageCount() })
+      ] })
+    ] })
+  ] });
+}
+function PagerButton({
+  onClick,
+  disabled,
+  label,
+  children
+}) {
+  return /* @__PURE__ */ jsx(
+    "button",
+    {
+      type: "button",
+      onClick,
+      disabled,
+      "aria-label": label,
+      title: label,
+      className: "rounded border border-gray-200 p-1.5 text-gray-700 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700",
+      children
+    }
+  );
+}
+function VirtualList({
+  items,
+  renderItem,
+  estimateSize = 56,
+  overscan = 8,
+  getItemKey,
+  onEndReached,
+  endReachedThreshold = 200,
+  loading = false,
+  skeletonRows = 8,
+  emptyMessage,
+  className,
+  style,
+  ariaLabel
+}) {
+  const scrollRef = useRef(null);
+  const estimator = typeof estimateSize === "function" ? estimateSize : () => estimateSize;
+  const virtualizer = useVirtualizer({
+    count: items.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: estimator,
+    overscan,
+    getItemKey: getItemKey ? (index) => getItemKey(items[index], index) : void 0
+  });
+  const virtualItems = virtualizer.getVirtualItems();
+  const lastIndex = virtualItems.length ? virtualItems[virtualItems.length - 1].index : -1;
+  useEffect(() => {
+    if (!onEndReached || items.length === 0) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= endReachedThreshold;
+    if (lastIndex >= items.length - 1 && nearBottom) onEndReached();
+  }, [lastIndex, items.length, onEndReached, endReachedThreshold]);
+  if (loading) {
+    return /* @__PURE__ */ jsx(
+      "div",
+      {
+        className: `overflow-auto ${className ?? ""}`,
+        style,
+        role: "status",
+        "aria-busy": "true",
+        children: Array.from({ length: skeletonRows }).map((_, i) => /* @__PURE__ */ jsx(
+          Skeleton,
+          {
+            height: typeof estimateSize === "number" ? estimateSize - 12 : 44,
+            delay: `${i * 80}ms`,
+            className: "mx-2 my-1.5"
+          },
+          i
+        ))
+      }
+    );
+  }
+  if (items.length === 0) {
+    return /* @__PURE__ */ jsx(
+      "div",
+      {
+        className: `flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 ${className ?? ""}`,
+        style,
+        children: emptyMessage ?? "No items"
+      }
+    );
+  }
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      ref: scrollRef,
+      className: `overflow-auto ${className ?? ""}`,
+      style,
+      role: "list",
+      "aria-label": ariaLabel,
+      children: /* @__PURE__ */ jsx(
+        "div",
+        {
+          style: { height: virtualizer.getTotalSize(), width: "100%", position: "relative" },
+          children: virtualItems.map((vi) => /* @__PURE__ */ jsx(
+            "div",
+            {
+              role: "listitem",
+              "data-index": vi.index,
+              ref: virtualizer.measureElement,
+              style: {
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                transform: `translateY(${vi.start}px)`
+              },
+              children: renderItem(items[vi.index], vi.index)
+            },
+            vi.key
+          ))
+        }
+      )
+    }
+  );
+}
 
-export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MunicipalityFlag, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useUserProfile, userManager };
+export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MunicipalityFlag, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useUserProfile, userManager };
