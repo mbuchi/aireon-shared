@@ -62,7 +62,7 @@ export interface PrmRecord {
 
 export class AuthRequiredError extends Error {
   constructor() {
-    super('Sign in required to save parcels to PRM');
+    super('Sign in required to track parcels');
     this.name = 'AuthRequiredError';
   }
 }
