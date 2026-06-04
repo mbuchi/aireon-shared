@@ -67,7 +67,7 @@ const en: SavedParcelsStrings = {
   tagPlaceholder: 'Tag…',
   addTag: 'Add',
   removeTag: (tag) => `Remove tag ${tag}`,
-  confirmDeleteTitle: 'Remove this parcel from PRM?',
+  confirmDeleteTitle: 'Stop tracking this parcel?',
   confirmDeleteBody:
     'It will be removed from proom too. This cannot be undone.',
   close: 'Close',
@@ -112,7 +112,7 @@ const fr: SavedParcelsStrings = {
   tagPlaceholder: 'Tag…',
   addTag: 'Ajouter',
   removeTag: (tag) => `Retirer le tag ${tag}`,
-  confirmDeleteTitle: 'Retirer cette parcelle du PRM ?',
+  confirmDeleteTitle: 'Ne plus suivre cette parcelle ?',
   confirmDeleteBody:
     'Elle sera aussi retirée de proom. Action irréversible.',
   close: 'Fermer',
@@ -157,7 +157,7 @@ const de: SavedParcelsStrings = {
   tagPlaceholder: 'Tag…',
   addTag: 'Hinzufügen',
   removeTag: (tag) => `Tag ${tag} entfernen`,
-  confirmDeleteTitle: 'Parzelle aus PRM entfernen?',
+  confirmDeleteTitle: 'Parzelle nicht mehr verfolgen?',
   confirmDeleteBody:
     'Sie wird auch aus proom entfernt. Diese Aktion ist endgültig.',
   close: 'Schliessen',
@@ -202,7 +202,7 @@ const it: SavedParcelsStrings = {
   tagPlaceholder: 'Tag…',
   addTag: 'Aggiungi',
   removeTag: (tag) => `Rimuovi tag ${tag}`,
-  confirmDeleteTitle: 'Rimuovere questa particella dal PRM?',
+  confirmDeleteTitle: 'Smettere di seguire questa particella?',
   confirmDeleteBody:
     'Sarà rimossa anche da proom. Azione irreversibile.',
   close: 'Chiudi',

@@ -1079,7 +1079,7 @@ var PRM_PRIORITIES = [
 ];
 var AuthRequiredError = class extends Error {
   constructor() {
-    super("Sign in required to save parcels to PRM");
+    super("Sign in required to track parcels");
     this.name = "AuthRequiredError";
   }
 };
@@ -1184,7 +1184,7 @@ var en = {
   tagPlaceholder: "Tag\u2026",
   addTag: "Add",
   removeTag: (tag) => `Remove tag ${tag}`,
-  confirmDeleteTitle: "Remove this parcel from PRM?",
+  confirmDeleteTitle: "Stop tracking this parcel?",
   confirmDeleteBody: "It will be removed from proom too. This cannot be undone.",
   close: "Close",
   cancel: "Cancel",
@@ -1226,7 +1226,7 @@ var fr = {
   tagPlaceholder: "Tag\u2026",
   addTag: "Ajouter",
   removeTag: (tag) => `Retirer le tag ${tag}`,
-  confirmDeleteTitle: "Retirer cette parcelle du PRM ?",
+  confirmDeleteTitle: "Ne plus suivre cette parcelle ?",
   confirmDeleteBody: "Elle sera aussi retir\xE9e de proom. Action irr\xE9versible.",
   close: "Fermer",
   cancel: "Annuler",
@@ -1268,7 +1268,7 @@ var de = {
   tagPlaceholder: "Tag\u2026",
   addTag: "Hinzuf\xFCgen",
   removeTag: (tag) => `Tag ${tag} entfernen`,
-  confirmDeleteTitle: "Parzelle aus PRM entfernen?",
+  confirmDeleteTitle: "Parzelle nicht mehr verfolgen?",
   confirmDeleteBody: "Sie wird auch aus proom entfernt. Diese Aktion ist endg\xFCltig.",
   close: "Schliessen",
   cancel: "Abbrechen",
@@ -1310,7 +1310,7 @@ var it = {
   tagPlaceholder: "Tag\u2026",
   addTag: "Aggiungi",
   removeTag: (tag) => `Rimuovi tag ${tag}`,
-  confirmDeleteTitle: "Rimuovere questa particella dal PRM?",
+  confirmDeleteTitle: "Smettere di seguire questa particella?",
   confirmDeleteBody: "Sar\xE0 rimossa anche da proom. Azione irreversibile.",
   close: "Chiudi",
   cancel: "Annulla",
