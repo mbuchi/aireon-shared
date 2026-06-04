@@ -1345,8 +1345,39 @@ interface DataTableProps<T> {
     strings?: Partial<DataTableStrings>;
     /** Accessible table caption (visually hidden). */
     ariaLabel?: string;
+    /** Row hover passthrough (e.g. to highlight a linked map feature). */
+    onRowMouseEnter?: (row: T) => void;
+    onRowMouseLeave?: (row: T) => void;
+    /**
+     * Let table content overflow its container instead of scrolling — needed
+     * when cells render absolutely-positioned popovers/menus that would be
+     * clipped by a scroll container. Forced to scroll when `maxHeight` is set.
+     * Default false.
+     */
+    overflowVisible?: boolean;
+    /** Per-slot class overrides for theming (e.g. dark-slate apps). */
+    classNames?: DataTableClassNames;
 }
-declare function DataTable<T>({ columns, data, loading, skeletonRows, enableSorting, enableGlobalFilter, pageSize, virtualize, estimateRowHeight, overscan, maxHeight, stickyHeader, density, onRowClick, rowClassName, getRowId, className, emptyMessage, strings, ariaLabel, }: DataTableProps<T>): JSX.Element;
+/**
+ * Per-slot class overrides. Each REPLACES the default colour classes for that
+ * element (structural classes — padding, dividers, sticky, font — are always
+ * applied), so a bespoke-themed app can fully restyle the table.
+ */
+interface DataTableClassNames {
+    /** Scroll/border wrapper. */
+    container?: string;
+    /** Header row background. */
+    thead?: string;
+    /** Header cell text colour. */
+    headerCell?: string;
+    /** Body background + row dividers. */
+    body?: string;
+    /** Row hover (and base) classes. */
+    row?: string;
+    /** Body cell text colour. */
+    cell?: string;
+}
+declare function DataTable<T>({ columns, data, loading, skeletonRows, enableSorting, enableGlobalFilter, pageSize, virtualize, estimateRowHeight, overscan, maxHeight, stickyHeader, density, onRowClick, rowClassName, getRowId, className, emptyMessage, strings, ariaLabel, onRowMouseEnter, onRowMouseLeave, overflowVisible, classNames, }: DataTableProps<T>): JSX.Element;
 
 interface VirtualListProps<T> {
     items: T[];
