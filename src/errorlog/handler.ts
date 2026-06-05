@@ -8,7 +8,7 @@
 // OpenAPI schema being regenerated.
 //
 // Each consuming app's `api/errorlog-collect.ts` is a one-line re-export:
-//   export { config, default } from '@swissnovo/shared/errorlog-collect';
+//   export { config, default } from '@aireon/shared/errorlog-collect';
 
 export const config = {
   runtime: 'edge',

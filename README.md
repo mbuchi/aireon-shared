@@ -1,6 +1,6 @@
-# @swissnovo/shared
+# @aireon/shared
 
-Shared UI components and utilities for the [SwissNovo](https://toolbox.swissnovo.com) app suite.
+Shared UI components and utilities for the [aireon](https://toolbox.swissnovo.com) app suite.
 Eliminates file-for-file duplication across the ~30 sibling apps — fix a bug once here, bump the
 tag, and every consumer picks it up.
 
@@ -11,7 +11,7 @@ Consumed directly from this Git repo, pinned to a release tag (no npm registry):
 ```jsonc
 // package.json of a consuming app
 "dependencies": {
-  "@swissnovo/shared": "github:mbuchi/swissnovo-shared#v0.2.0"
+  "@aireon/shared": "github:mbuchi/aireon-shared#v1.0.0"
 }
 ```
 
@@ -26,7 +26,7 @@ The components ship Tailwind utility classes. Each consuming app must let its Ta
 content: [
   './index.html',
   './src/**/*.{js,ts,jsx,tsx}',
-  './node_modules/@swissnovo/shared/dist/**/*.js',
+  './node_modules/@aireon/shared/dist/**/*.js',
 ],
 ```
 
@@ -57,7 +57,7 @@ The versioned changelog pill + slide-in panel. Each app keeps its own `src/data/
 (the `RELEASES` data) and imports the types/`KIND_META` from here.
 
 ```tsx
-import { ReleaseNotesButton } from '@swissnovo/shared';
+import { ReleaseNotesButton } from '@aireon/shared';
 import { RELEASES, REPO_URL } from '../data/releaseNotes';
 
 <ReleaseNotesButton
@@ -72,7 +72,7 @@ import { RELEASES, REPO_URL } from '../data/releaseNotes';
 
 ```ts
 // src/data/releaseNotes.ts
-import type { Release } from '@swissnovo/shared';
+import type { Release } from '@aireon/shared';
 export const RELEASES: Release[] = [ /* ... */ ];
 export const CURRENT_VERSION = RELEASES[0].version;
 export const REPO_URL = 'https://github.com/mbuchi/<app>';
@@ -87,7 +87,7 @@ OpenAPI 3.1 contract. Replaces ad-hoc `fetch` calls with one typed surface, and 
 **Import it from the `/api` subpath** in server-side code (Vercel functions, Node, edge):
 
 ```ts
-import { createResApiClient } from '@swissnovo/shared/api';
+import { createResApiClient } from '@aireon/shared/api';
 ```
 
 The `/api` subpath is server-safe — it omits the browser-only modules (the auth module
@@ -103,7 +103,7 @@ is also re-exported from the package root for browser code.
 In the browser, point `baseUrl` at your app's own `/api/*` proxy and pass no token.
 
 ```ts
-import { createResApiClient } from '@swissnovo/shared/api';
+import { createResApiClient } from '@aireon/shared/api';
 
 const res = createResApiClient({ token: process.env.RES_TOKEN });
 

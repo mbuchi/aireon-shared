@@ -8,7 +8,7 @@
  *
  * App bootstrap:
  *
- *   import { registerI18n } from '@swissnovo/shared/cesium-app/i18n/engine.js';
+ *   import { registerI18n } from '@aireon/shared/cesium-app/i18n/engine.js';
  *   registerI18n({
  *     catalog: { en: {...}, fr: {...}, de: {...}, it: {...} },
  *     storageKey: 'hood:locale',

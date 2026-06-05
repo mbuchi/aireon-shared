@@ -1,5 +1,5 @@
 // Public surface of the suite-wide error-logging / bug-reporting module.
-// The edge handler is a separate subpath entry (`@swissnovo/shared/errorlog-collect`).
+// The edge handler is a separate subpath entry (`@aireon/shared/errorlog-collect`).
 
 export { createErrorLogger, installErrorLogging } from './client';
 export type {

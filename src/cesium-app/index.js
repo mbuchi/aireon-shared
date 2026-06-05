@@ -1,8 +1,8 @@
 /**
- * Barrel for @swissnovo/shared/cesium-app — re-exports the most common
+ * Barrel for @aireon/shared/cesium-app — re-exports the most common
  * setup entry points so app `main.js` files can import a handful of named
  * exports from a single path. Deeper modules are still importable via
- * `@swissnovo/shared/cesium-app/<area>/<file>.js`.
+ * `@aireon/shared/cesium-app/<area>/<file>.js`.
  */
 
 export { setupApp, getAppName, getAppLabel } from './app.js';

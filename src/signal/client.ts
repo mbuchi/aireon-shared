@@ -2,7 +2,7 @@
 //
 // Every SwissNovo app emits usage signals to the shared RES API. The request
 // goes through the app's own `/api/signal-collect` Vercel edge function (see
-// `@swissnovo/shared/signal-collect`), which attaches the server-side bearer
+// `@aireon/shared/signal-collect`), which attaches the server-side bearer
 // token. This module is the single browser-side dispatcher — an app creates
 // one client bound to its name and calls `.send()` at each tracked action.
 //

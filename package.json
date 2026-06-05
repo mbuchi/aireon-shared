@@ -1,12 +1,12 @@
 {
-  "name": "@swissnovo/shared",
-  "version": "0.50.0",
-  "description": "Shared UI components and utilities for the SwissNovo app suite.",
+  "name": "@aireon/shared",
+  "version": "1.0.0",
+  "description": "Shared UI components and utilities for the aireon app suite.",
   "type": "module",
   "license": "UNLICENSED",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mbuchi/swissnovo-shared.git"
+    "url": "https://github.com/mbuchi/aireon-shared.git"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",

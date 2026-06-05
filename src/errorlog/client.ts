@@ -3,7 +3,7 @@
 // Every SwissNovo app reports its client errors (uncaught exceptions, promise
 // rejections, React render errors) and user bug reports to the shared RES API.
 // The request goes through the app's own `/api/errorlog-collect` Vercel edge
-// function (see `@swissnovo/shared/errorlog-collect`), which attaches the
+// function (see `@aireon/shared/errorlog-collect`), which attaches the
 // server-side bearer token. This module is the single browser-side dispatcher.
 //
 // Mirrors the signal client: one logger bound to the app name, fire-and-forget,

@@ -236,7 +236,7 @@ export type { DataTableProps, DataTableStrings } from './table/DataTable';
 export { VirtualList } from './list/VirtualList';
 export type { VirtualListProps } from './list/VirtualList';
 // Re-export the TanStack building blocks apps need to define columns, so they
-// can import everything from '@swissnovo/shared' without a direct dependency.
+// can import everything from '@aireon/shared' without a direct dependency.
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
 export type { ColumnDef, Row, CellContext } from '@tanstack/react-table';
 

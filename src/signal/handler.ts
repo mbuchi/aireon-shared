@@ -5,7 +5,7 @@
 // Uses the typed RES API client from this same package.
 //
 // Each consuming app's `api/signal-collect.ts` is a one-line re-export:
-//   export { config, default } from '@swissnovo/shared/signal-collect';
+//   export { config, default } from '@aireon/shared/signal-collect';
 //
 // Server-safe: imports only the `/api` client, never the browser modules.
 
