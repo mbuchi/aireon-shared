@@ -11,6 +11,8 @@ import {
 import type { User } from 'oidc-client-ts';
 import {
   SSO_ATTEMPTED_KEY,
+  markSsoAttempted,
+  ssoAttempted,
   stripAuthParams,
   urlHasAuthParams,
   userManager,
@@ -193,12 +195,12 @@ export function AuthProvider({
         if (urlHasAuthParams()) {
           try {
             const completed = await userManager.signinRedirectCallback();
-            sessionStorage.setItem(SSO_ATTEMPTED_KEY, '1');
+            markSsoAttempted();
             stripAuthParams();
             finish(completed ?? null);
             return;
           } catch (err) {
-            sessionStorage.setItem(SSO_ATTEMPTED_KEY, '1');
+            markSsoAttempted();
             stripAuthParams();
             // login_required from a prompt=none probe is the normal "no Zitadel
             // session" outcome, not an error worth shouting about.
@@ -221,8 +223,10 @@ export function AuthProvider({
         // (handled by the callback branch above on the next load). Attempted at
         // most once per tab so reloads don't re-bounce. Skipped when `silentSso`
         // is off. The redirect navigates away, so nothing after it runs.
-        if (silentSso && sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== '1') {
-          sessionStorage.setItem(SSO_ATTEMPTED_KEY, '1');
+        // markSsoAttempted() must succeed *before* we redirect: if the flag
+        // can't be persisted (storage blocked) we skip SSO entirely rather than
+        // fire a redirect the return leg couldn't guard against looping.
+        if (silentSso && !ssoAttempted() && markSsoAttempted()) {
           try {
             await userManager.signinRedirect({ extraQueryParams: { prompt: 'none' } });
             return;

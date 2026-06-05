@@ -718,6 +718,21 @@ var settings = {
 };
 var userManager = new UserManager(settings);
 var SSO_ATTEMPTED_KEY = "aireon:silent_sso_attempted";
+function ssoAttempted() {
+  try {
+    return sessionStorage.getItem(SSO_ATTEMPTED_KEY) === "1";
+  } catch {
+    return true;
+  }
+}
+function markSsoAttempted() {
+  try {
+    sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
+    return true;
+  } catch {
+    return false;
+  }
+}
 async function getExistingUser() {
   try {
     const user = await userManager.getUser();
@@ -922,12 +937,12 @@ function AuthProvider({
         if (urlHasAuthParams()) {
           try {
             const completed = await userManager.signinRedirectCallback();
-            sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
+            markSsoAttempted();
             stripAuthParams();
             finish(completed ?? null);
             return;
           } catch (err) {
-            sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
+            markSsoAttempted();
             stripAuthParams();
             finish(null);
             return;
@@ -940,8 +955,7 @@ function AuthProvider({
         }
         if (existing?.expired) await userManager.removeUser().catch(() => {
         });
-        if (silentSso && sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== "1") {
-          sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
+        if (silentSso && !ssoAttempted() && markSsoAttempted()) {
           try {
             await userManager.signinRedirect({ extraQueryParams: { prompt: "none" } });
             return;

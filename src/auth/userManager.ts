@@ -52,6 +52,35 @@ export const userManager = new UserManager(settings);
 export const SSO_ATTEMPTED_KEY = 'aireon:silent_sso_attempted';
 
 /**
+ * True if the automatic `prompt=none` SSO redirect has already been attempted in
+ * this tab. Fails *safe*: if sessionStorage is unreadable (a locked-down or
+ * private browser that throws on access), it reports `true` so the caller never
+ * fires a redirect it can't guard — an unguarded redirect would loop. The app
+ * then simply degrades to anonymous, exactly as it would today.
+ */
+export function ssoAttempted(): boolean {
+  try {
+    return sessionStorage.getItem(SSO_ATTEMPTED_KEY) === '1';
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Record that the SSO redirect was attempted this tab. Returns `false` if the
+ * flag could not be persisted (storage blocked) — callers MUST NOT redirect in
+ * that case, or the un-guarded redirect would loop on the way back.
+ */
+export function markSsoAttempted(): boolean {
+  try {
+    sessionStorage.setItem(SSO_ATTEMPTED_KEY, '1');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * The currently stored, non-expired OIDC user, or null. Use this to attach a
  * token to API requests (e.g. the screenshot/image service) outside React.
  */
