@@ -162,13 +162,21 @@ export async function initAuth() {
         const autoTried = sessionStorage.getItem(AUTO_LOGIN_FLAG) === 'true';
         const signedOut = localStorage.getItem(SIGNED_OUT_FLAG) === 'true';
 
+        // Cross-app SSO: a top-level prompt=none redirect to Zitadel. First-party
+        // to the IdP, so the shared Zitadel session cookie is sent — if the user
+        // signed in to any Aireon app, Zitadel bounces back with a code and this
+        // app signs in silently; otherwise it returns error=login_required, which
+        // isErrorCallback() handles on the next load as "stay anonymous". Using
+        // prompt=none (not a plain signinRedirect) means an anonymous visitor is
+        // never forced onto the Zitadel login page — no UI is rendered, just two
+        // fast 3xx hops. Attempted at most once per tab so reloads don't bounce.
         if (!autoTried && !signedOut) {
             sessionStorage.setItem(AUTO_LOGIN_FLAG, 'true');
             try {
-                await userManager.signinRedirect();
+                await userManager.signinRedirect({ extraQueryParams: { prompt: 'none' } });
                 return;
             } catch (e) {
-                console.error('Auto-login redirect failed:', e);
+                console.error('Cross-app SSO redirect failed to start:', e);
             }
         }
 

@@ -311,20 +311,30 @@ interface AuthProviderProps {
     /** Auto-open the modal once for an anonymous first-time visitor. */
     loginPromptOnFirstVisit?: boolean;
     /**
-     * Run the hidden-iframe silent SSO on mount and keep `automaticSilentRenew`
-     * active. Defaults to `true` (the suite-standard behaviour).
+     * Attempt automatic cross-app SSO on mount. Defaults to `true` (the
+     * suite-standard behaviour — this is what makes "sign in to one Aireon app,
+     * be signed in to all of them" work).
      *
-     * Zitadel serves every authorize page with `Content-Security-Policy:
-     * frame-ancestors 'none'`, so the silent-SSO iframe is *always* blocked — it
-     * can never reach `silent-callback.html`. The death-switch below keeps that
-     * from stranding the app, but the blocked frame still logs a scary
-     * `Framing '…zitadel.cloud' violates … frame-ancestors 'none'` console error
-     * on every load and adds a multi-second settle delay before the app falls to
-     * anonymous. For a public, anonymous-first app (where cross-origin SSO is the
-     * only thing the iframe could ever buy, and it's CSP-dead anyway) pass
-     * `false`: the app then settles instantly from the locally-persisted session
-     * (or to anonymous) with no iframe, no console error, and no renew churn.
-     * Interactive `login()`/`register()` (full-page redirects) are unaffected.
+     * Mechanism: when no local session exists, the app does a top-level
+     * `prompt=none` redirect to Zitadel. Because that is a first-party navigation
+     * to the IdP, the shared Zitadel session cookie is sent: if the user has
+     * signed in to *any* Aireon app, Zitadel returns a code and this app logs in
+     * silently; if not, Zitadel returns `error=login_required` and the app settles
+     * to anonymous. It is attempted at most once per browser tab
+     * ({@link SSO_ATTEMPTED_KEY}), so reloads don't re-bounce and there is no
+     * redirect loop. `prompt=none` never renders a Zitadel UI, so the round-trip
+     * is two fast 3xx hops with no visible login page.
+     *
+     * This replaces the old hidden-iframe silent SSO, which is permanently dead:
+     * Zitadel serves every authorize page with `frame-ancestors 'none'`, so the
+     * iframe was always CSP-blocked. The redirect path needs no iframe, no
+     * `silent-callback.html`, and no third-party cookies — so it is robust on
+     * every browser regardless of cookie policy.
+     *
+     * Pass `false` only for a surface that should never auto-authenticate (e.g. a
+     * purely public marketing/landing page): it then settles instantly from the
+     * locally-persisted session, or to anonymous, with no redirect. Interactive
+     * `login()`/`register()` are unaffected either way.
      */
     silentSso?: boolean;
 }
@@ -340,8 +350,16 @@ declare function useAuth(): AuthContextValue;
 
 /** The shared OIDC client for the whole suite. */
 declare const userManager: UserManager;
-/** sessionStorage flag so silent SSO is attempted at most once per browser tab. */
-declare const SSO_ATTEMPTED_KEY = "swissnovo:silent_sso_attempted";
+/**
+ * sessionStorage flag so the automatic `prompt=none` SSO redirect is attempted
+ * at most once per browser tab. It is set *before* the redirect and survives the
+ * round-trip back from Zitadel (same origin, same tab), so the callback never
+ * re-triggers the redirect — this is the primary guard against a redirect loop.
+ * sessionStorage (not localStorage) is deliberate: it persists across reloads
+ * within a tab but a fresh tab re-checks, so a session signed in elsewhere is
+ * picked up promptly.
+ */
+declare const SSO_ATTEMPTED_KEY = "aireon:silent_sso_attempted";
 /**
  * The currently stored, non-expired OIDC user, or null. Use this to attach a
  * token to API requests (e.g. the screenshot/image service) outside React.

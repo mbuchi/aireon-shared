@@ -66,20 +66,30 @@ export interface AuthProviderProps {
   /** Auto-open the modal once for an anonymous first-time visitor. */
   loginPromptOnFirstVisit?: boolean;
   /**
-   * Run the hidden-iframe silent SSO on mount and keep `automaticSilentRenew`
-   * active. Defaults to `true` (the suite-standard behaviour).
+   * Attempt automatic cross-app SSO on mount. Defaults to `true` (the
+   * suite-standard behaviour — this is what makes "sign in to one Aireon app,
+   * be signed in to all of them" work).
    *
-   * Zitadel serves every authorize page with `Content-Security-Policy:
-   * frame-ancestors 'none'`, so the silent-SSO iframe is *always* blocked — it
-   * can never reach `silent-callback.html`. The death-switch below keeps that
-   * from stranding the app, but the blocked frame still logs a scary
-   * `Framing '…zitadel.cloud' violates … frame-ancestors 'none'` console error
-   * on every load and adds a multi-second settle delay before the app falls to
-   * anonymous. For a public, anonymous-first app (where cross-origin SSO is the
-   * only thing the iframe could ever buy, and it's CSP-dead anyway) pass
-   * `false`: the app then settles instantly from the locally-persisted session
-   * (or to anonymous) with no iframe, no console error, and no renew churn.
-   * Interactive `login()`/`register()` (full-page redirects) are unaffected.
+   * Mechanism: when no local session exists, the app does a top-level
+   * `prompt=none` redirect to Zitadel. Because that is a first-party navigation
+   * to the IdP, the shared Zitadel session cookie is sent: if the user has
+   * signed in to *any* Aireon app, Zitadel returns a code and this app logs in
+   * silently; if not, Zitadel returns `error=login_required` and the app settles
+   * to anonymous. It is attempted at most once per browser tab
+   * ({@link SSO_ATTEMPTED_KEY}), so reloads don't re-bounce and there is no
+   * redirect loop. `prompt=none` never renders a Zitadel UI, so the round-trip
+   * is two fast 3xx hops with no visible login page.
+   *
+   * This replaces the old hidden-iframe silent SSO, which is permanently dead:
+   * Zitadel serves every authorize page with `frame-ancestors 'none'`, so the
+   * iframe was always CSP-blocked. The redirect path needs no iframe, no
+   * `silent-callback.html`, and no third-party cookies — so it is robust on
+   * every browser regardless of cookie policy.
+   *
+   * Pass `false` only for a surface that should never auto-authenticate (e.g. a
+   * purely public marketing/landing page): it then settles instantly from the
+   * locally-persisted session, or to anonymous, with no redirect. Interactive
+   * `login()`/`register()` are unaffected either way.
    */
   silentSso?: boolean;
 }
@@ -119,19 +129,17 @@ export function AuthProvider({
   const firstVisitDecided = useRef(false);
 
   // Death-switch: every mount unconditionally flips out of `isLoading` after
-  // 8s, regardless of how the silent-SSO init goes. This is the only guard
-  // that survives React 18 StrictMode's double-effect dance — the init
-  // effect below is gated by `initStarted.current` so the second mount
-  // skips re-running the IIFE, and the first mount's `setIsLoading` would
-  // be a no-op against the live (second) mount. The death-switch instead
-  // captures the CURRENT mount's setter on every mount, so it always
-  // updates the live tree.
+  // 8s, regardless of how init goes. This is the only guard that survives
+  // React 18 StrictMode's double-effect dance — the init effect below is gated
+  // by `initStarted.current` so the second mount skips re-running the IIFE, and
+  // the first mount's `setIsLoading` would be a no-op against the live (second)
+  // mount. The death-switch instead captures the CURRENT mount's setter on
+  // every mount, so it always updates the live tree.
   //
-  // Defensive against any path the init might fail to settle: Zitadel's
-  // `Content-Security-Policy: frame-ancestors 'none'` keeps the silent-SSO
-  // iframe from ever reaching silent-callback.html, and oidc-client-ts's
-  // own `silentRequestTimeoutInSeconds` does NOT reliably propagate the
-  // rejection through to our await in every scenario.
+  // Defensive against any path init might fail to settle (e.g. a hung OIDC
+  // discovery/token fetch on the callback leg — oidc-client-ts network calls
+  // have no built-in timeout). The normal prompt=none SSO path navigates away
+  // before this fires.
   useEffect(() => {
     const t = setTimeout(() => {
       setIsLoading((prev) => {
@@ -144,19 +152,13 @@ export function AuthProvider({
 
   // userManager events run on every mount: even when the init IIFE settled
   // on a stale (now-unmounted) instance, a real userLoaded event still hits
-  // the live mount via this listener.
-  //
-  // When `silentSso` is off we also cancel `automaticSilentRenew`: the shared
-  // userManager singleton is constructed with `automaticSilentRenew: true`, so
-  // oidc-client-ts arms an iframe-based renew timer as soon as a user loads.
-  // That iframe hits the same CSP-blocked Zitadel authorize page, so for an
-  // opted-out app we tear the timer back down on mount and after every load —
-  // stopSilentRenew() is a safe no-op when nothing is scheduled.
+  // the live mount via this listener. The shared userManager has
+  // automaticSilentRenew off (the renew iframe is CSP-dead), so there is no
+  // renew timer to tear down here. When the access token expires we drop to
+  // anonymous; the next load (or tab) re-runs the prompt=none SSO and, as long
+  // as the Zitadel session is still alive, silently signs the user back in.
   useEffect(() => {
-    const onLoaded = (u: User) => {
-      setUser(u);
-      if (!silentSso) userManager.stopSilentRenew();
-    };
+    const onLoaded = (u: User) => setUser(u);
     const onUnloaded = () => setUser(null);
     const onExpired = () => {
       userManager.removeUser().finally(() => setUser(null));
@@ -164,13 +166,12 @@ export function AuthProvider({
     userManager.events.addUserLoaded(onLoaded);
     userManager.events.addUserUnloaded(onUnloaded);
     userManager.events.addAccessTokenExpired(onExpired);
-    if (!silentSso) userManager.stopSilentRenew();
     return () => {
       userManager.events.removeUserLoaded(onLoaded);
       userManager.events.removeUserUnloaded(onUnloaded);
       userManager.events.removeAccessTokenExpired(onExpired);
     };
-  }, [silentSso]);
+  }, []);
 
   useEffect(() => {
     if (initStarted.current) return;
@@ -183,6 +184,12 @@ export function AuthProvider({
 
     (async () => {
       try {
+        // Returning from any Zitadel authorize redirect — interactive login OR
+        // the prompt=none SSO probe. A successful probe carries `code`; a
+        // session-less probe carries `error=login_required` (and other
+        // `*_required` errors), which signinRedirectCallback() rejects on. Both
+        // are terminal: we mark SSO attempted so we never re-redirect, strip the
+        // params, and settle. This is what stops the redirect from looping.
         if (urlHasAuthParams()) {
           try {
             const completed = await userManager.signinRedirectCallback();
@@ -193,7 +200,8 @@ export function AuthProvider({
           } catch (err) {
             sessionStorage.setItem(SSO_ATTEMPTED_KEY, '1');
             stripAuthParams();
-            console.warn('[auth] sign-in callback failed', err);
+            // login_required from a prompt=none probe is the normal "no Zitadel
+            // session" outcome, not an error worth shouting about.
             finish(null);
             return;
           }
@@ -206,25 +214,20 @@ export function AuthProvider({
         }
         if (existing?.expired) await userManager.removeUser().catch(() => {});
 
-        // Hidden-iframe silent SSO with a 6s race timeout as defence-in-depth.
-        // A positive resolution lets the app settle to authenticated promptly
-        // rather than waiting the full 8s on the death-switch when the
-        // network round-trip is just slow. Skipped entirely when `silentSso`
-        // is off — see the prop docs: the CSP-blocked iframe can never succeed,
-        // so an opted-out app settles straight from local storage to anonymous.
+        // Cross-app SSO: a top-level prompt=none redirect to Zitadel. First-party
+        // to the IdP, so the shared Zitadel session cookie is sent — if the user
+        // signed in to any Aireon app, Zitadel bounces straight back with a code
+        // and this app logs in with no UI; otherwise it returns login_required
+        // (handled by the callback branch above on the next load). Attempted at
+        // most once per tab so reloads don't re-bounce. Skipped when `silentSso`
+        // is off. The redirect navigates away, so nothing after it runs.
         if (silentSso && sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== '1') {
           sessionStorage.setItem(SSO_ATTEMPTED_KEY, '1');
           try {
-            const silent = await Promise.race([
-              userManager.signinSilent(),
-              new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('silent SSO hard timeout')), 6000),
-              ),
-            ]);
-            finish(silent && !silent.expired ? silent : null);
+            await userManager.signinRedirect({ extraQueryParams: { prompt: 'none' } });
             return;
-          } catch {
-            /* no session, CSP-blocked iframe, or hard timeout — fall through */
+          } catch (err) {
+            console.warn('[auth] cross-app SSO redirect failed to start', err);
           }
         }
         finish(null);
