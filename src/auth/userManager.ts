@@ -5,8 +5,12 @@ import {
   type UserManagerSettings,
 } from 'oidc-client-ts';
 
-// The whole SwissNovo suite authenticates against a single shared Zitadel
-// OIDC client, so this config is identical for every app — no per-app setup.
+// The whole Aireon suite authenticates against a single shared Zitadel OIDC
+// client, so this config is identical for every app — no per-app setup. Because
+// every app shares this one client_id and Zitadel keeps a single SSO session
+// cookie on its own domain, a `prompt=none` authorize redirect from any app
+// resolves silently once the user has signed in anywhere — this is what powers
+// cross-app SSO (see AuthProvider).
 const ZITADEL_AUTHORITY = 'https://swissnovo-ekqvxs.ch1.zitadel.cloud/';
 const ZITADEL_CLIENT_ID = '366334583324661156';
 
@@ -17,17 +21,18 @@ const settings: UserManagerSettings = {
   client_id: ZITADEL_CLIENT_ID,
   redirect_uri: `${origin}/`,
   post_logout_redirect_uri: `${origin}/`,
-  silent_redirect_uri: `${origin}/silent-callback.html`,
   response_type: 'code',
   scope: 'openid profile email',
   loadUserInfo: true,
-  automaticSilentRenew: true,
+  // Hidden-iframe flows (silent renew, signinSilent) are permanently dead: every
+  // Zitadel authorize page is served with `Content-Security-Policy:
+  // frame-ancestors 'none'`, so the browser blocks the renew iframe. Cross-app
+  // SSO and token refresh are instead handled by a top-level `prompt=none`
+  // redirect to Zitadel (see AuthProvider) — first-party to the IdP, so the
+  // shared Zitadel session cookie is sent and no iframe is involved. Leaving
+  // automaticSilentRenew on would only arm a CSP-blocked iframe that logs noise.
+  automaticSilentRenew: false,
   monitorSession: false,
-  // Bound the hidden-iframe silent SSO. oidc-client-ts defaults to 10s, so a
-  // visitor with no Zitadel session waits the full 10s before the app settles
-  // to anonymous. A logged-in check resolves in well under a second; 5s leaves
-  // ample room for a slow network while capping the worst case.
-  silentRequestTimeoutInSeconds: 5,
   userStore: new WebStorageStateStore({ store: window.localStorage }),
   stateStore: new WebStorageStateStore({ store: window.localStorage }),
 };
@@ -35,12 +40,16 @@ const settings: UserManagerSettings = {
 /** The shared OIDC client for the whole suite. */
 export const userManager = new UserManager(settings);
 
-userManager.events.addSilentRenewError((e) => {
-  console.warn('[auth] silent renew error', e);
-});
-
-/** sessionStorage flag so silent SSO is attempted at most once per browser tab. */
-export const SSO_ATTEMPTED_KEY = 'swissnovo:silent_sso_attempted';
+/**
+ * sessionStorage flag so the automatic `prompt=none` SSO redirect is attempted
+ * at most once per browser tab. It is set *before* the redirect and survives the
+ * round-trip back from Zitadel (same origin, same tab), so the callback never
+ * re-triggers the redirect — this is the primary guard against a redirect loop.
+ * sessionStorage (not localStorage) is deliberate: it persists across reloads
+ * within a tab but a fresh tab re-checks, so a session signed in elsewhere is
+ * picked up promptly.
+ */
+export const SSO_ATTEMPTED_KEY = 'aireon:silent_sso_attempted';
 
 /**
  * The currently stored, non-expired OIDC user, or null. Use this to attach a

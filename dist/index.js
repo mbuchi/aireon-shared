@@ -701,25 +701,23 @@ var settings = {
   client_id: ZITADEL_CLIENT_ID,
   redirect_uri: `${origin}/`,
   post_logout_redirect_uri: `${origin}/`,
-  silent_redirect_uri: `${origin}/silent-callback.html`,
   response_type: "code",
   scope: "openid profile email",
   loadUserInfo: true,
-  automaticSilentRenew: true,
+  // Hidden-iframe flows (silent renew, signinSilent) are permanently dead: every
+  // Zitadel authorize page is served with `Content-Security-Policy:
+  // frame-ancestors 'none'`, so the browser blocks the renew iframe. Cross-app
+  // SSO and token refresh are instead handled by a top-level `prompt=none`
+  // redirect to Zitadel (see AuthProvider) — first-party to the IdP, so the
+  // shared Zitadel session cookie is sent and no iframe is involved. Leaving
+  // automaticSilentRenew on would only arm a CSP-blocked iframe that logs noise.
+  automaticSilentRenew: false,
   monitorSession: false,
-  // Bound the hidden-iframe silent SSO. oidc-client-ts defaults to 10s, so a
-  // visitor with no Zitadel session waits the full 10s before the app settles
-  // to anonymous. A logged-in check resolves in well under a second; 5s leaves
-  // ample room for a slow network while capping the worst case.
-  silentRequestTimeoutInSeconds: 5,
   userStore: new WebStorageStateStore({ store: window.localStorage }),
   stateStore: new WebStorageStateStore({ store: window.localStorage })
 };
 var userManager = new UserManager(settings);
-userManager.events.addSilentRenewError((e) => {
-  console.warn("[auth] silent renew error", e);
-});
-var SSO_ATTEMPTED_KEY = "swissnovo:silent_sso_attempted";
+var SSO_ATTEMPTED_KEY = "aireon:silent_sso_attempted";
 async function getExistingUser() {
   try {
     const user = await userManager.getUser();
@@ -898,10 +896,7 @@ function AuthProvider({
     return () => clearTimeout(t);
   }, []);
   useEffect(() => {
-    const onLoaded = (u) => {
-      setUser(u);
-      if (!silentSso) userManager.stopSilentRenew();
-    };
+    const onLoaded = (u) => setUser(u);
     const onUnloaded = () => setUser(null);
     const onExpired = () => {
       userManager.removeUser().finally(() => setUser(null));
@@ -909,13 +904,12 @@ function AuthProvider({
     userManager.events.addUserLoaded(onLoaded);
     userManager.events.addUserUnloaded(onUnloaded);
     userManager.events.addAccessTokenExpired(onExpired);
-    if (!silentSso) userManager.stopSilentRenew();
     return () => {
       userManager.events.removeUserLoaded(onLoaded);
       userManager.events.removeUserUnloaded(onUnloaded);
       userManager.events.removeAccessTokenExpired(onExpired);
     };
-  }, [silentSso]);
+  }, []);
   useEffect(() => {
     if (initStarted.current) return;
     initStarted.current = true;
@@ -935,7 +929,6 @@ function AuthProvider({
           } catch (err) {
             sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
             stripAuthParams();
-            console.warn("[auth] sign-in callback failed", err);
             finish(null);
             return;
           }
@@ -950,15 +943,10 @@ function AuthProvider({
         if (silentSso && sessionStorage.getItem(SSO_ATTEMPTED_KEY) !== "1") {
           sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
           try {
-            const silent = await Promise.race([
-              userManager.signinSilent(),
-              new Promise(
-                (_, reject) => setTimeout(() => reject(new Error("silent SSO hard timeout")), 6e3)
-              )
-            ]);
-            finish(silent && !silent.expired ? silent : null);
+            await userManager.signinRedirect({ extraQueryParams: { prompt: "none" } });
             return;
-          } catch {
+          } catch (err) {
+            console.warn("[auth] cross-app SSO redirect failed to start", err);
           }
         }
         finish(null);
