@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { Bookmark, ChevronDown, CircleUser, LogOut } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar, useUserProfile } from '../profile';
@@ -29,6 +30,13 @@ export interface MapUserMenuProps {
   labels: MapUserMenuLabels;
   locale?: PrmLocale;
   showSavedParcels?: boolean;
+  savedParcelsOpenHereLabel?: string;
+  extraItems?: Array<{
+    key: string;
+    label: string;
+    icon?: ReactNode;
+    onClick: () => void;
+  }>;
   onOpenSavedParcel?: (record: PrmRecord) => void;
 }
 
@@ -45,6 +53,8 @@ export function MapUserMenu({
   labels,
   locale = 'en',
   showSavedParcels = true,
+  savedParcelsOpenHereLabel,
+  extraItems = [],
   onOpenSavedParcel = defaultOpenSavedParcel,
 }: MapUserMenuProps) {
   const { user, isLoading, login, logout } = useAuth();
@@ -131,6 +141,21 @@ export function MapUserMenu({
             </div>
 
             <div className="py-1">
+              {extraItems.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    item.onClick();
+                  }}
+                  className="map-shell-user-menu-item"
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ))}
               <button
                 type="button"
                 role="menuitem"
@@ -181,6 +206,7 @@ export function MapUserMenu({
         <SavedParcelsModal
           locale={locale}
           onClose={() => setShowParcels(false)}
+          openHereLabel={savedParcelsOpenHereLabel}
           onOpenHere={(record) => {
             setShowParcels(false);
             onOpenSavedParcel(record);

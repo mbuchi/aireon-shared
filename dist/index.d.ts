@@ -1314,9 +1314,16 @@ interface MapUserMenuProps {
     labels: MapUserMenuLabels;
     locale?: Locale$1;
     showSavedParcels?: boolean;
+    savedParcelsOpenHereLabel?: string;
+    extraItems?: Array<{
+        key: string;
+        label: string;
+        icon?: ReactNode;
+        onClick: () => void;
+    }>;
     onOpenSavedParcel?: (record: PrmRecord) => void;
 }
-declare function MapUserMenu({ dark, labels, locale, showSavedParcels, onOpenSavedParcel, }: MapUserMenuProps): react_jsx_runtime.JSX.Element;
+declare function MapUserMenu({ dark, labels, locale, showSavedParcels, savedParcelsOpenHereLabel, extraItems, onOpenSavedParcel, }: MapUserMenuProps): react_jsx_runtime.JSX.Element;
 
 declare module '@tanstack/react-table' {
     interface ColumnMeta<TData extends RowData, TValue> {

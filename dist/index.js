@@ -5539,6 +5539,8 @@ function MapUserMenu({
   labels,
   locale = "en",
   showSavedParcels = true,
+  savedParcelsOpenHereLabel,
+  extraItems = [],
   onOpenSavedParcel = defaultOpenSavedParcel
 }) {
   const { user, isLoading, login, logout } = useAuth();
@@ -5617,6 +5619,23 @@ function MapUserMenu({
           ] })
         ] }),
         /* @__PURE__ */ jsxs("div", { className: "py-1", children: [
+          extraItems.map((item) => /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              role: "menuitem",
+              onClick: () => {
+                setOpen(false);
+                item.onClick();
+              },
+              className: "map-shell-user-menu-item",
+              children: [
+                item.icon,
+                item.label
+              ]
+            },
+            item.key
+          )),
           /* @__PURE__ */ jsxs(
             "button",
             {
@@ -5674,6 +5693,7 @@ function MapUserMenu({
       {
         locale,
         onClose: () => setShowParcels(false),
+        openHereLabel: savedParcelsOpenHereLabel,
         onOpenHere: (record) => {
           setShowParcels(false);
           onOpenSavedParcel(record);
