@@ -5541,6 +5541,10 @@ function MapUserMenu({
   showSavedParcels = true,
   savedParcelsOpenHereLabel,
   extraItems = [],
+  toolbarItems = [],
+  toolbarLabel = "More tools",
+  dropdownSummary,
+  dropdownWidth = "default",
   onOpenSavedParcel = defaultOpenSavedParcel
 }) {
   const { user, isLoading, login, logout } = useAuth();
@@ -5603,89 +5607,123 @@ function MapUserMenu({
           ]
         }
       ),
-      open && /* @__PURE__ */ jsxs("div", { className: "map-shell-user-dropdown", role: "menu", children: [
-        /* @__PURE__ */ jsxs("div", { className: "map-shell-user-card", children: [
-          /* @__PURE__ */ jsx(Avatar, { url: avatarUrl2, initials, size: 40 }),
-          /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
-            /* @__PURE__ */ jsx("p", { className: "map-shell-user-display-name", children: displayName || firstName || labels.fallbackUser }),
-            email && /* @__PURE__ */ jsx("p", { className: "map-shell-user-email", children: email }),
-            /* @__PURE__ */ jsxs("div", { className: "map-shell-user-active", children: [
-              /* @__PURE__ */ jsxs("span", { className: "map-shell-user-active-dot", children: [
-                /* @__PURE__ */ jsx("span", {}),
-                /* @__PURE__ */ jsx("span", {})
-              ] }),
-              /* @__PURE__ */ jsx("span", { children: labels.active })
+      open && /* @__PURE__ */ jsxs(
+        "div",
+        {
+          className: `map-shell-user-dropdown ${dropdownWidth === "wide" ? "map-shell-user-dropdown--wide" : ""}`,
+          role: "menu",
+          children: [
+            /* @__PURE__ */ jsxs("div", { className: "map-shell-user-card", children: [
+              /* @__PURE__ */ jsx(Avatar, { url: avatarUrl2, initials, size: 40 }),
+              /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
+                /* @__PURE__ */ jsx("p", { className: "map-shell-user-display-name", children: displayName || firstName || labels.fallbackUser }),
+                email && /* @__PURE__ */ jsx("p", { className: "map-shell-user-email", children: email }),
+                /* @__PURE__ */ jsxs("div", { className: "map-shell-user-active", children: [
+                  /* @__PURE__ */ jsxs("span", { className: "map-shell-user-active-dot", children: [
+                    /* @__PURE__ */ jsx("span", {}),
+                    /* @__PURE__ */ jsx("span", {})
+                  ] }),
+                  /* @__PURE__ */ jsx("span", { children: labels.active })
+                ] })
+              ] })
+            ] }),
+            dropdownSummary && /* @__PURE__ */ jsx("div", { className: "map-shell-user-summary", children: dropdownSummary }),
+            toolbarItems.length > 0 && /* @__PURE__ */ jsxs("div", { className: "map-shell-user-tools", children: [
+              /* @__PURE__ */ jsx("p", { className: "map-shell-user-section-label", children: toolbarLabel }),
+              toolbarItems.map((item) => /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  type: "button",
+                  role: "menuitem",
+                  disabled: item.disabled,
+                  onClick: () => {
+                    if (item.disabled) return;
+                    setOpen(false);
+                    item.onClick();
+                  },
+                  className: `map-shell-user-tool-item ${item.danger ? "map-shell-user-tool-item--danger" : ""}`,
+                  children: [
+                    item.icon,
+                    /* @__PURE__ */ jsx("span", { children: item.label }),
+                    item.badge && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-badge", children: item.badge })
+                  ]
+                },
+                item.key
+              ))
+            ] }),
+            /* @__PURE__ */ jsxs("div", { className: "py-1", children: [
+              extraItems.map((item) => /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  type: "button",
+                  role: "menuitem",
+                  disabled: item.disabled,
+                  onClick: () => {
+                    if (item.disabled) return;
+                    setOpen(false);
+                    item.onClick();
+                  },
+                  className: `map-shell-user-menu-item ${item.danger ? "map-shell-user-menu-item--danger" : ""}`,
+                  children: [
+                    item.icon,
+                    /* @__PURE__ */ jsx("span", { children: item.label }),
+                    item.badge && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-badge", children: item.badge })
+                  ]
+                },
+                item.key
+              )),
+              /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  type: "button",
+                  role: "menuitem",
+                  onClick: () => {
+                    setOpen(false);
+                    setShowProfile(true);
+                  },
+                  className: "map-shell-user-menu-item",
+                  children: [
+                    /* @__PURE__ */ jsx(CircleUser, { size: 16, "aria-hidden": "true" }),
+                    labels.viewProfile
+                  ]
+                }
+              ),
+              showSavedParcels && /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  type: "button",
+                  role: "menuitem",
+                  onClick: () => {
+                    setOpen(false);
+                    setShowParcels(true);
+                  },
+                  className: "map-shell-user-menu-item",
+                  children: [
+                    /* @__PURE__ */ jsx(Bookmark, { size: 16, "aria-hidden": "true" }),
+                    labels.savedParcels
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  type: "button",
+                  role: "menuitem",
+                  onClick: () => {
+                    setOpen(false);
+                    logout();
+                  },
+                  className: "map-shell-user-menu-item map-shell-user-menu-item--danger",
+                  children: [
+                    /* @__PURE__ */ jsx(LogOut, { size: 16, "aria-hidden": "true" }),
+                    labels.signOut
+                  ]
+                }
+              )
             ] })
-          ] })
-        ] }),
-        /* @__PURE__ */ jsxs("div", { className: "py-1", children: [
-          extraItems.map((item) => /* @__PURE__ */ jsxs(
-            "button",
-            {
-              type: "button",
-              role: "menuitem",
-              onClick: () => {
-                setOpen(false);
-                item.onClick();
-              },
-              className: "map-shell-user-menu-item",
-              children: [
-                item.icon,
-                item.label
-              ]
-            },
-            item.key
-          )),
-          /* @__PURE__ */ jsxs(
-            "button",
-            {
-              type: "button",
-              role: "menuitem",
-              onClick: () => {
-                setOpen(false);
-                setShowProfile(true);
-              },
-              className: "map-shell-user-menu-item",
-              children: [
-                /* @__PURE__ */ jsx(CircleUser, { size: 16, "aria-hidden": "true" }),
-                labels.viewProfile
-              ]
-            }
-          ),
-          showSavedParcels && /* @__PURE__ */ jsxs(
-            "button",
-            {
-              type: "button",
-              role: "menuitem",
-              onClick: () => {
-                setOpen(false);
-                setShowParcels(true);
-              },
-              className: "map-shell-user-menu-item",
-              children: [
-                /* @__PURE__ */ jsx(Bookmark, { size: 16, "aria-hidden": "true" }),
-                labels.savedParcels
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsxs(
-            "button",
-            {
-              type: "button",
-              role: "menuitem",
-              onClick: () => {
-                setOpen(false);
-                logout();
-              },
-              className: "map-shell-user-menu-item map-shell-user-menu-item--danger",
-              children: [
-                /* @__PURE__ */ jsx(LogOut, { size: 16, "aria-hidden": "true" }),
-                labels.signOut
-              ]
-            }
-          )
-        ] })
-      ] })
+          ]
+        }
+      )
     ] }),
     showProfile && /* @__PURE__ */ jsx(ProfileModal, { user, onClose: () => setShowProfile(false), dark }),
     showParcels && /* @__PURE__ */ jsx(

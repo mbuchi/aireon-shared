@@ -231,7 +231,7 @@ export { Portal } from './portal/Portal';
 export type { PortalProps } from './portal/Portal';
 
 export { MapUserMenu, default as MapUserMenuDefault } from './map/MapUserMenu';
-export type { MapUserMenuLabels, MapUserMenuProps } from './map/MapUserMenu';
+export type { MapUserMenuAction, MapUserMenuLabels, MapUserMenuProps } from './map/MapUserMenu';
 
 // Suite-default data primitives — TanStack Table / Virtual.
 export { DataTable, DATA_TABLE_STRINGS_EN } from './table/DataTable';
