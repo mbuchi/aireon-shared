@@ -230,6 +230,9 @@ export type { ZIndexKey } from './theme/zindex';
 export { Portal } from './portal/Portal';
 export type { PortalProps } from './portal/Portal';
 
+export { MapUserMenu, default as MapUserMenuDefault } from './map/MapUserMenu';
+export type { MapUserMenuLabels, MapUserMenuProps } from './map/MapUserMenu';
+
 // Suite-default data primitives — TanStack Table / Virtual.
 export { DataTable, DATA_TABLE_STRINGS_EN } from './table/DataTable';
 export type { DataTableProps, DataTableStrings } from './table/DataTable';
@@ -239,4 +242,3 @@ export type { VirtualListProps } from './list/VirtualList';
 // can import everything from '@aireon/shared' without a direct dependency.
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
 export type { ColumnDef, Row, CellContext } from '@tanstack/react-table';
-
