@@ -4,7 +4,7 @@ export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, 
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, CircleUser, Bookmark, LogOut, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
@@ -5527,6 +5527,162 @@ function Portal({ children, container }) {
   const target = container || document.body;
   return createPortal(children, target);
 }
+var defaultOpenSavedParcel = (record) => {
+  const params = new URLSearchParams({
+    lat: String(record.parcel_lat),
+    lng: String(record.parcel_lng)
+  });
+  window.location.href = `${window.location.pathname}?${params.toString()}`;
+};
+function MapUserMenu({
+  dark = false,
+  labels,
+  locale = "en",
+  showSavedParcels = true,
+  onOpenSavedParcel = defaultOpenSavedParcel
+}) {
+  const { user, isLoading, login, logout } = useAuth();
+  const { avatarUrl: avatarUrl2 } = useUserProfile(user);
+  const [open, setOpen] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showParcels, setShowParcels] = useState(false);
+  const menuRef = useRef(null);
+  useEffect(() => {
+    const close = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+  if (isLoading) {
+    return /* @__PURE__ */ jsx(Skeleton, { circle: true, width: 36, dark });
+  }
+  if (!user) {
+    return /* @__PURE__ */ jsx(
+      "button",
+      {
+        type: "button",
+        onClick: () => login(),
+        className: "map-shell-user-button map-shell-user-button--signed-out",
+        "aria-label": labels.signIn,
+        title: labels.signIn,
+        children: /* @__PURE__ */ jsx(CircleUser, { size: 20, "aria-hidden": "true" })
+      }
+    );
+  }
+  const firstName = firstNameOf(user);
+  const displayName = fullNameOf(user);
+  const email = emailOf(user);
+  const initials = initialsOf(user);
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsxs("div", { ref: menuRef, className: "relative flex-shrink-0", children: [
+      /* @__PURE__ */ jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: () => setOpen((v) => !v),
+          className: "map-shell-user-button",
+          "aria-label": labels.userMenu,
+          "aria-haspopup": "menu",
+          "aria-expanded": open,
+          children: [
+            /* @__PURE__ */ jsx("span", { className: "map-shell-user-avatar", children: /* @__PURE__ */ jsx(Avatar, { url: avatarUrl2, initials, size: 28 }) }),
+            /* @__PURE__ */ jsx("span", { className: "map-shell-user-name", children: firstName || displayName || labels.fallbackUser }),
+            /* @__PURE__ */ jsx(
+              ChevronDown,
+              {
+                size: 14,
+                "aria-hidden": "true",
+                className: `map-shell-user-chevron ${open ? "map-shell-user-chevron--open" : ""}`
+              }
+            )
+          ]
+        }
+      ),
+      open && /* @__PURE__ */ jsxs("div", { className: "map-shell-user-dropdown", role: "menu", children: [
+        /* @__PURE__ */ jsxs("div", { className: "map-shell-user-card", children: [
+          /* @__PURE__ */ jsx(Avatar, { url: avatarUrl2, initials, size: 40 }),
+          /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
+            /* @__PURE__ */ jsx("p", { className: "map-shell-user-display-name", children: displayName || firstName || labels.fallbackUser }),
+            email && /* @__PURE__ */ jsx("p", { className: "map-shell-user-email", children: email }),
+            /* @__PURE__ */ jsxs("div", { className: "map-shell-user-active", children: [
+              /* @__PURE__ */ jsxs("span", { className: "map-shell-user-active-dot", children: [
+                /* @__PURE__ */ jsx("span", {}),
+                /* @__PURE__ */ jsx("span", {})
+              ] }),
+              /* @__PURE__ */ jsx("span", { children: labels.active })
+            ] })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "py-1", children: [
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              role: "menuitem",
+              onClick: () => {
+                setOpen(false);
+                setShowProfile(true);
+              },
+              className: "map-shell-user-menu-item",
+              children: [
+                /* @__PURE__ */ jsx(CircleUser, { size: 16, "aria-hidden": "true" }),
+                labels.viewProfile
+              ]
+            }
+          ),
+          showSavedParcels && /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              role: "menuitem",
+              onClick: () => {
+                setOpen(false);
+                setShowParcels(true);
+              },
+              className: "map-shell-user-menu-item",
+              children: [
+                /* @__PURE__ */ jsx(Bookmark, { size: 16, "aria-hidden": "true" }),
+                labels.savedParcels
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              role: "menuitem",
+              onClick: () => {
+                setOpen(false);
+                logout();
+              },
+              className: "map-shell-user-menu-item map-shell-user-menu-item--danger",
+              children: [
+                /* @__PURE__ */ jsx(LogOut, { size: 16, "aria-hidden": "true" }),
+                labels.signOut
+              ]
+            }
+          )
+        ] })
+      ] })
+    ] }),
+    showProfile && /* @__PURE__ */ jsx(ProfileModal, { user, onClose: () => setShowProfile(false), dark }),
+    showParcels && /* @__PURE__ */ jsx(
+      SavedParcelsModal,
+      {
+        locale,
+        onClose: () => setShowParcels(false),
+        onOpenHere: (record) => {
+          setShowParcels(false);
+          onOpenSavedParcel(record);
+        }
+      }
+    )
+  ] });
+}
+var MapUserMenu_default = MapUserMenu;
 var DATA_TABLE_STRINGS_EN = {
   searchPlaceholder: "Search\u2026",
   sortBy: "Sort by {column}",
@@ -5891,4 +6047,4 @@ function VirtualList({
   );
 }
 
-export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MunicipalityFlag, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useUserProfile, userManager };
+export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useUserProfile, userManager };
