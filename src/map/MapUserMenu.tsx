@@ -25,18 +25,27 @@ export interface MapUserMenuLabels {
   fallbackUser: string;
 }
 
+export interface MapUserMenuAction {
+  key: string;
+  label: string;
+  icon?: ReactNode;
+  onClick: () => void;
+  badge?: ReactNode;
+  disabled?: boolean;
+  danger?: boolean;
+}
+
 export interface MapUserMenuProps {
   dark?: boolean;
   labels: MapUserMenuLabels;
   locale?: PrmLocale;
   showSavedParcels?: boolean;
   savedParcelsOpenHereLabel?: string;
-  extraItems?: Array<{
-    key: string;
-    label: string;
-    icon?: ReactNode;
-    onClick: () => void;
-  }>;
+  extraItems?: MapUserMenuAction[];
+  toolbarItems?: MapUserMenuAction[];
+  toolbarLabel?: string;
+  dropdownSummary?: ReactNode;
+  dropdownWidth?: 'default' | 'wide';
   onOpenSavedParcel?: (record: PrmRecord) => void;
 }
 
@@ -55,6 +64,10 @@ export function MapUserMenu({
   showSavedParcels = true,
   savedParcelsOpenHereLabel,
   extraItems = [],
+  toolbarItems = [],
+  toolbarLabel = 'More tools',
+  dropdownSummary,
+  dropdownWidth = 'default',
   onOpenSavedParcel = defaultOpenSavedParcel,
 }: MapUserMenuProps) {
   const { user, isLoading, login, logout } = useAuth();
@@ -122,7 +135,10 @@ export function MapUserMenu({
         </button>
 
         {open && (
-          <div className="map-shell-user-dropdown" role="menu">
+          <div
+            className={`map-shell-user-dropdown ${dropdownWidth === 'wide' ? 'map-shell-user-dropdown--wide' : ''}`}
+            role="menu"
+          >
             <div className="map-shell-user-card">
               <Avatar url={avatarUrl} initials={initials} size={40} />
               <div className="min-w-0 flex-1">
@@ -140,20 +156,53 @@ export function MapUserMenu({
               </div>
             </div>
 
+            {dropdownSummary && (
+              <div className="map-shell-user-summary">
+                {dropdownSummary}
+              </div>
+            )}
+
+            {toolbarItems.length > 0 && (
+              <div className="map-shell-user-tools">
+                <p className="map-shell-user-section-label">{toolbarLabel}</p>
+                {toolbarItems.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    role="menuitem"
+                    disabled={item.disabled}
+                    onClick={() => {
+                      if (item.disabled) return;
+                      setOpen(false);
+                      item.onClick();
+                    }}
+                    className={`map-shell-user-tool-item ${item.danger ? 'map-shell-user-tool-item--danger' : ''}`}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                    {item.badge && <span className="map-shell-user-menu-badge">{item.badge}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="py-1">
               {extraItems.map((item) => (
                 <button
                   key={item.key}
                   type="button"
                   role="menuitem"
+                  disabled={item.disabled}
                   onClick={() => {
+                    if (item.disabled) return;
                     setOpen(false);
                     item.onClick();
                   }}
-                  className="map-shell-user-menu-item"
+                  className={`map-shell-user-menu-item ${item.danger ? 'map-shell-user-menu-item--danger' : ''}`}
                 >
                   {item.icon}
-                  {item.label}
+                  <span>{item.label}</span>
+                  {item.badge && <span className="map-shell-user-menu-badge">{item.badge}</span>}
                 </button>
               ))}
               <button
