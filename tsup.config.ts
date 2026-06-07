@@ -20,6 +20,7 @@ export default defineConfig({
     'react',
     'react-dom',
     'lucide-react',
+    'mapbox-gl',
     'oidc-client-ts',
     'openapi-fetch',
     '@tanstack/react-table',

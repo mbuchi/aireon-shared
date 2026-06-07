@@ -195,6 +195,19 @@ export interface ClairePOIs {
   count: number;
   /** scoore-equivalent location-accessibility score; null when no POIs. */
   score: LocationScore | null;
+  /** Nearest categorised POIs for Scoore-style map visualisations. */
+  points: ClairePoiMapPoint[];
+}
+
+export interface ClairePoiMapPoint {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  distance: number;
+  category: string;
+  categoryLabel: string;
+  tags?: Record<string, string>;
 }
 
 /**
@@ -218,16 +231,16 @@ export async function fetchClairePOIs(
       body: JSON.stringify({ lat, lng }),
       signal,
     });
-    if (!res.ok) return { text: '', count: 0, score: null };
+    if (!res.ok) return { text: '', count: 0, score: null, points: [] };
     data = (await res.json()) as OverpassPayload;
   } catch {
-    return { text: '', count: 0, score: null };
+    return { text: '', count: 0, score: null, points: [] };
   }
 
   const elements = data.elements ?? [];
-  if (elements.length === 0) return { text: '', count: 0, score: null };
+  if (elements.length === 0) return { text: '', count: 0, score: null, points: [] };
 
-  type Item = { name: string; distance: number };
+  type Item = ClairePoiMapPoint;
   const buckets: Record<string, Item[]> = {};
   let total = 0;
 
@@ -238,11 +251,20 @@ export async function fetchClairePOIs(
     const cat = categoryOf(el.tags);
     if (!cat) continue;
     const distance = haversineMetres(lat, lng, c.lat, c.lng);
-    (buckets[cat] ??= []).push({ name: nameOf(el.tags), distance });
+    (buckets[cat] ??= []).push({
+      id: `${el.type}:${el.id}`,
+      name: nameOf(el.tags),
+      lat: c.lat,
+      lng: c.lng,
+      distance,
+      category: cat,
+      categoryLabel: CATEGORY_LABEL[cat] ?? cat,
+      tags: el.tags,
+    });
     total += 1;
   }
 
-  if (total === 0) return { text: '', count: 0, score: null };
+  if (total === 0) return { text: '', count: 0, score: null, points: [] };
 
   // scoore-equivalent location score from the same buckets.
   const distancesByCategory: Record<string, number[]> = {};
@@ -250,6 +272,7 @@ export async function fetchClairePOIs(
     distancesByCategory[cat] = items.map((i) => i.distance);
   }
   const score = computeLocationScore(distancesByCategory);
+  const points: ClairePoiMapPoint[] = [];
 
   // Per-category score line, in display order.
   const perCategory = CATEGORY_ORDER.map(
@@ -263,6 +286,7 @@ export async function fetchClairePOIs(
     if (!items || items.length === 0) continue;
     items.sort((a, b) => a.distance - b.distance);
     const top = items.slice(0, CAP_PER_CATEGORY);
+    points.push(...top);
     const list = top
       .map((p) => `${p.name} (${formatDistance(p.distance)})`)
       .join(', ');
@@ -279,5 +303,5 @@ export async function fetchClairePOIs(
     `Per category (0–6): ${perCategory}.\n` +
     `Nearest points of interest:\n${poiLines.join('\n')}`;
 
-  return { text, count: total, score };
+  return { text, count: total, score, points };
 }

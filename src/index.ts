@@ -94,7 +94,7 @@ export { sendClaireMessageSignal } from './claire/signal';
 export { fetchClaireContext } from './claire/claireContext';
 export type { ClaireContext } from './claire/claireContext';
 export { fetchClairePOIs } from './claire/clairePOIs';
-export type { ClairePOIs } from './claire/clairePOIs';
+export type { ClairePOIs, ClairePoiMapPoint } from './claire/clairePOIs';
 export { computeLocationScore } from './claire/claireScore';
 export type { LocationScore } from './claire/claireScore';
 export {
@@ -232,6 +232,14 @@ export type { PortalProps } from './portal/Portal';
 
 export { MapUserMenu, default as MapUserMenuDefault } from './map/MapUserMenu';
 export type { MapUserMenuAction, MapUserMenuLabels, MapUserMenuProps } from './map/MapUserMenu';
+export {
+  ScooreMiniMap,
+  default as ScooreMiniMapDefault,
+  SCOORE_CATEGORY_COLORS,
+  SCOORE_RADIUS_CIRCLES,
+  createScooreCircleGeoJSON,
+} from './map/ScooreMiniMap';
+export type { ScooreMiniMapLabels, ScooreMiniMapProps } from './map/ScooreMiniMap';
 
 // Suite-default data primitives — TanStack Table / Virtual.
 export { DataTable, DATA_TABLE_STRINGS_EN } from './table/DataTable';
