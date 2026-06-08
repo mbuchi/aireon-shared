@@ -1409,6 +1409,68 @@ interface ScooreMiniMapProps {
 declare function createScooreCircleGeoJSON(centerLng: number, centerLat: number, radiusMeters: number, points?: number): GeoJSON.Feature<GeoJSON.Polygon>;
 declare function ScooreMiniMap({ lat, lng, mapboxToken, address, points, score, labels, isDarkMode, className, mapClassName, maxInitialPoiDistance, preserveDrawingBuffer, }: ScooreMiniMapProps): react_jsx_runtime.JSX.Element | null;
 
+type OverflowNavMode = 'inline' | 'menu';
+interface OverflowNavItem {
+    /** Stable identity for React keys. */
+    key: string;
+    /**
+     * Text label. Shown as the row text in the collapsed overflow menu and used
+     * as the `title` / `aria-label` of the default inline icon button.
+     */
+    label: string;
+    /** Icon node (e.g. a lucide-react icon). Rendered both inline and in the menu. */
+    icon?: ReactNode;
+    /** Click handler for the default button rendering. */
+    onSelect?: () => void;
+    /** Active/selected state — highlights the inline button and the menu row. */
+    active?: boolean;
+    /** Small badge/dot (e.g. unread count). Surfaces on the ⋯ trigger when collapsed. */
+    badge?: ReactNode;
+    /** Render in the danger (destructive) tone. */
+    danger?: boolean;
+    /** Disable the control. */
+    disabled?: boolean;
+    /**
+     * Keep this item visible inline even on mobile — use for the identity anchor
+     * (avatar / user menu) or a primary CTA that must never hide.
+     */
+    keepInline?: boolean;
+    /** Hide entirely on mobile (only meaningful on desktop). */
+    desktopOnly?: boolean;
+    /**
+     * Escape hatch for complex controls (a language `<select>`, a user menu, …).
+     * When provided, `icon` / `onSelect` / `active` are ignored and this renders
+     * instead. `mode` is `'inline'` in the bar and `'menu'` inside the dropdown,
+     * so a control can present a compact inline form and a full-width menu form.
+     */
+    render?: (mode: OverflowNavMode) => ReactNode;
+}
+interface OverflowNavProps {
+    /** Ordered list of actions, left → right. */
+    items: OverflowNavItem[];
+    /** Dark theme styling. Also picks up an ancestor `.dark` / `[data-theme="dark"]`. */
+    dark?: boolean;
+    /** Collapse to the overflow menu at or below this viewport width (px). Default 768. */
+    collapseBelow?: number;
+    /** Accessible label for the ⋯ trigger. Default "More". */
+    moreLabel?: string;
+    /** Optional small heading shown above the collapsed items in the menu. */
+    menuLabel?: string;
+    /** Extra class names on the root cluster. */
+    className?: string;
+}
+/**
+ * `OverflowNav` — a breakpoint-driven responsive action cluster (the
+ * "priority+" / overflow-menu pattern used by Apple, Google, Tesla, …).
+ *
+ * On desktop (above `collapseBelow`) every item renders inline, identical to a
+ * plain flex row — the desktop layout is unchanged. At or below the breakpoint,
+ * items flagged `keepInline` stay visible while the rest collapse behind a
+ * single ⋯ "More" button that opens a tidy dropdown. This keeps phones from
+ * cramming a dozen overlapping icon buttons into the top bar.
+ */
+declare function OverflowNav({ items, dark, collapseBelow, moreLabel, menuLabel, className, }: OverflowNavProps): react_jsx_runtime.JSX.Element;
+
 declare module '@tanstack/react-table' {
     interface ColumnMeta<TData extends RowData, TValue> {
         /** Horizontal alignment of the cell + header. */
@@ -1530,4 +1592,4 @@ interface VirtualListProps<T> {
 }
 declare function VirtualList<T>({ items, renderItem, estimateSize, overscan, getItemKey, onEndReached, endReachedThreshold, loading, skeletonRows, emptyMessage, className, style, ariaLabel, }: VirtualListProps<T>): JSX.Element;
 
-export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClairePoiMapPoint, type ClaireTurn, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MapUserMenu, type MapUserMenuAction, MapUserMenu as MapUserMenuDefault, type MapUserMenuLabels, type MapUserMenuProps, MunicipalityFlag, type MunicipalityFlagProps, type OpenReplay, type OpenReplayOptions, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, type ReleaseNotesController, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, ScooreMiniMap, ScooreMiniMap as ScooreMiniMapDefault, type ScooreMiniMapLabels, type ScooreMiniMapProps, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseReleaseNotesOptions, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClairePoiMapPoint, type ClaireTurn, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MapUserMenu, type MapUserMenuAction, MapUserMenu as MapUserMenuDefault, type MapUserMenuLabels, type MapUserMenuProps, MunicipalityFlag, type MunicipalityFlagProps, type OpenReplay, type OpenReplayOptions, OverflowNav, OverflowNav as OverflowNavDefault, type OverflowNavItem, type OverflowNavMode, type OverflowNavProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, type ReleaseNotesController, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, ScooreMiniMap, ScooreMiniMap as ScooreMiniMapDefault, type ScooreMiniMapLabels, type ScooreMiniMapProps, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseReleaseNotesOptions, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
