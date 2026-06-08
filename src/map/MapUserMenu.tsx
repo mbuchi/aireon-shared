@@ -31,6 +31,8 @@ export interface MapUserMenuAction {
   icon?: ReactNode;
   onClick: () => void;
   badge?: ReactNode;
+  /** Renders a small red dot at the row's trailing edge (e.g. unseen release notes). */
+  dot?: boolean;
   disabled?: boolean;
   danger?: boolean;
 }
@@ -181,6 +183,7 @@ export function MapUserMenu({
                     {item.icon}
                     <span>{item.label}</span>
                     {item.badge && <span className="map-shell-user-menu-badge">{item.badge}</span>}
+                    {item.dot && <span className="map-shell-user-menu-dot" aria-hidden="true" />}
                   </button>
                 ))}
               </div>
@@ -203,6 +206,7 @@ export function MapUserMenu({
                   {item.icon}
                   <span>{item.label}</span>
                   {item.badge && <span className="map-shell-user-menu-badge">{item.badge}</span>}
+                  {item.dot && <span className="map-shell-user-menu-dot" aria-hidden="true" />}
                 </button>
               ))}
               <button

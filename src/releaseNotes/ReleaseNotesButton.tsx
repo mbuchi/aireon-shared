@@ -1,10 +1,9 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useRef } from 'react';
 import { CheckCircle } from 'lucide-react';
 import ReleaseNotesPanel from './ReleaseNotesPanel';
+import { useReleaseNotes } from './useReleaseNotes';
 import type { Release } from './types';
 import { getReleaseNotesStrings, type Locale } from './i18n';
-
-const HASH = '#release-notes';
 
 export interface ReleaseNotesButtonProps {
   /** The app's release history, newest first. */
@@ -40,65 +39,22 @@ export default function ReleaseNotesButton({
 }: ReleaseNotesButtonProps) {
   const t = getReleaseNotesStrings(locale);
   const currentVersion = releases[0].version;
-  const [open, setOpen] = useState(false);
-  const [hasUnread, setHasUnread] = useState(false);
+  const { hasUnread, isOpen: open, openPanel, closePanel } = useReleaseNotes({
+    currentVersion,
+    storageKey,
+  });
   const closeRef = useRef<(() => void) | null>(null);
-
-  useEffect(() => {
-    try {
-      const lastSeen = localStorage.getItem(storageKey);
-      if (lastSeen !== currentVersion) setHasUnread(true);
-    } catch {
-      /* private mode etc. */
-    }
-
-    if (window.location.hash === HASH) setOpen(true);
-
-    const onHash = () => {
-      if (window.location.hash === HASH) setOpen(true);
-    };
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
-  }, [storageKey, currentVersion]);
-
-  const handleOpen = useCallback(() => {
-    setOpen(true);
-    if (window.location.hash !== HASH) {
-      window.history.replaceState(
-        null,
-        '',
-        `${window.location.pathname}${window.location.search}${HASH}`,
-      );
-    }
-  }, []);
 
   // Clicking the version pill toggles the panel: open it, or dismiss it if
   // already open (animated close via the panel's own handler).
   const handleToggle = useCallback(() => {
     if (open) {
       if (closeRef.current) closeRef.current();
-      else setOpen(false);
+      else closePanel();
     } else {
-      handleOpen();
+      openPanel();
     }
-  }, [open, handleOpen]);
-
-  const handleClose = useCallback(() => {
-    setOpen(false);
-    setHasUnread(false);
-    try {
-      localStorage.setItem(storageKey, currentVersion);
-    } catch {
-      /* ignore */
-    }
-    if (window.location.hash === HASH) {
-      window.history.replaceState(
-        null,
-        '',
-        `${window.location.pathname}${window.location.search}`,
-      );
-    }
-  }, [storageKey, currentVersion]);
+  }, [open, openPanel, closePanel]);
 
   return (
     <>
@@ -116,7 +72,7 @@ export default function ReleaseNotesButton({
       </button>
       {open && (
         <ReleaseNotesPanel
-          onClose={handleClose}
+          onClose={closePanel}
           closeRef={closeRef}
           locale={locale}
           releases={releases}

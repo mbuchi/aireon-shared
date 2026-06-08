@@ -559,37 +559,27 @@ function ReleaseNotesPanel({
   );
 }
 var HASH = "#release-notes";
-function ReleaseNotesButton({
-  releases,
-  locale = "en",
-  storageKey,
-  repoUrl,
-  brandPrefix,
-  brandSuffix = "",
-  brandNode,
-  zIndex,
-  className
+function useReleaseNotes({
+  currentVersion,
+  storageKey
 }) {
-  const t = getReleaseNotesStrings(locale);
-  const currentVersion = releases[0].version;
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
-  const closeRef = useRef(null);
   useEffect(() => {
     try {
       const lastSeen = localStorage.getItem(storageKey);
       if (lastSeen !== currentVersion) setHasUnread(true);
     } catch {
     }
-    if (window.location.hash === HASH) setOpen(true);
+    if (window.location.hash === HASH) setIsOpen(true);
     const onHash = () => {
-      if (window.location.hash === HASH) setOpen(true);
+      if (window.location.hash === HASH) setIsOpen(true);
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, [storageKey, currentVersion]);
-  const handleOpen = useCallback(() => {
-    setOpen(true);
+  const openPanel = useCallback(() => {
+    setIsOpen(true);
     if (window.location.hash !== HASH) {
       window.history.replaceState(
         null,
@@ -598,16 +588,8 @@ function ReleaseNotesButton({
       );
     }
   }, []);
-  const handleToggle = useCallback(() => {
-    if (open) {
-      if (closeRef.current) closeRef.current();
-      else setOpen(false);
-    } else {
-      handleOpen();
-    }
-  }, [open, handleOpen]);
-  const handleClose = useCallback(() => {
-    setOpen(false);
+  const closePanel = useCallback(() => {
+    setIsOpen(false);
     setHasUnread(false);
     try {
       localStorage.setItem(storageKey, currentVersion);
@@ -621,6 +603,34 @@ function ReleaseNotesButton({
       );
     }
   }, [storageKey, currentVersion]);
+  return { hasUnread, isOpen, openPanel, closePanel };
+}
+function ReleaseNotesButton({
+  releases,
+  locale = "en",
+  storageKey,
+  repoUrl,
+  brandPrefix,
+  brandSuffix = "",
+  brandNode,
+  zIndex,
+  className
+}) {
+  const t = getReleaseNotesStrings(locale);
+  const currentVersion = releases[0].version;
+  const { hasUnread, isOpen: open, openPanel, closePanel } = useReleaseNotes({
+    currentVersion,
+    storageKey
+  });
+  const closeRef = useRef(null);
+  const handleToggle = useCallback(() => {
+    if (open) {
+      if (closeRef.current) closeRef.current();
+      else closePanel();
+    } else {
+      openPanel();
+    }
+  }, [open, openPanel, closePanel]);
   return /* @__PURE__ */ jsxs(Fragment, { children: [
     /* @__PURE__ */ jsxs(
       "button",
@@ -639,7 +649,7 @@ function ReleaseNotesButton({
     open && /* @__PURE__ */ jsx(
       ReleaseNotesPanel,
       {
-        onClose: handleClose,
+        onClose: closePanel,
         closeRef,
         locale,
         releases,
@@ -1838,7 +1848,7 @@ Building, terrain & environment:
 - boom \u2014 Swiss environmental noise map (road & rail) checked against legal limits. https://boom.aireon.ch/ (legacy: https://swissnovo-boom.vercel.app/)
 
 Regulations & legal:
-- xploore \u2014 finds building regulations, zoning plans and rules for a parcel. https://xploore.ch/ (legacy: https://xploore.vercel.app/)
+- xploore \u2014 finds building regulations, zoning plans and rules for a parcel. https://xploore.aireon.ch/ (legacy: https://xploore.vercel.app/)
 - handbook \u2014 planning-document dataroom with AI summaries and regulation Q&A. https://handbook.aireon.ch/ (legacy: https://swissnovo-handbook.vercel.app/)
 - roolez \u2014 AI-powered analysis and interpretation of building regulations. https://roolez-collector.aireon.ch/ (legacy: https://roolez-collector.vercel.app/)
 - lookup \u2014 OEREB control center for public-law restriction queries. https://lookup.aireon.ch/ (legacy: https://swissnovo-lookup.vercel.app/)
@@ -5659,7 +5669,8 @@ function MapUserMenu({
                   children: [
                     item.icon,
                     /* @__PURE__ */ jsx("span", { children: item.label }),
-                    item.badge && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-badge", children: item.badge })
+                    item.badge && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-badge", children: item.badge }),
+                    item.dot && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-dot", "aria-hidden": "true" })
                   ]
                 },
                 item.key
@@ -5681,7 +5692,8 @@ function MapUserMenu({
                   children: [
                     item.icon,
                     /* @__PURE__ */ jsx("span", { children: item.label }),
-                    item.badge && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-badge", children: item.badge })
+                    item.badge && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-badge", children: item.badge }),
+                    item.dot && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-dot", "aria-hidden": "true" })
                   ]
                 },
                 item.key
@@ -6517,4 +6529,4 @@ function VirtualList({
   );
 }
 
-export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useUserProfile, userManager };
+export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
