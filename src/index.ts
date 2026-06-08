@@ -249,6 +249,15 @@ export {
 } from './map/ScooreMiniMap';
 export type { ScooreMiniMapLabels, ScooreMiniMapProps } from './map/ScooreMiniMap';
 
+// Responsive top-bar action cluster — collapses overflowing buttons into a ⋯
+// "More" menu on mobile (priority+ pattern); desktop stays a plain inline row.
+export { OverflowNav, default as OverflowNavDefault } from './nav/OverflowNav';
+export type {
+  OverflowNavItem,
+  OverflowNavProps,
+  OverflowNavMode,
+} from './nav/OverflowNav';
+
 // Suite-default data primitives — TanStack Table / Virtual.
 export { DataTable, DATA_TABLE_STRINGS_EN } from './table/DataTable';
 export type { DataTableProps, DataTableStrings } from './table/DataTable';

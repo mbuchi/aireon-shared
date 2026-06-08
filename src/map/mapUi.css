@@ -552,3 +552,274 @@
     max-width: min(72vw, 100%);
   }
 }
+
+/* ==========================================================================
+   OverflowNav — responsive action cluster (priority+ / overflow menu)
+   Desktop: a plain inline flex row (unchanged). Mobile: collapsible items
+   fold into a single ⋯ "More" dropdown so phones never overlap a long row of
+   top-bar buttons. Styling mirrors the suite's neutral icon-button + menu look
+   so it drops into both the Tailwind hub and the map-app headers.
+   ========================================================================== */
+.aireon-onav {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.aireon-onav-btn {
+  position: relative;
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: rgb(243 244 246);
+  color: rgb(75 85 99);
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease;
+}
+
+.aireon-onav-btn:hover {
+  background: rgb(229 231 235);
+  color: rgb(31 41 55);
+}
+
+.aireon-onav-btn:active {
+  transform: scale(0.96);
+}
+
+.aireon-onav-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(220 38 38), 0 0 0 4px rgb(255 255 255);
+}
+
+.aireon-onav-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.aireon-onav-btn--active {
+  border-color: rgb(220 38 38 / 0.4);
+  background: rgb(254 242 242);
+  color: rgb(185 28 28);
+}
+
+.aireon-onav-btn--danger {
+  color: rgb(220 38 38);
+}
+
+.aireon-onav-btn-badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+  border-radius: 9999px;
+  background: rgb(220 38 38);
+  color: rgb(255 255 255);
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.aireon-onav-btn-badge--dot {
+  min-width: 0.55rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  padding: 0;
+  top: -0.1rem;
+  right: -0.1rem;
+}
+
+.dark .aireon-onav-btn,
+[data-theme="dark"] .aireon-onav-btn,
+.aireon-onav--dark .aireon-onav-btn {
+  border-color: rgb(51 65 85 / 0.8);
+  background: rgb(30 41 59);
+  color: rgb(203 213 225);
+}
+
+.dark .aireon-onav-btn:hover,
+[data-theme="dark"] .aireon-onav-btn:hover,
+.aireon-onav--dark .aireon-onav-btn:hover {
+  border-color: rgb(220 38 38 / 0.45);
+  background: rgb(127 29 29 / 0.24);
+  color: rgb(248 113 113);
+}
+
+.dark .aireon-onav-btn--active,
+[data-theme="dark"] .aireon-onav-btn--active,
+.aireon-onav--dark .aireon-onav-btn--active {
+  border-color: rgb(220 38 38 / 0.5);
+  background: rgb(127 29 29 / 0.28);
+  color: rgb(248 113 113);
+}
+
+.dark .aireon-onav-btn:focus-visible,
+[data-theme="dark"] .aireon-onav-btn:focus-visible,
+.aireon-onav--dark .aireon-onav-btn:focus-visible {
+  box-shadow: 0 0 0 2px rgb(248 113 113), 0 0 0 4px rgb(15 23 42);
+}
+
+/* ---- the ⋯ trigger + dropdown ------------------------------------------- */
+.aireon-onav-more {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.aireon-onav-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 60;
+  width: 14rem;
+  max-width: calc(100vw - 1rem);
+  max-height: calc(100dvh - 5rem);
+  overflow-y: auto;
+  padding: 0.375rem;
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.75rem;
+  background: white;
+  box-shadow: 0 20px 40px rgb(15 23 42 / 0.18);
+}
+
+.dark .aireon-onav-menu,
+[data-theme="dark"] .aireon-onav-menu,
+.aireon-onav--dark .aireon-onav-menu {
+  border-color: rgb(51 65 85);
+  background: rgb(30 41 59);
+  box-shadow: 0 20px 44px rgb(0 0 0 / 0.34);
+}
+
+.aireon-onav-menu-label {
+  margin: 0;
+  padding: 0.375rem 0.625rem 0.25rem;
+  color: rgb(156 163 175);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.dark .aireon-onav-menu-label,
+[data-theme="dark"] .aireon-onav-menu-label,
+.aireon-onav--dark .aireon-onav-menu-label {
+  color: rgb(100 116 139);
+}
+
+.aireon-onav-menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  padding: 0.5rem 0.625rem;
+  color: rgb(55 65 81);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.aireon-onav-menu-item:hover {
+  background: rgb(249 250 251);
+  color: rgb(17 24 39);
+}
+
+.aireon-onav-menu-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.aireon-onav-menu-item--active {
+  background: rgb(254 242 242);
+  color: rgb(185 28 28);
+}
+
+.aireon-onav-menu-item--danger {
+  color: rgb(220 38 38);
+}
+
+.aireon-onav-menu-item--danger:hover {
+  background: rgb(254 242 242);
+}
+
+.aireon-onav-menu-item-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.aireon-onav-menu-item-badge {
+  margin-left: auto;
+  border-radius: 9999px;
+  background: rgb(243 244 246);
+  padding: 0.125rem 0.375rem;
+  color: rgb(75 85 99);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.dark .aireon-onav-menu-item,
+[data-theme="dark"] .aireon-onav-menu-item,
+.aireon-onav--dark .aireon-onav-menu-item {
+  color: rgb(203 213 225);
+}
+
+.dark .aireon-onav-menu-item:hover,
+[data-theme="dark"] .aireon-onav-menu-item:hover,
+.aireon-onav--dark .aireon-onav-menu-item:hover {
+  background: rgb(51 65 85 / 0.72);
+  color: rgb(248 250 252);
+}
+
+.dark .aireon-onav-menu-item--active,
+[data-theme="dark"] .aireon-onav-menu-item--active,
+.aireon-onav--dark .aireon-onav-menu-item--active {
+  background: rgb(127 29 29 / 0.28);
+  color: rgb(248 113 113);
+}
+
+.dark .aireon-onav-menu-item--danger,
+[data-theme="dark"] .aireon-onav-menu-item--danger,
+.aireon-onav--dark .aireon-onav-menu-item--danger {
+  color: rgb(248 113 113);
+}
+
+.dark .aireon-onav-menu-item--danger:hover,
+[data-theme="dark"] .aireon-onav-menu-item--danger:hover,
+.aireon-onav--dark .aireon-onav-menu-item--danger:hover {
+  background: rgb(127 29 29 / 0.28);
+}
+
+.dark .aireon-onav-menu-item-badge,
+[data-theme="dark"] .aireon-onav-menu-item-badge,
+.aireon-onav--dark .aireon-onav-menu-item-badge {
+  background: rgb(51 65 85);
+  color: rgb(203 213 225);
+}
+
+/* Custom controls dropped into the menu (a language <select>, etc.) get a row
+   of breathing room and stretch to full width. */
+.aireon-onav-menu-custom {
+  padding: 0.25rem 0.375rem;
+}
+
+.aireon-onav-menu-custom > * {
+  width: 100%;
+}
