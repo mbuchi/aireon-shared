@@ -1,3 +1,15 @@
+// Brand — the canonical Aireon wordmark (inline SVG, themeable via
+// currentColor) and the back-to-hub badge apps drop into their navbars.
+export { AireonLogo, default as AireonLogoDefault } from './brand/AireonLogo';
+export type { AireonLogoProps } from './brand/AireonLogo';
+export { AireonHubLink, default as AireonHubLinkDefault } from './brand/AireonHubLink';
+export type { AireonHubLinkProps } from './brand/AireonHubLink';
+export {
+  AIREON_LOGO_PATH,
+  AIREON_LOGO_VIEWBOX,
+  AIREON_LOGO_ASPECT,
+} from './brand/aireonLogoPath';
+
 export { default as ReleaseNotesPanel } from './releaseNotes/ReleaseNotesPanel';
 export { default as ReleaseNotesButton } from './releaseNotes/ReleaseNotesButton';
 export { useReleaseNotes } from './releaseNotes/useReleaseNotes';
