@@ -7,8 +7,12 @@ export interface AireonHubLinkProps {
   href?: string;
   /** Accessible name + tooltip. */
   label?: string;
-  /** Classes on the <a>. */
+  /** Classes on the wrapper — set the foreground colour here (e.g.
+   *  `text-gray-900 dark:text-white`). Both the wordmark (`currentColor`) and
+   *  the divider (`bg-current`) inherit it, so the badge stays one colour. */
   className?: string;
+  /** Extra classes on the <a> itself (rarely needed). */
+  linkClassName?: string;
   /** Classes controlling the wordmark size/colour. Height-based recommended. */
   logoClassName?: string;
   /** Render a thin vertical rule after the badge — used when the badge sits to
@@ -35,6 +39,7 @@ export function AireonHubLink({
   href = TOOLBOX_APP_URL,
   label = 'Aireon hub',
   className = '',
+  linkClassName = '',
   logoClassName = 'h-[17px] w-auto',
   withDivider = false,
   dividerClassName = 'h-5 w-px bg-current opacity-20',
@@ -44,7 +49,7 @@ export function AireonHubLink({
   onClick,
 }: AireonHubLinkProps) {
   return (
-    <span className="inline-flex items-center gap-2 sm:gap-2.5" style={style}>
+    <span className={'inline-flex items-center gap-2 sm:gap-2.5 ' + className} style={style}>
       <a
         href={href}
         target={target}
@@ -54,7 +59,7 @@ export function AireonHubLink({
         title={label}
         className={
           'inline-flex items-center rounded-md opacity-60 transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ' +
-          className
+          linkClassName
         }
       >
         <AireonLogo className={logoClassName} title="" />

@@ -138,6 +138,7 @@ function AireonHubLink({
   href = TOOLBOX_APP_URL,
   label = "Aireon hub",
   className = "",
+  linkClassName = "",
   logoClassName = "h-[17px] w-auto",
   withDivider = false,
   dividerClassName = "h-5 w-px bg-current opacity-20",
@@ -146,7 +147,7 @@ function AireonHubLink({
   rel,
   onClick
 }) {
-  return /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-2 sm:gap-2.5", style, children: [
+  return /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-2 sm:gap-2.5 " + className, style, children: [
     /* @__PURE__ */ jsx(
       "a",
       {
@@ -156,7 +157,7 @@ function AireonHubLink({
         onClick,
         "aria-label": label,
         title: label,
-        className: "inline-flex items-center rounded-md opacity-60 transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent " + className,
+        className: "inline-flex items-center rounded-md opacity-60 transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent " + linkClassName,
         children: /* @__PURE__ */ jsx(AireonLogo, { className: logoClassName, title: "" })
       }
     ),
