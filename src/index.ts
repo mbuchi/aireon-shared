@@ -64,7 +64,6 @@ export {
 
 export { default as ClaireAssistant } from './claire/ClaireAssistant';
 export type { ClaireAssistantProps } from './claire/ClaireAssistant';
-export { CLAIRE_LOGO_DATA_URI, CLAIRE_LOGO_SVG } from './claire/claireLogo';
 export {
   buildParcelContextSummary,
   generateParcelChatReply,
