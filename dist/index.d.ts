@@ -34,8 +34,12 @@ interface AireonHubLinkProps {
     href?: string;
     /** Accessible name + tooltip. */
     label?: string;
-    /** Classes on the <a>. */
+    /** Classes on the wrapper — set the foreground colour here (e.g.
+     *  `text-gray-900 dark:text-white`). Both the wordmark (`currentColor`) and
+     *  the divider (`bg-current`) inherit it, so the badge stays one colour. */
     className?: string;
+    /** Extra classes on the <a> itself (rarely needed). */
+    linkClassName?: string;
     /** Classes controlling the wordmark size/colour. Height-based recommended. */
     logoClassName?: string;
     /** Render a thin vertical rule after the badge — used when the badge sits to
@@ -57,7 +61,7 @@ interface AireonHubLinkProps {
  * by default so it reads as secondary to the app's own brand; it brightens on
  * hover/focus.
  */
-declare function AireonHubLink({ href, label, className, logoClassName, withDivider, dividerClassName, style, target, rel, onClick, }: AireonHubLinkProps): react_jsx_runtime.JSX.Element;
+declare function AireonHubLink({ href, label, className, linkClassName, logoClassName, withDivider, dividerClassName, style, target, rel, onClick, }: AireonHubLinkProps): react_jsx_runtime.JSX.Element;
 
 declare const AIREON_LOGO_VIEWBOX = "0 0 968 240";
 declare const AIREON_LOGO_ASPECT: number;
