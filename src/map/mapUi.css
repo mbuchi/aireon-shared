@@ -398,6 +398,18 @@
   color: rgb(203 213 225);
 }
 
+/* Trailing unseen indicator (e.g. release notes) — a bare red dot, distinct
+   from the gray pill badge above. Used by MapUserMenuAction.dot. */
+.map-shell-user-menu-dot {
+  margin-left: auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: rgb(239 68 68);
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 0.18);
+}
+
 .map-shell-user-menu-item {
   display: flex;
   width: 100%;
