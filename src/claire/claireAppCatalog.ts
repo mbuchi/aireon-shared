@@ -40,7 +40,7 @@ Building, terrain & environment:
 - boom — Swiss environmental noise map (road & rail) checked against legal limits. https://boom.aireon.ch/ (legacy: https://swissnovo-boom.vercel.app/)
 
 Regulations & legal:
-- xploore — finds building regulations, zoning plans and rules for a parcel. https://xploore.ch/ (legacy: https://xploore.vercel.app/)
+- xploore — finds building regulations, zoning plans and rules for a parcel. https://xploore.aireon.ch/ (legacy: https://xploore.vercel.app/)
 - handbook — planning-document dataroom with AI summaries and regulation Q&A. https://handbook.aireon.ch/ (legacy: https://swissnovo-handbook.vercel.app/)
 - roolez — AI-powered analysis and interpretation of building regulations. https://roolez-collector.aireon.ch/ (legacy: https://roolez-collector.vercel.app/)
 - lookup — OEREB control center for public-law restriction queries. https://lookup.aireon.ch/ (legacy: https://swissnovo-lookup.vercel.app/)
