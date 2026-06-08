@@ -26,6 +26,9 @@ export {
   PROOM_APP_URL,
   TOOLBOX_APP_URL,
   GEOPOOL_APP_URL,
+  LEGACY_PROOM_APP_URL,
+  LEGACY_TOOLBOX_APP_URL,
+  LEGACY_GEOPOOL_APP_URL,
 } from './prm/api';
 export type {
   PrmRecord,
@@ -61,6 +64,7 @@ export {
 
 export { default as ClaireAssistant } from './claire/ClaireAssistant';
 export type { ClaireAssistantProps } from './claire/ClaireAssistant';
+export { CLAIRE_LOGO_DATA_URI, CLAIRE_LOGO_SVG } from './claire/claireLogo';
 export {
   buildParcelContextSummary,
   generateParcelChatReply,

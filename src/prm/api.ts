@@ -5,10 +5,10 @@
 // to proom's Kanban in real time.
 //
 // CORS: proom's edge handlers respond with `Access-Control-Allow-Origin: *`,
-// so cross-origin POST/PATCH/DELETE from any swissnovo-*.vercel.app domain
-// works without a proxy.
+// so cross-origin POST/PATCH/DELETE from both *.aireon.ch and legacy
+// swissnovo-*.vercel.app domains works without a proxy.
 
-const PROOM_API_BASE = 'https://swissnovo-proom.vercel.app/api';
+const PROOM_API_BASE = 'https://proom.aireon.ch/api';
 
 export type PrmState =
   | 'new'
@@ -169,6 +169,10 @@ export async function deletePrmRecord(
   );
 }
 
-export const PROOM_APP_URL = 'https://swissnovo-proom.vercel.app';
-export const TOOLBOX_APP_URL = 'https://swissnovo-toolbox.vercel.app';
-export const GEOPOOL_APP_URL = 'https://swissnovo-geopool.vercel.app';
+export const PROOM_APP_URL = 'https://proom.aireon.ch';
+export const TOOLBOX_APP_URL = 'https://hub.aireon.ch';
+export const GEOPOOL_APP_URL = 'https://geopool.aireon.ch';
+
+export const LEGACY_PROOM_APP_URL = 'https://swissnovo-proom.vercel.app';
+export const LEGACY_TOOLBOX_APP_URL = 'https://swissnovo-toolbox.vercel.app';
+export const LEGACY_GEOPOOL_APP_URL = 'https://swissnovo-geopool.vercel.app';
