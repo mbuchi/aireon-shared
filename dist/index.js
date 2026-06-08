@@ -2,15 +2,168 @@ import './chunk-6YKTLPIC.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
+import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, CircleUser, Bookmark, LogOut, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
-import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
+// src/brand/aireonLogoPath.ts
+var AIREON_LOGO_VIEWBOX = "0 0 968 240";
+var AIREON_LOGO_ASPECT = 968 / 240;
+var AIREON_LOGO_PATH = "m 250.25,72.25 c -14.04446,5.883586 -6.24529,26.166237 -8.25,39.22607 0.66196,34.55937 -1.32716,70.04868 1,104.02393 4.36792,9.10502 20.06523,7.97241 21.75,-2.75 1.75007,-42.8345 0.24995,-86.56926 0.75,-129.75 -1.34014,-7.0935 -7.41815,-12.344094 -15.25,-10.75 z m 148,-1 c -18.22636,-3.77766 -36.45374,3.798374 -47,17.75 -7.72796,13.30918 -1.81467,-8.032303 -7,-12.75 -6.8951,-9.062382 -23.39579,-1.904666 -20.75,10.340759 0.55443,43.380151 0.72035,86.813961 1.75,130.159241 4.07127,6.0824 16.43219,7.12273 19.25,-0.5 5.12324,-8.36764 0.84703,-22.96617 2.25,-33.72607 0.94813,-21.6756 -2.74815,-45.63571 3.75,-65.27393 5.09228,-8.6227 13.1482,-19.306903 24.25,-21.25 9.59118,-4.592351 28.14741,2.363944 30,-11.670379 1.30278,-6.275643 -2.02974,-10.220619 -6.5,-13.079621 z m 529.75,9 c -14.93021,-9.352635 -36.87069,-13.714816 -55.75,-8 -11.23441,3.938278 -20.1455,11.442494 -27.25,20.25 1.52053,-10.707378 -2.98,-23.496913 -16,-20 -13.48557,6.735119 -5.6774,26.756918 -7.75,39.97607 0.55293,33.90281 -1.07248,69.23137 0.75,102.27393 4.10939,9.27212 19.28089,9.33786 21.75,-1 2.97768,-29.76627 -0.9706,-61.32188 2,-91.5 3.23722,-10.35872 9.04326,-20.17976 19.5,-25.25 10.11012,-5.98715 26.77895,-8.125689 38.75,-3 9.96107,2.07729 17.81525,11.34786 22.25,19.25 6.92927,22.19861 2.50703,50.19649 3.75,75.03176 0.91753,12.23865 -4.63492,31.45332 10.5,33.71824 12.1983,0.38101 13.69265,-12.13426 12.2944,-22.86297 C 952.14352,171.06604 954.50329,141.6487 951.75,114.5 947.88994,101.09082 940.83129,89.946019 929.5,81.5 l -0.75,-0.25 z M 687,69.5 c -22.428,2.575086 -41.37101,12.752099 -53.5,28.75 -6.70886,8.39434 -10.61654,15.78023 -13.5,27 -4.98875,15.8782 -3.95413,37.58565 3,51.75 4.602,15.38772 19.47896,29.87689 32.75,37.75 13.47842,6.62438 29.32766,10.58572 46.25,9 13.2442,-1.77152 26.31363,-5.51997 35.75,-12.75 14.32498,-9.1834 24.98761,-23.65344 29.94108,-40.41085 C 775.08428,148.15521 771.1177,120.69621 757.75,102.75 749.75892,90.430446 737.58751,81.358069 725,75.25 713.36836,70.94516 700.1393,68.537073 687,69.5 Z M 684.75,92 c 17.37515,-1.406429 32.2077,2.016508 43.5,12 13.87899,11.04814 21.39865,29.49481 19.75,50.25 -3.26366,14.81475 -7.62252,25.34522 -20,36 -13.80907,11.42671 -38.09422,16.22834 -55.75,7 -13.74996,-5.25643 -24.57326,-17.79924 -28.5,-31.5 -6.02021,-16.04821 -3.51248,-37.50848 5.75,-49.25 7.0849,-12.2366 19.9398,-21.668082 34.25,-23.5 l 0.5,-0.25 z M 500.5,69.5 c -20.53688,2.557023 -37.8523,10.735288 -50.25,26.5 -11.38388,12.60157 -17.13557,29.27801 -18.25,47.84076 -0.9786,22.45897 7.37794,42.59884 21.25,57.90924 11.74144,10.65263 23.12992,18.19579 39.25,20.25 14.77165,4.35188 32.15619,1.39939 45.75,-3 10.56138,-4.73914 20.51067,-10.41879 28.5,-20.25 4.48549,-11.14907 -10.9306,-21.03729 -19,-12.25 -12.88938,14.47329 -35.458,19.08067 -55.25,13.75 -15.20498,-5.17647 -28.42098,-16.37617 -32.75,-31.5 -2.9386,-6.70962 -7.4831,-18.03474 5.8519,-13.75 35.61269,-0.1681 71.38388,0.33525 106.8981,-0.25 10.61321,-4.58529 6.70367,-18.79584 5.25,-27.92038 C 575.71749,114.58298 569.69656,103.57861 562.5,94.5 549.66282,80.09254 533.24569,71.176727 512.07962,69.5 508.24504,69.289002 504.45101,69.314591 500.5,69.5 Z m -44,65 c 2.49751,-12.92203 9.34028,-25.87454 20.75,-33.5 11.36577,-9.330976 31.26506,-11.295449 46.75,-7 9.29798,3.479636 18.83959,11.06678 24.5,20 3.40283,5.47634 6.50415,13.05205 7.5,21.25 -32.97673,-0.49787 -67.42814,0.99674 -99.5,-0.75 z M 31.25,99.5 c -6.915012,11.15301 -13.418189,22.48189 -14.25,36.75 -3.048073,15.15862 -0.04782,30.53859 5,43.5 2.117508,5.84815 7.697934,11.09884 7.75,15.75 4.184785,0.32723 8.552448,10.37892 14.25,12.5 9.251118,8.01205 19.819047,12.13779 32.420379,15 18.003721,4.06213 38.630501,1.86247 53.329621,-6 8.24296,-3.69933 21.11058,-10.28739 15.75,-22.25 -4.75992,-7.85432 -15.35683,-5.96065 -20.5,0.5 -16.69141,10.42489 -43.29751,10.77439 -59.75,0 C 52.361746,189.04526 43.842278,175.80274 40.75,162.57962 36.045825,146.96144 39.749363,128.0917 46.5,116.25 53.449676,105.89224 64.030088,95.82424 77,92.75 c 14.640951,-5.229057 35.62451,-3.882694 47.5,4.25 10.45348,4.40329 17.71285,14.76068 22.75,23.25 6.9658,15.28525 4.6613,38.55485 5.51111,57.74149 -1.46638,18.23929 5.96707,35.6398 20.98889,43.00851 8.28398,7.68659 23.74352,0.4219 20,-12.25 -3.03766,-7.67817 -15.36291,-7.68124 -16,-17 -4.5252,-13.853 -1.40158,-32.80772 -2.82931,-48.66094 C 175.0645,127.15934 170.02453,113.18112 162.5,102.5 151.10566,86.645432 135.09459,75.11581 114.82962,71.25 91.146619,65.071969 63.446958,71.622482 46.75,84.75 41.135736,88.752319 36.083337,94.62688 31.25,99.5 Z M 249.5,15.25 c -10.49025,3.048117 -13.29009,20.456684 -4.25,27 8.78379,7.791206 25.2901,-0.465587 23.5,-13.090759 C 267.77509,19.775963 259.7444,13.143377 249.5,15.25 Z";
+function AireonLogo({ className, style, title = "aireon" }) {
+  const decorative = title === "";
+  return /* @__PURE__ */ jsxs(
+    "svg",
+    {
+      viewBox: AIREON_LOGO_VIEWBOX,
+      className,
+      style,
+      role: decorative ? "presentation" : "img",
+      "aria-hidden": decorative ? true : void 0,
+      "aria-label": decorative ? void 0 : title,
+      focusable: "false",
+      fill: "currentColor",
+      xmlns: "http://www.w3.org/2000/svg",
+      children: [
+        !decorative && /* @__PURE__ */ jsx("title", { children: title }),
+        /* @__PURE__ */ jsx("path", { fillRule: "evenodd", clipRule: "evenodd", d: AIREON_LOGO_PATH })
+      ]
+    }
+  );
+}
+var AireonLogo_default = AireonLogo;
+
+// src/prm/api.ts
+var PROOM_API_BASE = "https://proom.aireon.ch/api";
+var PRM_STATES = [
+  { value: "new", color: "text-sky-400", bg: "bg-sky-500" },
+  { value: "contacted", color: "text-amber-400", bg: "bg-amber-500" },
+  { value: "negotiation", color: "text-orange-400", bg: "bg-orange-500" },
+  { value: "due_diligence", color: "text-teal-400", bg: "bg-teal-500" },
+  { value: "closed", color: "text-emerald-400", bg: "bg-emerald-500" },
+  { value: "rejected", color: "text-red-400", bg: "bg-red-500" }
+];
+var PRM_PRIORITIES = [
+  { value: "low", color: "text-slate-400" },
+  { value: "medium", color: "text-sky-400" },
+  { value: "high", color: "text-orange-400" },
+  { value: "urgent", color: "text-red-400" }
+];
+var AuthRequiredError = class extends Error {
+  constructor() {
+    super("Sign in required to track parcels");
+    this.name = "AuthRequiredError";
+  }
+};
+async function prmFetch(path, init, token) {
+  if (!token) throw new AuthRequiredError();
+  const res = await fetch(`${PROOM_API_BASE}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...init.headers
+    }
+  });
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = (await res.json())?.error ?? "";
+    } catch {
+    }
+    throw new Error(
+      `${res.status} ${res.statusText}${detail ? `: ${detail}` : ""}`
+    );
+  }
+  if (res.status === 204) return void 0;
+  return await res.json();
+}
+function fetchPrmByParcel(token, parcelId) {
+  return prmFetch(
+    `/prm-records?parcel_id=${encodeURIComponent(parcelId)}`,
+    { method: "GET" },
+    token
+  );
+}
+function createPrmRecord(token, input) {
+  return prmFetch(
+    "/prm-records",
+    { method: "POST", body: JSON.stringify(input) },
+    token
+  );
+}
+function fetchPrmRecords(token) {
+  return prmFetch("/prm-records", { method: "GET" }, token);
+}
+function updatePrmState(token, id, state) {
+  return prmFetch(
+    `/prm-records/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify({ state }) },
+    token
+  );
+}
+function updatePrmPriority(token, id, priority) {
+  return prmFetch(
+    `/prm-records/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify({ priority }) },
+    token
+  );
+}
+function updatePrmTags(token, id, tags) {
+  return prmFetch(
+    `/prm-records/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify({ tags }) },
+    token
+  );
+}
+async function deletePrmRecord(token, id) {
+  await prmFetch(
+    `/prm-records/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+    token
+  );
+}
+var PROOM_APP_URL = "https://proom.aireon.ch";
+var TOOLBOX_APP_URL = "https://hub.aireon.ch";
+var GEOPOOL_APP_URL = "https://geopool.aireon.ch";
+var LEGACY_PROOM_APP_URL = "https://swissnovo-proom.vercel.app";
+var LEGACY_TOOLBOX_APP_URL = "https://swissnovo-toolbox.vercel.app";
+var LEGACY_GEOPOOL_APP_URL = "https://swissnovo-geopool.vercel.app";
+function AireonHubLink({
+  href = TOOLBOX_APP_URL,
+  label = "Aireon hub",
+  className = "",
+  logoClassName = "h-[17px] w-auto",
+  withDivider = false,
+  dividerClassName = "h-5 w-px bg-current opacity-20",
+  style,
+  target,
+  rel,
+  onClick
+}) {
+  return /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-2 sm:gap-2.5", style, children: [
+    /* @__PURE__ */ jsx(
+      "a",
+      {
+        href,
+        target,
+        rel: rel ?? (target === "_blank" ? "noopener noreferrer" : void 0),
+        onClick,
+        "aria-label": label,
+        title: label,
+        className: "inline-flex items-center rounded-md opacity-60 transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent " + className,
+        children: /* @__PURE__ */ jsx(AireonLogo, { className: logoClassName, title: "" })
+      }
+    ),
+    withDivider && /* @__PURE__ */ jsx("span", { "aria-hidden": "true", className: dividerClassName })
+  ] });
+}
+var AireonHubLink_default = AireonHubLink;
 function useFocusTrap(options = {}) {
   const { active = true, onEscape, restoreFocus = true } = options;
   const ref = useRef(null);
@@ -1075,103 +1228,6 @@ function useAuth() {
   if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
   return ctx;
 }
-
-// src/prm/api.ts
-var PROOM_API_BASE = "https://proom.aireon.ch/api";
-var PRM_STATES = [
-  { value: "new", color: "text-sky-400", bg: "bg-sky-500" },
-  { value: "contacted", color: "text-amber-400", bg: "bg-amber-500" },
-  { value: "negotiation", color: "text-orange-400", bg: "bg-orange-500" },
-  { value: "due_diligence", color: "text-teal-400", bg: "bg-teal-500" },
-  { value: "closed", color: "text-emerald-400", bg: "bg-emerald-500" },
-  { value: "rejected", color: "text-red-400", bg: "bg-red-500" }
-];
-var PRM_PRIORITIES = [
-  { value: "low", color: "text-slate-400" },
-  { value: "medium", color: "text-sky-400" },
-  { value: "high", color: "text-orange-400" },
-  { value: "urgent", color: "text-red-400" }
-];
-var AuthRequiredError = class extends Error {
-  constructor() {
-    super("Sign in required to track parcels");
-    this.name = "AuthRequiredError";
-  }
-};
-async function prmFetch(path, init, token) {
-  if (!token) throw new AuthRequiredError();
-  const res = await fetch(`${PROOM_API_BASE}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...init.headers
-    }
-  });
-  if (!res.ok) {
-    let detail = "";
-    try {
-      detail = (await res.json())?.error ?? "";
-    } catch {
-    }
-    throw new Error(
-      `${res.status} ${res.statusText}${detail ? `: ${detail}` : ""}`
-    );
-  }
-  if (res.status === 204) return void 0;
-  return await res.json();
-}
-function fetchPrmByParcel(token, parcelId) {
-  return prmFetch(
-    `/prm-records?parcel_id=${encodeURIComponent(parcelId)}`,
-    { method: "GET" },
-    token
-  );
-}
-function createPrmRecord(token, input) {
-  return prmFetch(
-    "/prm-records",
-    { method: "POST", body: JSON.stringify(input) },
-    token
-  );
-}
-function fetchPrmRecords(token) {
-  return prmFetch("/prm-records", { method: "GET" }, token);
-}
-function updatePrmState(token, id, state) {
-  return prmFetch(
-    `/prm-records/${encodeURIComponent(id)}`,
-    { method: "PATCH", body: JSON.stringify({ state }) },
-    token
-  );
-}
-function updatePrmPriority(token, id, priority) {
-  return prmFetch(
-    `/prm-records/${encodeURIComponent(id)}`,
-    { method: "PATCH", body: JSON.stringify({ priority }) },
-    token
-  );
-}
-function updatePrmTags(token, id, tags) {
-  return prmFetch(
-    `/prm-records/${encodeURIComponent(id)}`,
-    { method: "PATCH", body: JSON.stringify({ tags }) },
-    token
-  );
-}
-async function deletePrmRecord(token, id) {
-  await prmFetch(
-    `/prm-records/${encodeURIComponent(id)}`,
-    { method: "DELETE" },
-    token
-  );
-}
-var PROOM_APP_URL = "https://proom.aireon.ch";
-var TOOLBOX_APP_URL = "https://hub.aireon.ch";
-var GEOPOOL_APP_URL = "https://geopool.aireon.ch";
-var LEGACY_PROOM_APP_URL = "https://swissnovo-proom.vercel.app";
-var LEGACY_TOOLBOX_APP_URL = "https://swissnovo-toolbox.vercel.app";
-var LEGACY_GEOPOOL_APP_URL = "https://swissnovo-geopool.vercel.app";
 
 // src/prm/i18n.ts
 var en = {
@@ -6707,4 +6763,4 @@ function VirtualList({
   );
 }
 
-export { AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
