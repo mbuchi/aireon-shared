@@ -33,6 +33,13 @@ export interface MapUserMenuAction {
   badge?: ReactNode;
   /** Renders a small red dot at the row's trailing edge (e.g. unseen release notes). */
   dot?: boolean;
+  /**
+   * Also surface this action when the user is signed out — the menu then opens a
+   * compact dropdown with these public tools plus a "Sign in" row, instead of a
+   * bare sign-in button. Use for tools anonymous visitors should reach (tour,
+   * what's-new); omit for account-gated tools (export, saved items).
+   */
+  signedOut?: boolean;
   disabled?: boolean;
   danger?: boolean;
 }
@@ -89,21 +96,88 @@ export function MapUserMenu({
     return () => document.removeEventListener('mousedown', close);
   }, []);
 
+  // Shared renderer for a "More tools" row, used by both the signed-in and the
+  // signed-out dropdowns.
+  const renderToolItem = (item: MapUserMenuAction) => (
+    <button
+      key={item.key}
+      type="button"
+      role="menuitem"
+      disabled={item.disabled}
+      onClick={() => {
+        if (item.disabled) return;
+        setOpen(false);
+        item.onClick();
+      }}
+      className={`map-shell-user-tool-item ${item.danger ? 'map-shell-user-tool-item--danger' : ''}`}
+    >
+      {item.icon}
+      <span>{item.label}</span>
+      {item.badge && <span className="map-shell-user-menu-badge">{item.badge}</span>}
+      {item.dot && <span className="map-shell-user-menu-dot" aria-hidden="true" />}
+    </button>
+  );
+
   if (isLoading) {
     return <Skeleton circle width={36} dark={dark} />;
   }
 
   if (!user) {
+    // Tools flagged `signedOut` stay reachable for anonymous visitors (tour,
+    // what's-new) via a compact dropdown; otherwise fall back to a bare sign-in
+    // button (backward-compatible with apps that pass no public tools).
+    const publicItems = toolbarItems.filter((item) => item.signedOut);
+    if (publicItems.length === 0) {
+      return (
+        <button
+          type="button"
+          onClick={() => login()}
+          className="map-shell-user-button map-shell-user-button--signed-out"
+          aria-label={labels.signIn}
+          title={labels.signIn}
+        >
+          <CircleUser size={20} aria-hidden="true" />
+        </button>
+      );
+    }
     return (
-      <button
-        type="button"
-        onClick={() => login()}
-        className="map-shell-user-button map-shell-user-button--signed-out"
-        aria-label={labels.signIn}
-        title={labels.signIn}
-      >
-        <CircleUser size={20} aria-hidden="true" />
-      </button>
+      <div ref={menuRef} className="relative flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="map-shell-user-button map-shell-user-button--signed-out"
+          aria-label={labels.userMenu}
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          <CircleUser size={20} aria-hidden="true" />
+        </button>
+        {open && (
+          <div
+            className={`map-shell-user-dropdown ${dropdownWidth === 'wide' ? 'map-shell-user-dropdown--wide' : ''}`}
+            role="menu"
+          >
+            <div className="map-shell-user-tools">
+              <p className="map-shell-user-section-label">{toolbarLabel}</p>
+              {publicItems.map(renderToolItem)}
+            </div>
+            <div className="py-1">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  login();
+                }}
+                className="map-shell-user-menu-item"
+              >
+                <CircleUser size={16} aria-hidden="true" />
+                {labels.signIn}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -167,25 +241,7 @@ export function MapUserMenu({
             {toolbarItems.length > 0 && (
               <div className="map-shell-user-tools">
                 <p className="map-shell-user-section-label">{toolbarLabel}</p>
-                {toolbarItems.map((item) => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    role="menuitem"
-                    disabled={item.disabled}
-                    onClick={() => {
-                      if (item.disabled) return;
-                      setOpen(false);
-                      item.onClick();
-                    }}
-                    className={`map-shell-user-tool-item ${item.danger ? 'map-shell-user-tool-item--danger' : ''}`}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                    {item.badge && <span className="map-shell-user-menu-badge">{item.badge}</span>}
-                    {item.dot && <span className="map-shell-user-menu-dot" aria-hidden="true" />}
-                  </button>
-                ))}
+                {toolbarItems.map(renderToolItem)}
               </div>
             )}
 

@@ -5586,21 +5586,88 @@ function MapUserMenu({
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
+  const renderToolItem = (item) => /* @__PURE__ */ jsxs(
+    "button",
+    {
+      type: "button",
+      role: "menuitem",
+      disabled: item.disabled,
+      onClick: () => {
+        if (item.disabled) return;
+        setOpen(false);
+        item.onClick();
+      },
+      className: `map-shell-user-tool-item ${item.danger ? "map-shell-user-tool-item--danger" : ""}`,
+      children: [
+        item.icon,
+        /* @__PURE__ */ jsx("span", { children: item.label }),
+        item.badge && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-badge", children: item.badge }),
+        item.dot && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-dot", "aria-hidden": "true" })
+      ]
+    },
+    item.key
+  );
   if (isLoading) {
     return /* @__PURE__ */ jsx(Skeleton, { circle: true, width: 36, dark });
   }
   if (!user) {
-    return /* @__PURE__ */ jsx(
-      "button",
-      {
-        type: "button",
-        onClick: () => login(),
-        className: "map-shell-user-button map-shell-user-button--signed-out",
-        "aria-label": labels.signIn,
-        title: labels.signIn,
-        children: /* @__PURE__ */ jsx(CircleUser, { size: 20, "aria-hidden": "true" })
-      }
-    );
+    const publicItems = toolbarItems.filter((item) => item.signedOut);
+    if (publicItems.length === 0) {
+      return /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: () => login(),
+          className: "map-shell-user-button map-shell-user-button--signed-out",
+          "aria-label": labels.signIn,
+          title: labels.signIn,
+          children: /* @__PURE__ */ jsx(CircleUser, { size: 20, "aria-hidden": "true" })
+        }
+      );
+    }
+    return /* @__PURE__ */ jsxs("div", { ref: menuRef, className: "relative flex-shrink-0", children: [
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: () => setOpen((v) => !v),
+          className: "map-shell-user-button map-shell-user-button--signed-out",
+          "aria-label": labels.userMenu,
+          "aria-haspopup": "menu",
+          "aria-expanded": open,
+          children: /* @__PURE__ */ jsx(CircleUser, { size: 20, "aria-hidden": "true" })
+        }
+      ),
+      open && /* @__PURE__ */ jsxs(
+        "div",
+        {
+          className: `map-shell-user-dropdown ${dropdownWidth === "wide" ? "map-shell-user-dropdown--wide" : ""}`,
+          role: "menu",
+          children: [
+            /* @__PURE__ */ jsxs("div", { className: "map-shell-user-tools", children: [
+              /* @__PURE__ */ jsx("p", { className: "map-shell-user-section-label", children: toolbarLabel }),
+              publicItems.map(renderToolItem)
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "py-1", children: /* @__PURE__ */ jsxs(
+              "button",
+              {
+                type: "button",
+                role: "menuitem",
+                onClick: () => {
+                  setOpen(false);
+                  login();
+                },
+                className: "map-shell-user-menu-item",
+                children: [
+                  /* @__PURE__ */ jsx(CircleUser, { size: 16, "aria-hidden": "true" }),
+                  labels.signIn
+                ]
+              }
+            ) })
+          ]
+        }
+      )
+    ] });
   }
   const firstName = firstNameOf(user);
   const displayName = fullNameOf(user);
@@ -5654,27 +5721,7 @@ function MapUserMenu({
             dropdownSummary && /* @__PURE__ */ jsx("div", { className: "map-shell-user-summary", children: dropdownSummary }),
             toolbarItems.length > 0 && /* @__PURE__ */ jsxs("div", { className: "map-shell-user-tools", children: [
               /* @__PURE__ */ jsx("p", { className: "map-shell-user-section-label", children: toolbarLabel }),
-              toolbarItems.map((item) => /* @__PURE__ */ jsxs(
-                "button",
-                {
-                  type: "button",
-                  role: "menuitem",
-                  disabled: item.disabled,
-                  onClick: () => {
-                    if (item.disabled) return;
-                    setOpen(false);
-                    item.onClick();
-                  },
-                  className: `map-shell-user-tool-item ${item.danger ? "map-shell-user-tool-item--danger" : ""}`,
-                  children: [
-                    item.icon,
-                    /* @__PURE__ */ jsx("span", { children: item.label }),
-                    item.badge && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-badge", children: item.badge }),
-                    item.dot && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-dot", "aria-hidden": "true" })
-                  ]
-                },
-                item.key
-              ))
+              toolbarItems.map(renderToolItem)
             ] }),
             /* @__PURE__ */ jsxs("div", { className: "py-1", children: [
               extraItems.map((item) => /* @__PURE__ */ jsxs(

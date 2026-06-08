@@ -1354,6 +1354,13 @@ interface MapUserMenuAction {
     badge?: ReactNode;
     /** Renders a small red dot at the row's trailing edge (e.g. unseen release notes). */
     dot?: boolean;
+    /**
+     * Also surface this action when the user is signed out — the menu then opens a
+     * compact dropdown with these public tools plus a "Sign in" row, instead of a
+     * bare sign-in button. Use for tools anonymous visitors should reach (tour,
+     * what's-new); omit for account-gated tools (export, saved items).
+     */
+    signedOut?: boolean;
     disabled?: boolean;
     danger?: boolean;
 }
