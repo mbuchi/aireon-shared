@@ -49,13 +49,23 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
   const { profile, avatarId, avatarUrl: chosenUrl, setAvatarId, updateProfile } =
     useUserProfile(user);
 
-  // Avatar changes apply instantly; the text/select details use a draft so a
-  // RES sync only fires when the user explicitly saves.
+  // Everything is drafted so nothing persists until the user explicitly saves:
+  // the text/select details, and the avatar too — picking a new avatar previews
+  // it live and enables "Save changes", while Close cancels. (Previously the
+  // avatar applied instantly and so never enabled the Save button.)
   const [draft, setDraft] = useState<Pick<SwissnovoProfile, 'gender' | 'age' | 'about'>>({
     gender: profile.gender,
     age: profile.age,
     about: profile.about,
   });
+  const [pickedAvatarId, setPickedAvatarId] = useState<string | null>(null);
+  const effectiveAvatarId = pickedAvatarId ?? avatarId;
+  const avatarChanged = pickedAvatarId != null && pickedAvatarId !== avatarId;
+  const previewUrl = useMemo(() => {
+    if (pickedAvatarId == null) return chosenUrl;
+    const opt = avatarOptions.find((o) => o.id === pickedAvatarId);
+    return opt ? avatarUrl(opt) : chosenUrl;
+  }, [pickedAvatarId, chosenUrl]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -71,13 +81,15 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
 
   const dirty = useMemo(
     () =>
+      avatarChanged ||
       draft.gender !== profile.gender ||
       draft.age !== profile.age ||
       draft.about !== profile.about,
-    [draft, profile],
+    [avatarChanged, draft, profile],
   );
 
   function handleSave() {
+    if (avatarChanged && pickedAvatarId != null) setAvatarId(pickedAvatarId);
     updateProfile(draft);
     onClose();
   }
@@ -116,7 +128,7 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
           {/* Identity */}
           <div className="flex flex-col items-center">
             <span className="rounded-full ring-2 ring-gray-100 dark:ring-gray-800">
-              <Avatar url={chosenUrl} initials={initials} size={80} />
+              <Avatar url={previewUrl} initials={initials} size={80} />
             </span>
             <div className="mt-3 text-center">
               <div className="max-w-[16rem] truncate text-base font-semibold text-gray-900 dark:text-gray-100">
@@ -149,12 +161,12 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
             </p>
             <div className="grid grid-cols-4 gap-2.5">
               {avatarOptions.map((opt) => {
-                const selected = opt.id === avatarId;
+                const selected = opt.id === effectiveAvatarId;
                 return (
                   <button
                     key={opt.id}
                     type="button"
-                    onClick={() => setAvatarId(opt.id)}
+                    onClick={() => setPickedAvatarId(opt.id)}
                     title={opt.label}
                     aria-label={opt.label}
                     aria-pressed={selected}
