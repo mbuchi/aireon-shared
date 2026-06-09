@@ -6,7 +6,7 @@ export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, CircleUser, Bookmark, LogOut, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, CircleUser, UserCog, Table2, LogOut, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
@@ -5783,7 +5783,25 @@ function MapUserMenu({
                   ] }),
                   /* @__PURE__ */ jsx("span", { children: labels.active })
                 ] })
-              ] })
+              ] }),
+              /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  type: "button",
+                  role: "menuitem",
+                  onClick: () => {
+                    setOpen(false);
+                    setShowProfile(true);
+                  },
+                  className: "map-shell-user-manage",
+                  "aria-label": labels.manageProfile ?? labels.viewProfile,
+                  title: labels.manageProfile ?? labels.viewProfile,
+                  children: [
+                    /* @__PURE__ */ jsx(UserCog, { size: 13, "aria-hidden": "true" }),
+                    /* @__PURE__ */ jsx("span", { children: labels.manageProfile ?? labels.viewProfile })
+                  ]
+                }
+              )
             ] }),
             dropdownSummary && /* @__PURE__ */ jsx("div", { className: "map-shell-user-summary", children: dropdownSummary }),
             toolbarItems.length > 0 && /* @__PURE__ */ jsxs("div", { className: "map-shell-user-tools", children: [
@@ -5812,22 +5830,6 @@ function MapUserMenu({
                 },
                 item.key
               )),
-              /* @__PURE__ */ jsxs(
-                "button",
-                {
-                  type: "button",
-                  role: "menuitem",
-                  onClick: () => {
-                    setOpen(false);
-                    setShowProfile(true);
-                  },
-                  className: "map-shell-user-menu-item",
-                  children: [
-                    /* @__PURE__ */ jsx(CircleUser, { size: 16, "aria-hidden": "true" }),
-                    labels.viewProfile
-                  ]
-                }
-              ),
               showSavedParcels && /* @__PURE__ */ jsxs(
                 "button",
                 {
@@ -5839,7 +5841,7 @@ function MapUserMenu({
                   },
                   className: "map-shell-user-menu-item",
                   children: [
-                    /* @__PURE__ */ jsx(Bookmark, { size: 16, "aria-hidden": "true" }),
+                    /* @__PURE__ */ jsx(Table2, { size: 16, "aria-hidden": "true" }),
                     labels.savedParcels
                   ]
                 }
