@@ -1,6 +1,6 @@
 {
   "name": "@aireon/shared",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Shared UI components and utilities for the aireon app suite.",
   "type": "module",
   "license": "UNLICENSED",
@@ -31,6 +31,10 @@
     "./gemini": {
       "types": "./dist/gemini/index.d.ts",
       "default": "./dist/gemini/index.js"
+    },
+    "./map-interaction": {
+      "types": "./dist/map/parcelInteraction.d.ts",
+      "default": "./dist/map/parcelInteraction.js"
     },
     "./map-ui.css": "./src/map/mapUi.css",
     "./cesium-app": "./src/cesium-app/index.js",
