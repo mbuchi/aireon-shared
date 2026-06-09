@@ -271,6 +271,16 @@ export {
 } from './map/parcelInteraction';
 export type { ZoomGatedClickMap } from './map/parcelInteraction';
 
+// Mapbox-hosted style → MapLibre loader for the suite's maplibre-gl renderer
+// migration. Engine-agnostic (rewrites mapbox:// → https + token, fetches +
+// caches), so mapbox-gl/maplibre-gl both stay optional peers.
+export {
+  loadMapboxStyleForMapLibre,
+  normalizeMapboxStyle,
+  normalizeMapboxResourceUrl,
+} from './map/maplibreStyle';
+export type { MapboxStyleLike, LoadMapboxStyleOptions } from './map/maplibreStyle';
+
 // Responsive top-bar action cluster — collapses overflowing buttons into a ⋯
 // "More" menu on mobile (priority+ pattern); desktop stays a plain inline row.
 export { OverflowNav, default as OverflowNavDefault } from './nav/OverflowNav';

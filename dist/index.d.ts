@@ -6,6 +6,7 @@ import { User, UserManager } from 'oidc-client-ts';
 export { Coordinates, GeoJSONFeatureCollection, JsonError, ParcelTree, PoiDetail, RES_API_BASE_URL, ResApiClient, ResApiClientOptions, SignalRecord, SwissnovoImage, components, createResApiClient, operations, paths } from './api/index.js';
 export { GEMINI_FALLBACK_CHAIN, GeminiFallbackAttempt, GeminiFallbackOptions, GeminiFallbackResult, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './gemini/index.js';
 export { PARCEL_INTERACTION_MIN_ZOOM, ZoomGatedClickMap, isParcelInteractive, wireZoomGatedParcelClick } from './map/parcelInteraction.js';
+export { LoadMapboxStyleOptions, MapboxStyleLike, loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './map/maplibreStyle.js';
 import { RowData, ColumnDef } from '@tanstack/react-table';
 export { CellContext, ColumnDef, Row, createColumnHelper, flexRender } from '@tanstack/react-table';
 import 'openapi-fetch';

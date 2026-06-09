@@ -15,6 +15,9 @@ export default defineConfig({
     // can be imported in node/test contexts without dragging in the barrel's
     // browser-only modules (auth touches `window` at module load).
     'src/map/parcelInteraction.ts',
+    // Engine-agnostic Mapbox-style → MapLibre loader for the maplibre-gl
+    // migration (imports neither mapbox-gl nor maplibre-gl, so its own subpath).
+    'src/map/maplibreStyle.ts',
   ],
   format: ['esm'],
   dts: true,
