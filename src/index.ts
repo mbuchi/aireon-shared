@@ -261,6 +261,16 @@ export {
 } from './map/ScooreMiniMap';
 export type { ScooreMiniMapLabels, ScooreMiniMapProps } from './map/ScooreMiniMap';
 
+// Suite-wide parcel-interaction zoom gate — the single threshold + predicate
+// every map-first app uses so hover-highlight and click-to-select only come
+// alive once the map is zoomed past block level (and stay in lock-step).
+export {
+  PARCEL_INTERACTION_MIN_ZOOM,
+  isParcelInteractive,
+  wireZoomGatedParcelClick,
+} from './map/parcelInteraction';
+export type { ZoomGatedClickMap } from './map/parcelInteraction';
+
 // Responsive top-bar action cluster — collapses overflowing buttons into a ⋯
 // "More" menu on mobile (priority+ pattern); desktop stays a plain inline row.
 export { OverflowNav, default as OverflowNavDefault } from './nav/OverflowNav';
