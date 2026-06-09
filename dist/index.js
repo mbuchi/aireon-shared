@@ -1,7 +1,7 @@
 import './chunk-6YKTLPIC.js';
+export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
-export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -5395,6 +5395,14 @@ function ProfileModal({ user, onClose, dark = false }) {
     age: profile.age,
     about: profile.about
   });
+  const [pickedAvatarId, setPickedAvatarId] = useState(null);
+  const effectiveAvatarId = pickedAvatarId ?? avatarId;
+  const avatarChanged = pickedAvatarId != null && pickedAvatarId !== avatarId;
+  const previewUrl = useMemo(() => {
+    if (pickedAvatarId == null) return chosenUrl;
+    const opt = avatarOptions.find((o) => o.id === pickedAvatarId);
+    return opt ? avatarUrl(opt) : chosenUrl;
+  }, [pickedAvatarId, chosenUrl]);
   useEffect(() => {
     function onKey(e) {
       if (e.key === "Escape") onClose();
@@ -5406,10 +5414,11 @@ function ProfileModal({ user, onClose, dark = false }) {
   const email = emailOf(user);
   const initials = initialsOf(user);
   const dirty = useMemo(
-    () => draft.gender !== profile.gender || draft.age !== profile.age || draft.about !== profile.about,
-    [draft, profile]
+    () => avatarChanged || draft.gender !== profile.gender || draft.age !== profile.age || draft.about !== profile.about,
+    [avatarChanged, draft, profile]
   );
   function handleSave() {
+    if (avatarChanged && pickedAvatarId != null) setAvatarId(pickedAvatarId);
     updateProfile2(draft);
     onClose();
   }
@@ -5444,7 +5453,7 @@ function ProfileModal({ user, onClose, dark = false }) {
                 ),
                 /* @__PURE__ */ jsxs("div", { className: "flex-1 overflow-y-auto px-5 pb-5 pt-6", children: [
                   /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center", children: [
-                    /* @__PURE__ */ jsx("span", { className: "rounded-full ring-2 ring-gray-100 dark:ring-gray-800", children: /* @__PURE__ */ jsx(Avatar, { url: chosenUrl, initials, size: 80 }) }),
+                    /* @__PURE__ */ jsx("span", { className: "rounded-full ring-2 ring-gray-100 dark:ring-gray-800", children: /* @__PURE__ */ jsx(Avatar, { url: previewUrl, initials, size: 80 }) }),
                     /* @__PURE__ */ jsxs("div", { className: "mt-3 text-center", children: [
                       /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-base font-semibold text-gray-900 dark:text-gray-100", children: name }),
                       email && /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-xs text-gray-500 dark:text-gray-400", children: email }),
@@ -5461,12 +5470,12 @@ function ProfileModal({ user, onClose, dark = false }) {
                     /* @__PURE__ */ jsx("div", { className: "mb-2 text-xs font-medium text-gray-700 dark:text-gray-300", children: "Choose your avatar" }),
                     /* @__PURE__ */ jsx("p", { className: "mb-3 text-[11px] text-gray-500 dark:text-gray-400", children: "Your pick follows you across every SwissNovo app." }),
                     /* @__PURE__ */ jsx("div", { className: "grid grid-cols-4 gap-2.5", children: avatarOptions.map((opt) => {
-                      const selected = opt.id === avatarId;
+                      const selected = opt.id === effectiveAvatarId;
                       return /* @__PURE__ */ jsxs(
                         "button",
                         {
                           type: "button",
-                          onClick: () => setAvatarId(opt.id),
+                          onClick: () => setPickedAvatarId(opt.id),
                           title: opt.label,
                           "aria-label": opt.label,
                           "aria-pressed": selected,
