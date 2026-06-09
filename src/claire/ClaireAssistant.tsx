@@ -11,12 +11,12 @@ import {
 import { createPortal } from 'react-dom';
 import {
   AlertCircle,
+  AudioLines,
   Loader2,
   MapPin,
-  Phone,
   PhoneOff,
   Send,
-  Sparkles,
+  SquareCode,
   X,
 } from 'lucide-react';
 import {
@@ -658,7 +658,7 @@ const ClaireAssistant = ({
     messages.length === 0 && !loading && !historyLoading;
 
   const displayAddress = headerAddress || official.address;
-  const subtitle = contextLoading ? 'Syncing parcel…' : 'Powered by Gemini';
+  const subtitle = contextLoading ? 'Syncing parcel…' : null;
 
   // A compact circular launcher anchored to the bottom-right corner. It may
   // overlap the parcel info panel — accepted for now per product direction.
@@ -733,20 +733,22 @@ const ClaireAssistant = ({
         </div>
         <div className="min-w-0 flex-1">
           <div
-            className={`text-[13px] font-semibold leading-tight ${
+            className={`text-[18px] font-semibold leading-tight ${
               darkMode ? 'text-white' : 'text-gray-900'
             }`}
           >
             Claire
           </div>
-          <div
-            className={`flex items-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em] mt-0.5 ${
-              darkMode ? 'text-amber-200/70' : 'text-amber-700/80'
-            }`}
-          >
-            {contextLoading && <Loader2 size={9} className="animate-spin shrink-0" />}
-            <span className="truncate">{subtitle}</span>
-          </div>
+          {subtitle && (
+            <div
+              className={`flex items-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em] mt-0.5 ${
+                darkMode ? 'text-amber-200/70' : 'text-amber-700/80'
+              }`}
+            >
+              <Loader2 size={9} className="animate-spin shrink-0" />
+              <span className="truncate">{subtitle}</span>
+            </div>
+          )}
         </div>
         {/* Studio — hands the current parcel off to the doorway "Claire
             studio" app (chat-first UI with user-picked data sources). Opens
@@ -759,10 +761,9 @@ const ClaireAssistant = ({
             rel="noopener noreferrer"
             aria-label="Open this address in doorway studio"
             title="Open in doorway studio — chat with Claire using picked data sources"
-            className="inline-flex items-center gap-1 px-2 h-8 rounded-lg shrink-0 transition-colors text-[11px] font-semibold uppercase tracking-wider text-amber-200/80 ring-1 ring-amber-300/25 hover:text-amber-100 hover:bg-amber-400/10 hover:ring-amber-300/40"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-colors text-amber-200/80 ring-1 ring-amber-300/25 hover:text-amber-100 hover:bg-amber-400/10 hover:ring-amber-300/40"
           >
-            <Sparkles size={12} />
-            <span>Studio</span>
+            <SquareCode size={15} />
           </a>
         )}
         {voiceCallEnabled && (
@@ -782,7 +783,7 @@ const ClaireAssistant = ({
                 : 'text-rose-200 bg-rose-500/15 ring-1 ring-rose-400/30 hover:bg-rose-500/25 disabled:opacity-60'
             }`}
           >
-            {callStatus === 'idle' ? <Phone size={15} /> : <PhoneOff size={15} />}
+            {callStatus === 'idle' ? <AudioLines size={15} /> : <PhoneOff size={15} />}
           </button>
         )}
         <button
@@ -870,9 +871,7 @@ const ClaireAssistant = ({
                 : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200/70'
             }`}
           >
-            Hi, I’m Claire. Ask me anything about this parcel — zoning, value,
-            what can be built, comparable properties, or hidden risks. My
-            answers are scoped to the selection on the map.
+            Hi, I'm Claire. Ask me anything about this parcel.
           </div>
         )}
 

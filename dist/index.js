@@ -1,13 +1,13 @@
+import './chunk-6YKTLPIC.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
 export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
-import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, Sparkles, Phone, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, CircleUser, UserCog, Table2, LogOut, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, CircleUser, UserCog, Table2, LogOut, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
@@ -3527,7 +3527,7 @@ var ClaireAssistant = ({
   const sendDisabled = !input.trim() || loading;
   const showQuickPrompts = messages.length === 0 && !loading && !historyLoading;
   const displayAddress = headerAddress || official.address;
-  const subtitle = contextLoading ? "Syncing parcel\u2026" : "Powered by Gemini";
+  const subtitle = contextLoading ? "Syncing parcel\u2026" : null;
   const launcherPos = "right-6 bottom-6";
   const cardPos = "inset-x-3 top-20 bottom-3 md:inset-x-auto md:top-auto md:bottom-6 md:right-6 md:left-auto md:w-[23rem] md:h-auto md:max-h-[min(78vh,560px)]";
   const launcher = /* @__PURE__ */ jsxs(
@@ -3589,22 +3589,22 @@ var ClaireAssistant = ({
                 /* @__PURE__ */ jsx(
                   "div",
                   {
-                    className: `text-[13px] font-semibold leading-tight ${"text-white" }`,
+                    className: `text-[18px] font-semibold leading-tight ${"text-white" }`,
                     children: "Claire"
                   }
                 ),
-                /* @__PURE__ */ jsxs(
+                subtitle && /* @__PURE__ */ jsxs(
                   "div",
                   {
                     className: `flex items-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em] mt-0.5 ${"text-amber-200/70" }`,
                     children: [
-                      contextLoading && /* @__PURE__ */ jsx(Loader2, { size: 9, className: "animate-spin shrink-0" }),
+                      /* @__PURE__ */ jsx(Loader2, { size: 9, className: "animate-spin shrink-0" }),
                       /* @__PURE__ */ jsx("span", { className: "truncate", children: subtitle })
                     ]
                   }
                 )
               ] }),
-              appName !== "doorway" && /* @__PURE__ */ jsxs(
+              appName !== "doorway" && /* @__PURE__ */ jsx(
                 "a",
                 {
                   href: `https://doorway.aireon.ch/?lat=${lngLat.lat}&lng=${lngLat.lng}`,
@@ -3612,11 +3612,8 @@ var ClaireAssistant = ({
                   rel: "noopener noreferrer",
                   "aria-label": "Open this address in doorway studio",
                   title: "Open in doorway studio \u2014 chat with Claire using picked data sources",
-                  className: "inline-flex items-center gap-1 px-2 h-8 rounded-lg shrink-0 transition-colors text-[11px] font-semibold uppercase tracking-wider text-amber-200/80 ring-1 ring-amber-300/25 hover:text-amber-100 hover:bg-amber-400/10 hover:ring-amber-300/40",
-                  children: [
-                    /* @__PURE__ */ jsx(Sparkles, { size: 12 }),
-                    /* @__PURE__ */ jsx("span", { children: "Studio" })
-                  ]
+                  className: "inline-flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-colors text-amber-200/80 ring-1 ring-amber-300/25 hover:text-amber-100 hover:bg-amber-400/10 hover:ring-amber-300/40",
+                  children: /* @__PURE__ */ jsx(SquareCode, { size: 15 })
                 }
               ),
               voiceCallEnabled && /* @__PURE__ */ jsx(
@@ -3628,7 +3625,7 @@ var ClaireAssistant = ({
                   "aria-label": callStatus === "idle" ? "Call Claire" : "End call",
                   title: callStatus === "idle" ? "Have a spoken conversation with Claire" : "End the call",
                   className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${callStatus === "idle" ? "text-gray-400 hover:text-emerald-300 hover:bg-emerald-400/10" : "text-rose-200 bg-rose-500/15 ring-1 ring-rose-400/30 hover:bg-rose-500/25 disabled:opacity-60"}`,
-                  children: callStatus === "idle" ? /* @__PURE__ */ jsx(Phone, { size: 15 }) : /* @__PURE__ */ jsx(PhoneOff, { size: 15 })
+                  children: callStatus === "idle" ? /* @__PURE__ */ jsx(AudioLines, { size: 15 }) : /* @__PURE__ */ jsx(PhoneOff, { size: 15 })
                 }
               ),
               /* @__PURE__ */ jsx(
@@ -3696,7 +3693,7 @@ var ClaireAssistant = ({
                 "div",
                 {
                   className: `rounded-xl px-3 py-2.5 text-[12px] leading-relaxed ${"bg-white/[0.025] text-gray-300 ring-1 ring-white/[0.04]" }`,
-                  children: "Hi, I\u2019m Claire. Ask me anything about this parcel \u2014 zoning, value, what can be built, comparable properties, or hidden risks. My answers are scoped to the selection on the map."
+                  children: "Hi, I'm Claire. Ask me anything about this parcel."
                 }
               ),
               messages.map(
