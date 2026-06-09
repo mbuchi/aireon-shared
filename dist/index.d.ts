@@ -1400,6 +1400,12 @@ interface MapUserMenuLabels {
     signIn: string;
     userMenu: string;
     viewProfile: string;
+    /**
+     * Label for the compact profile button shown beside the user name in the
+     * account card. Optional — falls back to `viewProfile` so existing consumers
+     * need no change. Pass a short verb like "Manage" for the tightest fit.
+     */
+    manageProfile?: string;
     savedParcels: string;
     signOut: string;
     active: string;

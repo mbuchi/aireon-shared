@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Bookmark, ChevronDown, CircleUser, LogOut } from 'lucide-react';
+import { Table2, ChevronDown, CircleUser, LogOut, UserCog } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar, useUserProfile } from '../profile';
 import {
@@ -19,6 +19,12 @@ export interface MapUserMenuLabels {
   signIn: string;
   userMenu: string;
   viewProfile: string;
+  /**
+   * Label for the compact profile button shown beside the user name in the
+   * account card. Optional — falls back to `viewProfile` so existing consumers
+   * need no change. Pass a short verb like "Manage" for the tightest fit.
+   */
+  manageProfile?: string;
   savedParcels: string;
   signOut: string;
   active: string;
@@ -230,6 +236,20 @@ export function MapUserMenu({
                   <span>{labels.active}</span>
                 </div>
               </div>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  setShowProfile(true);
+                }}
+                className="map-shell-user-manage"
+                aria-label={labels.manageProfile ?? labels.viewProfile}
+                title={labels.manageProfile ?? labels.viewProfile}
+              >
+                <UserCog size={13} aria-hidden="true" />
+                <span>{labels.manageProfile ?? labels.viewProfile}</span>
+              </button>
             </div>
 
             {dropdownSummary && (
@@ -265,18 +285,6 @@ export function MapUserMenu({
                   {item.dot && <span className="map-shell-user-menu-dot" aria-hidden="true" />}
                 </button>
               ))}
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setOpen(false);
-                  setShowProfile(true);
-                }}
-                className="map-shell-user-menu-item"
-              >
-                <CircleUser size={16} aria-hidden="true" />
-                {labels.viewProfile}
-              </button>
               {showSavedParcels && (
                 <button
                   type="button"
@@ -287,7 +295,7 @@ export function MapUserMenu({
                   }}
                   className="map-shell-user-menu-item"
                 >
-                  <Bookmark size={16} aria-hidden="true" />
+                  <Table2 size={16} aria-hidden="true" />
                   {labels.savedParcels}
                 </button>
               )}
