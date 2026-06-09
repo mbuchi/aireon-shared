@@ -823,3 +823,226 @@
 .aireon-onav-menu-custom > * {
   width: 100%;
 }
+
+/* ========================================================================== */
+/* Variant-1 "Toolbar Lab" navbar — monochrome icon button + instant tooltip,  */
+/* and the cross-app "Open with" menu. Used by <NavIconButton>/<OpenWithMenu>. */
+/* ========================================================================== */
+
+.aireon-navbtn-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.aireon-navbtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: rgb(107 114 128); /* gray-500 */
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.aireon-navbtn:hover {
+  color: rgb(17 24 39); /* gray-900 */
+}
+
+.aireon-navbtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(17 24 39 / 0.5);
+}
+
+.aireon-navbtn--active {
+  background: rgb(243 244 246); /* gray-100 */
+  color: rgb(17 24 39);
+}
+
+/* Instant tooltip below the icon — reveals the moment the button is hovered. */
+.aireon-navbtn-tip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 0.375rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  background: rgb(17 24 39);
+  color: rgb(255 255 255);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 60;
+  box-shadow: 0 8px 20px rgb(15 23 42 / 0.22);
+  transition: opacity 120ms ease;
+}
+
+.aireon-navbtn-wrap:hover .aireon-navbtn-tip,
+.aireon-navbtn-wrap:focus-within .aireon-navbtn-tip,
+.aireon-openwith:hover .aireon-openwith-tip,
+.aireon-openwith:focus-within .aireon-openwith-tip {
+  opacity: 1;
+}
+
+.dark .aireon-navbtn,
+[data-theme="dark"] .aireon-navbtn,
+.aireon-navbtn-wrap--dark .aireon-navbtn,
+.aireon-openwith--dark .aireon-navbtn {
+  color: rgb(203 213 225); /* slate-300 */
+}
+
+.dark .aireon-navbtn:hover,
+[data-theme="dark"] .aireon-navbtn:hover,
+.aireon-navbtn-wrap--dark .aireon-navbtn:hover,
+.aireon-openwith--dark .aireon-navbtn:hover {
+  color: rgb(255 255 255);
+}
+
+.dark .aireon-navbtn--active,
+[data-theme="dark"] .aireon-navbtn--active,
+.aireon-navbtn-wrap--dark .aireon-navbtn--active {
+  background: rgb(30 41 59); /* slate-800 */
+  color: rgb(255 255 255);
+}
+
+.dark .aireon-navbtn:focus-visible,
+[data-theme="dark"] .aireon-navbtn:focus-visible,
+.aireon-navbtn-wrap--dark .aireon-navbtn:focus-visible {
+  box-shadow: 0 0 0 2px rgb(148 163 184 / 0.7);
+}
+
+.dark .aireon-navbtn-tip,
+[data-theme="dark"] .aireon-navbtn-tip,
+.aireon-navbtn-wrap--dark .aireon-navbtn-tip,
+.aireon-openwith--dark .aireon-navbtn-tip {
+  background: rgb(51 65 85); /* slate-700 */
+}
+
+/* ---- Open-with menu ----------------------------------------------------- */
+.aireon-openwith {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.aireon-openwith-trigger {
+  gap: 0.125rem;
+}
+
+.aireon-openwith-trigger--labelled {
+  padding: 0.375rem 0.625rem;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.aireon-openwith-trigger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.aireon-openwith-trigger-label {
+  margin: 0 0.125rem;
+}
+
+.aireon-openwith-caret {
+  transition: transform 160ms ease;
+}
+
+.aireon-openwith-caret.is-open {
+  transform: rotate(180deg);
+}
+
+.aireon-openwith-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  z-index: 60;
+  min-width: 11rem;
+  max-width: calc(100vw - 1rem);
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.375rem 0;
+  border: 1px solid rgb(229 231 235);
+  border-radius: 0.75rem;
+  background: white;
+  box-shadow: 0 20px 40px rgb(15 23 42 / 0.18);
+}
+
+.dark .aireon-openwith-menu,
+[data-theme="dark"] .aireon-openwith-menu,
+.aireon-openwith--dark .aireon-openwith-menu {
+  border-color: rgb(51 65 85);
+  background: rgb(30 41 59);
+  box-shadow: 0 20px 44px rgb(0 0 0 / 0.34);
+}
+
+.aireon-openwith-menu-label {
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+  color: rgb(156 163 175);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.dark .aireon-openwith-menu-label,
+[data-theme="dark"] .aireon-openwith-menu-label,
+.aireon-openwith--dark .aireon-openwith-menu-label {
+  color: rgb(100 116 139);
+}
+
+.aireon-openwith-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  border: 0;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  color: rgb(55 65 81);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.aireon-openwith-item:hover {
+  background: rgb(243 244 246);
+  color: rgb(17 24 39);
+}
+
+.aireon-openwith-item-icon {
+  flex-shrink: 0;
+  color: rgb(156 163 175);
+}
+
+.dark .aireon-openwith-item,
+[data-theme="dark"] .aireon-openwith-item,
+.aireon-openwith--dark .aireon-openwith-item {
+  color: rgb(203 213 225);
+}
+
+.dark .aireon-openwith-item:hover,
+[data-theme="dark"] .aireon-openwith-item:hover,
+.aireon-openwith--dark .aireon-openwith-item:hover {
+  background: rgb(51 65 85 / 0.6);
+  color: rgb(255 255 255);
+}
+
+.dark .aireon-openwith-item-icon,
+[data-theme="dark"] .aireon-openwith-item-icon,
+.aireon-openwith--dark .aireon-openwith-item-icon {
+  color: rgb(100 116 139);
+}

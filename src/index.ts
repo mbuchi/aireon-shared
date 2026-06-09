@@ -270,6 +270,20 @@ export type {
   OverflowNavMode,
 } from './nav/OverflowNav';
 
+// Variant-1 "Toolbar Lab" navbar primitives — monochrome icon button + the
+// cross-app "Open with" menu (open a picked location in another suite app).
+export { NavIconButton, default as NavIconButtonDefault } from './nav/NavIconButton';
+export type { NavIconButtonProps } from './nav/NavIconButton';
+export { OpenWithMenu, default as OpenWithMenuDefault } from './nav/OpenWithMenu';
+export type { OpenWithMenuProps } from './nav/OpenWithMenu';
+export {
+  LAUNCH_APPS,
+  LAUNCH_DEFAULT_ZOOM,
+  buildDeepLink,
+  openInApp,
+} from './nav/launchApps';
+export type { LaunchApp } from './nav/launchApps';
+
 // Suite-default data primitives — TanStack Table / Virtual.
 export { DataTable, DATA_TABLE_STRINGS_EN } from './table/DataTable';
 export type { DataTableProps, DataTableStrings } from './table/DataTable';
