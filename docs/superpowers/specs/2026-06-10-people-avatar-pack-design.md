@@ -91,6 +91,20 @@ back to initials on any load failure, so no JPEG fallback is needed.
 `PEOPLE_ASSET_TAG` bumped to `v1.13.2` (the assets changed, so the CDN pin and
 git tag move together).
 
+## Update — v1.14.0 (2026-06-11): gendered headshot pack (+39)
+
+Added a second illustrated style: 39 faceless head-and-shoulders portraits on a
+white background (20 `female-NN`, 19 `male-NN`), supplied as 256px PNG and
+converted to 256px WebP (`cwebp -q 80 -m 6 -sharp_yuv`, ~2.5 KB each, ~101 KB for
+all 39). They join the original 10 `person-NN` in the single **people** group
+(now 49), interleaved female/male in the array so the picker grid isn't
+gender-segregated. Friendly first-name labels continue (gender-appropriate,
+distinct from the original 10). Stable ids are gendered + contiguous
+(`female-01`…`female-20`, `male-01`…`male-19`; the source PNGs' gappy male
+numbering 1–22 was re-sequenced). Solid white background (no alpha), so the
+existing `rounded-full object-cover` tile renders them as clean circular
+headshots — no `Avatar`/`ProfileModal` change. `PEOPLE_ASSET_TAG` → `v1.14.0`.
+
 ## Out of scope
 
 - Rolling the new tag into the individual apps (separate task).
