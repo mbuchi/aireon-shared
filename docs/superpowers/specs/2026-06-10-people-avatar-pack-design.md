@@ -74,7 +74,12 @@ it up by bumping its `@aireon/shared` git dependency to `#v1.13.0`
 (`npm install "github:mbuchi/aireon-shared#v1.13.0"`) — a separate, optional
 follow-up across the ~30 apps.
 
-## Update — v1.13.1 (2026-06-11): WebP optimization
+## Update — v1.13.2 (2026-06-11): WebP optimization
+
+> Released as v1.13.2, not v1.13.1: a concurrent basemap fix on another machine
+> claimed the `v1.13.1` tag (PR #103) while this work was in flight, so the asset
+> pin and package version moved to v1.13.2 to stay monotonic and point at a tag
+> that actually contains the `.webp` files.
 
 The shipped JPEGs were re-derived from the 1254px PNG originals as **256px WebP**
 (`cwebp -q 80 -m 6 -sharp_yuv`), replacing `person-NN.jpg` with `person-NN.webp`.
@@ -83,7 +88,7 @@ sharpness (no JPEG ringing on the flat-art edges; sourced from clean originals,
 not re-compressed). 256px is retained — it covers the largest display (80px) at
 3× DPI. WebP is universally supported by the suite's browsers, and `Avatar` falls
 back to initials on any load failure, so no JPEG fallback is needed.
-`PEOPLE_ASSET_TAG` bumped to `v1.13.1` (the assets changed, so the CDN pin and
+`PEOPLE_ASSET_TAG` bumped to `v1.13.2` (the assets changed, so the CDN pin and
 git tag move together).
 
 ## Out of scope

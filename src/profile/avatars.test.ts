@@ -32,7 +32,7 @@ describe('avatar catalogue', () => {
   it('people resolve to a CDN image URL, emoji to a Twemoji SVG', () => {
     const mia = avatarOptions.find((o) => o.id === 'person-01')!;
     expect(avatarUrl(mia)).toBe(
-      'https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@v1.13.1/assets/avatars/person-01.webp',
+      'https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@v1.13.2/assets/avatars/person-01.webp',
     );
     const fox = avatarOptions.find((o) => o.id === 'fox')!;
     expect(avatarUrl(fox)).toContain('jdecked/twemoji');

@@ -5010,7 +5010,7 @@ function Avatar({ url, initials, size = 28, className = "" }) {
 // src/profile/avatars.ts
 var TWEMOJI_TAG = "15.1.0";
 var TWEMOJI_BASE = `https://cdn.jsdelivr.net/gh/jdecked/twemoji@${TWEMOJI_TAG}/assets/svg`;
-var PEOPLE_ASSET_TAG = "v1.13.1";
+var PEOPLE_ASSET_TAG = "v1.13.2";
 var PEOPLE_BASE = `https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@${PEOPLE_ASSET_TAG}/assets/avatars`;
 var avatarOptions = [
   // --- People (illustrated portraits) ---------------------------------------

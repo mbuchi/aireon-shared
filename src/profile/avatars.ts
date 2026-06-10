@@ -36,7 +36,7 @@ const TWEMOJI_BASE = `https://cdn.jsdelivr.net/gh/jdecked/twemoji@${TWEMOJI_TAG}
 // from the jsDelivr GitHub CDN, pinned to the release tag that introduced them
 // — same approach as Twemoji above: stable bytes, permanent CDN cache. Bump
 // this ONLY if the image files themselves change (not on every package release).
-const PEOPLE_ASSET_TAG = 'v1.13.1';
+const PEOPLE_ASSET_TAG = 'v1.13.2';
 const PEOPLE_BASE = `https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@${PEOPLE_ASSET_TAG}/assets/avatars`;
 
 /**
