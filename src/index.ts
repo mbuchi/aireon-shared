@@ -261,6 +261,21 @@ export {
 } from './map/ScooreMiniMap';
 export type { ScooreMiniMapLabels, ScooreMiniMapProps } from './map/ScooreMiniMap';
 
+// Suite-standard swisstopo aerial thumbnail for parcel info panels — a small
+// SWISSIMAGE orthophoto that expands to a full-screen lightbox. Engine- and
+// i18n-agnostic (plain <img>, strings injected via `labels`), so every
+// map-first parcel app renders the same one instead of forking a copy.
+export {
+  ParcelAerialThumbnail,
+  default as ParcelAerialThumbnailDefault,
+  buildSwisstopoAerialUrl,
+  aerialThumbnailZoom,
+} from './map/ParcelAerialThumbnail';
+export type {
+  ParcelAerialThumbnailLabels,
+  ParcelAerialThumbnailProps,
+} from './map/ParcelAerialThumbnail';
+
 // Suite-wide parcel-interaction zoom gate — the single threshold + predicate
 // every map-first app uses so hover-highlight and click-to-select only come
 // alive once the map is zoomed past block level (and stay in lock-step).

@@ -7,7 +7,7 @@ export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, CircleUser, UserCog, Table2, LogOut, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, CircleUser, UserCog, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
@@ -6279,6 +6279,211 @@ function ScooreMiniMap({
   );
 }
 var ScooreMiniMap_default = ScooreMiniMap;
+function aerialThumbnailZoom(areaM2, lat, imgWidthPx) {
+  const widthM = areaM2 && areaM2 > 0 ? Math.sqrt(areaM2) : 28;
+  const cosLat = Math.cos(lat * Math.PI / 180);
+  const targetFraction = 0.5;
+  const z = Math.log2(156543.03 * cosLat * targetFraction * imgWidthPx / widthM);
+  const clamped = Math.max(15, Math.min(19.5, z));
+  return Math.round(clamped * 10) / 10;
+}
+function buildSwisstopoAerialUrl(lng, lat, zoom, sizePx) {
+  const cosLat = Math.cos(lat * Math.PI / 180);
+  const groundM = sizePx * 156543.03 * cosLat / 2 ** zoom;
+  const dLat = groundM / 111320;
+  const dLng = groundM / (111320 * cosLat);
+  const bbox = `${lng - dLng / 2},${lat - dLat / 2},${lng + dLng / 2},${lat + dLat / 2}`;
+  const params = new URLSearchParams({
+    SERVICE: "WMS",
+    VERSION: "1.1.1",
+    REQUEST: "GetMap",
+    LAYERS: "ch.swisstopo.swissimage",
+    STYLES: "",
+    SRS: "EPSG:4326",
+    BBOX: bbox,
+    WIDTH: String(Math.round(sizePx * 2)),
+    HEIGHT: String(Math.round(sizePx * 2)),
+    FORMAT: "image/jpeg"
+  });
+  return `https://wms.geo.admin.ch/?${params.toString()}`;
+}
+var AerialLightbox = ({
+  url,
+  dark,
+  labels,
+  attribution,
+  onClose
+}) => {
+  const [loaded, setLoaded] = useState(false);
+  const closeRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onCloseRef.current();
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeRef.current?.focus();
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+  return createPortal(
+    /* @__PURE__ */ jsxs(
+      "div",
+      {
+        role: "dialog",
+        "aria-modal": "true",
+        "aria-label": labels.dialogAria,
+        className: "fixed inset-0 flex items-center justify-center p-4",
+        style: { zIndex: Z_INDEX.overlay },
+        children: [
+          /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-black/70 backdrop-blur-sm", onClick: onClose }),
+          /* @__PURE__ */ jsxs(
+            "div",
+            {
+              className: `relative rounded-xl overflow-hidden shadow-2xl ring-1 ${dark ? "ring-white/10 bg-gray-800" : "ring-black/10 bg-gray-100"}`,
+              style: { width: "min(90vw, 85vh, 560px)", aspectRatio: "1 / 1" },
+              children: [
+                /* @__PURE__ */ jsx(
+                  "img",
+                  {
+                    src: url,
+                    alt: labels.imageAlt,
+                    onLoad: () => setLoaded(true),
+                    className: `w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`
+                  }
+                ),
+                !loaded && /* @__PURE__ */ jsx("div", { className: `absolute inset-0 flex items-center justify-center ${dark ? "text-gray-500" : "text-gray-400"}`, children: /* @__PURE__ */ jsx(Map$1, { size: 28, className: "animate-pulse" }) }),
+                loaded && /* @__PURE__ */ jsx("div", { "aria-hidden": true, className: "absolute inset-0 flex items-center justify-center pointer-events-none", children: /* @__PURE__ */ jsx("div", { className: "w-2.5 h-2.5 rounded-full bg-white ring-2 ring-black/50 shadow" }) }),
+                /* @__PURE__ */ jsx("span", { className: "absolute bottom-1 right-1.5 px-1 text-[10px] leading-tight text-white/90 bg-black/40 rounded pointer-events-none select-none", children: attribution }),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    ref: closeRef,
+                    type: "button",
+                    onClick: onClose,
+                    "aria-label": labels.close,
+                    className: "absolute top-2 right-2 w-8 h-8 rounded-full bg-black/45 text-white hover:bg-black/65 flex items-center justify-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-white/80",
+                    children: /* @__PURE__ */ jsx(X, { size: 18 })
+                  }
+                )
+              ]
+            }
+          )
+        ]
+      }
+    ),
+    document.body
+  );
+};
+var ParcelAerialThumbnail = ({
+  lng,
+  lat,
+  areaM2 = null,
+  zoom,
+  sizePx = 88,
+  expandedPx = 480,
+  dark = false,
+  labels,
+  className,
+  attribution = "\xA9 swisstopo"
+}) => {
+  const url = useMemo(() => {
+    const z = zoom ?? aerialThumbnailZoom(areaM2, lat, sizePx);
+    return buildSwisstopoAerialUrl(lng, lat, z, sizePx);
+  }, [lng, lat, areaM2, zoom, sizePx]);
+  const expandedUrl = useMemo(() => {
+    const z = zoom != null ? Math.max(14, zoom - 1.2) : Math.max(14, aerialThumbnailZoom(areaM2, lat, expandedPx) - 1.2);
+    return buildSwisstopoAerialUrl(lng, lat, z, expandedPx);
+  }, [lng, lat, areaM2, zoom, expandedPx]);
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const triggerRef = useRef(null);
+  useEffect(() => {
+    setLoaded(false);
+    setErrored(false);
+  }, [url]);
+  const closeLightbox = () => {
+    setExpanded(false);
+    triggerRef.current?.focus();
+  };
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsxs(
+      "button",
+      {
+        ref: triggerRef,
+        type: "button",
+        onClick: () => setExpanded(true),
+        disabled: errored,
+        "aria-label": labels.expand,
+        className: `group relative shrink-0 rounded-lg overflow-hidden ring-1 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${errored ? "cursor-default" : "cursor-pointer"} ${dark ? "ring-white/[0.08] bg-white/[0.04]" : "ring-gray-200 bg-gray-100"}${className ? ` ${className}` : ""}`,
+        style: { width: sizePx, height: sizePx },
+        children: [
+          !errored && /* @__PURE__ */ jsx(
+            "img",
+            {
+              src: url,
+              alt: labels.imageAlt,
+              width: sizePx,
+              height: sizePx,
+              loading: "lazy",
+              decoding: "async",
+              onLoad: () => setLoaded(true),
+              onError: () => setErrored(true),
+              className: `w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`
+            }
+          ),
+          (!loaded || errored) && /* @__PURE__ */ jsx(
+            "div",
+            {
+              className: `absolute inset-0 flex items-center justify-center ${dark ? "text-gray-500" : "text-gray-400"}`,
+              children: /* @__PURE__ */ jsx(Map$1, { size: 18, className: errored ? "" : "animate-pulse" })
+            }
+          ),
+          loaded && !errored && /* @__PURE__ */ jsx(
+            "div",
+            {
+              "aria-hidden": true,
+              className: "absolute inset-0 flex items-center justify-center pointer-events-none",
+              children: /* @__PURE__ */ jsx("div", { className: "w-2 h-2 rounded-full bg-white ring-2 ring-black/40 shadow-sm" })
+            }
+          ),
+          loaded && !errored && /* @__PURE__ */ jsx(
+            "span",
+            {
+              "aria-hidden": true,
+              className: "absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 group-focus-visible:bg-black/30 transition-colors",
+              children: /* @__PURE__ */ jsx(
+                Maximize2,
+                {
+                  size: 16,
+                  className: "text-white opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity drop-shadow"
+                }
+              )
+            }
+          ),
+          loaded && !errored && /* @__PURE__ */ jsx("span", { className: "absolute bottom-0 right-0 px-0.5 text-[7px] leading-tight text-white/85 bg-black/35 rounded-tl pointer-events-none select-none", children: attribution })
+        ]
+      }
+    ),
+    expanded && /* @__PURE__ */ jsx(
+      AerialLightbox,
+      {
+        url: expandedUrl,
+        dark,
+        labels,
+        attribution,
+        onClose: closeLightbox
+      }
+    )
+  ] });
+};
+var ParcelAerialThumbnail_default = ParcelAerialThumbnail;
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(false);
   useEffect(() => {
@@ -6906,4 +7111,4 @@ function VirtualList({
   );
 }
 
-export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };

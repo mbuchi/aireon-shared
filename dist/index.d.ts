@@ -1475,6 +1475,59 @@ interface ScooreMiniMapProps {
 declare function createScooreCircleGeoJSON(centerLng: number, centerLat: number, radiusMeters: number, points?: number): GeoJSON.Feature<GeoJSON.Polygon>;
 declare function ScooreMiniMap({ lat, lng, mapboxToken, address, points, score, labels, isDarkMode, className, mapClassName, maxInitialPoiDistance, preserveDrawingBuffer, }: ScooreMiniMapProps): react_jsx_runtime.JSX.Element | null;
 
+/**
+ * Shared swisstopo aerial thumbnail for parcel info panels across the suite.
+ *
+ * Renders a small SWISSIMAGE orthophoto of a parcel that expands to a
+ * full-screen lightbox showing the parcel in its neighbourhood context. The
+ * imagery comes from the geo.admin WMS GetMap — Swiss federal aerial imagery,
+ * no API key, CORS-enabled (© swisstopo).
+ *
+ * The component is engine- and i18n-agnostic: it never imports mapbox-gl /
+ * maplibre-gl (the thumbnail is a plain <img>, not an engine render) and never
+ * resolves its own translations — the four strings come in via `labels`, the
+ * suite-standard label-injection pattern (see MapUserMenu / ScooreMiniMap).
+ */
+declare function aerialThumbnailZoom(areaM2: number | null, lat: number, imgWidthPx: number): number;
+declare function buildSwisstopoAerialUrl(lng: number, lat: number, zoom: number, sizePx: number): string;
+/** The four translatable strings the component needs, injected by the host app. */
+interface ParcelAerialThumbnailLabels {
+    /** alt text on both the thumbnail <img> and the lightbox <img>. */
+    imageAlt: string;
+    /** aria-label on the trigger button (e.g. "Enlarge aerial image"). */
+    expand: string;
+    /** aria-label on the lightbox dialog (e.g. "Parcel aerial preview"). */
+    dialogAria: string;
+    /** aria-label / title on the lightbox close (✕) button. */
+    close: string;
+}
+interface ParcelAerialThumbnailProps {
+    lng: number;
+    lat: number;
+    /** Parcel area for area-based framing; pass null/omit to use the 28 m default. */
+    areaM2?: number | null;
+    /**
+     * Optional fixed Web-Mercator zoom override. If provided, the thumbnail uses
+     * it directly and the lightbox zooms out 1.2 levels from it — lets callers
+     * with no parcel area pass a flat zoom. If omitted, both zooms derive from
+     * `areaM2` via aerialThumbnailZoom.
+     */
+    zoom?: number;
+    /** Thumbnail edge length in logical px. Default 88. */
+    sizePx?: number;
+    /** Lightbox source edge length in logical px (≈2× ground span). Default 480. */
+    expandedPx?: number;
+    /** Dark-mode styling toggle. */
+    dark?: boolean;
+    /** i18n strings — injected, never resolved inside the shared component. */
+    labels: ParcelAerialThumbnailLabels;
+    /** Optional wrapper class override for layout placement. */
+    className?: string;
+    /** Attribution overlay text. Always rendered. Defaults to "© swisstopo". */
+    attribution?: string;
+}
+declare const ParcelAerialThumbnail: ({ lng, lat, areaM2, zoom, sizePx, expandedPx, dark, labels, className, attribution, }: ParcelAerialThumbnailProps) => react_jsx_runtime.JSX.Element;
+
 type OverflowNavMode = 'inline' | 'menu';
 interface OverflowNavItem {
     /** Stable identity for React keys. */
@@ -1731,4 +1784,4 @@ interface VirtualListProps<T> {
 }
 declare function VirtualList<T>({ items, renderItem, estimateSize, overscan, getItemKey, onEndReached, endReachedThreshold, loading, skeletonRows, emptyMessage, className, style, ariaLabel, }: VirtualListProps<T>): JSX.Element;
 
-export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonHubLink, AireonHubLink as AireonHubLinkDefault, type AireonHubLinkProps, AireonLogo, AireonLogo as AireonLogoDefault, type AireonLogoProps, type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClairePoiMapPoint, type ClaireTurn, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, type LaunchApp, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MapUserMenu, type MapUserMenuAction, MapUserMenu as MapUserMenuDefault, type MapUserMenuLabels, type MapUserMenuProps, MunicipalityFlag, type MunicipalityFlagProps, NavIconButton, NavIconButton as NavIconButtonDefault, type NavIconButtonProps, type OpenReplay, type OpenReplayOptions, OpenWithMenu, OpenWithMenu as OpenWithMenuDefault, type OpenWithMenuProps, OverflowNav, OverflowNav as OverflowNavDefault, type OverflowNavItem, type OverflowNavMode, type OverflowNavProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, type ReleaseNotesController, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, ScooreMiniMap, ScooreMiniMap as ScooreMiniMapDefault, type ScooreMiniMapLabels, type ScooreMiniMapProps, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseReleaseNotesOptions, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonHubLink, AireonHubLink as AireonHubLinkDefault, type AireonHubLinkProps, AireonLogo, AireonLogo as AireonLogoDefault, type AireonLogoProps, type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClairePoiMapPoint, type ClaireTurn, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, type LaunchApp, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MapUserMenu, type MapUserMenuAction, MapUserMenu as MapUserMenuDefault, type MapUserMenuLabels, type MapUserMenuProps, MunicipalityFlag, type MunicipalityFlagProps, NavIconButton, NavIconButton as NavIconButtonDefault, type NavIconButtonProps, type OpenReplay, type OpenReplayOptions, OpenWithMenu, OpenWithMenu as OpenWithMenuDefault, type OpenWithMenuProps, OverflowNav, OverflowNav as OverflowNavDefault, type OverflowNavItem, type OverflowNavMode, type OverflowNavProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail as ParcelAerialThumbnailDefault, type ParcelAerialThumbnailLabels, type ParcelAerialThumbnailProps, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, type ReleaseNotesController, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, ScooreMiniMap, ScooreMiniMap as ScooreMiniMapDefault, type ScooreMiniMapLabels, type ScooreMiniMapProps, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseReleaseNotesOptions, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
