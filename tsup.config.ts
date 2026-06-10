@@ -20,6 +20,10 @@ export default defineConfig({
     // Engine-agnostic Mapbox-style → MapLibre loader for the maplibre-gl
     // migration (imports neither mapbox-gl nor maplibre-gl, so its own subpath).
     'src/map/maplibreStyle.ts',
+    // Shared swisstopo basemap system (restyle engine + 6 basemaps + picker).
+    // Dedicated subpath to keep it out of the window-touching auth barrel;
+    // maplibre-gl stays an external peer.
+    'src/basemap/index.ts',
   ],
   format: ['esm'],
   dts: true,
