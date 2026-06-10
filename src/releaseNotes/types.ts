@@ -51,3 +51,44 @@ export const KIND_META: Record<ChangeKind, { label: string; classes: string; dot
     dot: 'bg-sky-500',
   },
 };
+
+// Release-notes data files across the suite carry historical / non-canonical
+// kinds (e.g. 'added', 'changed', 'fix') cast through `as ChangeKind`. Those
+// must never crash the panel: alias the common ones to a canonical kind and
+// fall back to a neutral style for anything genuinely unknown.
+const KIND_ALIASES: Record<string, ChangeKind> = {
+  added: 'new',
+  add: 'new',
+  feature: 'new',
+  changed: 'improved',
+  change: 'improved',
+  improvement: 'improved',
+  fix: 'fixed',
+  bugfix: 'fixed',
+  removed: 'breaking',
+  doc: 'docs',
+  documentation: 'docs',
+};
+
+const FALLBACK_KIND_META = {
+  label: 'Update',
+  classes:
+    'text-gray-700 bg-gray-100 border-gray-200 dark:text-gray-300 dark:bg-white/[0.06] dark:border-white/[0.12]',
+  dot: 'bg-gray-400',
+};
+
+/** Canonical ChangeKind for a (possibly aliased) kind string, or null if unknown. */
+export function canonicalKind(kind: string): ChangeKind | null {
+  if (kind in KIND_META) return kind as ChangeKind;
+  if (kind in KIND_ALIASES) return KIND_ALIASES[kind];
+  return null;
+}
+
+/** Visual meta for any kind string — tolerant: aliases map to a canonical
+ *  style, unknown kinds get a neutral fallback. Never throws. */
+export function resolveKindMeta(
+  kind: string,
+): { label: string; classes: string; dot: string } {
+  const canonical = canonicalKind(kind);
+  return canonical ? KIND_META[canonical] : FALLBACK_KIND_META;
+}

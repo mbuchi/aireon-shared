@@ -12,7 +12,7 @@ import { Z_INDEX } from '../theme/zindex';
 import {
   X, Search, ChevronDown, ChevronUp, ExternalLink, GitPullRequest, Tag,
 } from 'lucide-react';
-import { KIND_META, type ChangeKind, type Release } from './types';
+import { canonicalKind, resolveKindMeta, type ChangeKind, type Release } from './types';
 import { getReleaseNotesStrings, type Locale } from './i18n';
 
 export interface ReleaseNotesPanelProps {
@@ -91,7 +91,7 @@ export default function ReleaseNotesPanel({
     const q = query.trim().toLowerCase();
     return releases.map((release) => {
       const items = release.items.filter((item) => {
-        const kindOk = activeFilter === 'all' || item.kind === activeFilter;
+        const kindOk = activeFilter === 'all' || canonicalKind(item.kind) === activeFilter;
         const queryOk =
           !q ||
           item.text.toLowerCase().includes(q) ||
@@ -320,7 +320,8 @@ export default function ReleaseNotesPanel({
                       {isOpen && (
                         <ul className="mt-3 space-y-2">
                           {release.items.map((item, i) => {
-                            const meta = KIND_META[item.kind];
+                            const meta = resolveKindMeta(item.kind);
+                            const ck = canonicalKind(item.kind);
                             const Icon = item.icon;
                             return (
                               <li
@@ -336,7 +337,7 @@ export default function ReleaseNotesPanel({
                                       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border ${meta.classes}`}
                                     >
                                       <span className={`w-1 h-1 rounded-full ${meta.dot}`} />
-                                      {t.kind[item.kind]}
+                                      {ck ? t.kind[ck] : meta.label}
                                     </span>
                                     {(item.prs ?? []).map((n) => (
                                       <a
