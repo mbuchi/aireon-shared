@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type {
   GeoJSONSource,
   LngLatBounds,
-  Map as MapboxMap,
+  Map as MapLibreMap,
   Marker,
   Popup,
-} from 'mapbox-gl';
-import type mapboxgl from 'mapbox-gl';
+  StyleSpecification,
+} from 'maplibre-gl';
+import type maplibregl from 'maplibre-gl';
+import { loadMapboxStyleForMapLibre } from './maplibreStyle';
 import type { ClairePoiMapPoint } from '../claire/clairePOIs';
 import type { LocationScore } from '../claire/claireScore';
 
@@ -63,7 +65,7 @@ export interface ScooreMiniMapProps {
   preserveDrawingBuffer?: boolean;
 }
 
-type MapboxGl = typeof mapboxgl;
+type MapLibreGl = typeof maplibregl;
 
 export function createScooreCircleGeoJSON(
   centerLng: number,
@@ -109,7 +111,7 @@ function staticThumbUrl(lat: number, lng: number, token: string): string {
   return `https://api.mapbox.com/styles/v1/${STATIC_STYLE}/static/${pin}/${lng},${lat},16.5,0/640x360@2x?access_token=${token}`;
 }
 
-function addRadiusCircles(map: MapboxMap, lng: number, lat: number): void {
+function addRadiusCircles(map: MapLibreMap, lng: number, lat: number): void {
   SCOORE_RADIUS_CIRCLES.forEach(({ radius, label }) => {
     const sourceId = `scoore-mini-radius-${radius}`;
     const fillId = `${sourceId}-fill`;
@@ -186,7 +188,7 @@ function addRadiusCircles(map: MapboxMap, lng: number, lat: number): void {
   });
 }
 
-function addParcelLayers(map: MapboxMap): void {
+function addParcelLayers(map: MapLibreMap): void {
   if (map.getSource('scoore-mini-parcel-tiles')) return;
 
   map.addSource('scoore-mini-parcel-tiles', {
@@ -284,8 +286,8 @@ export function ScooreMiniMap({
   preserveDrawingBuffer = true,
 }: ScooreMiniMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MapboxMap | null>(null);
-  const mapboxRef = useRef<MapboxGl | null>(null);
+  const mapRef = useRef<MapLibreMap | null>(null);
+  const maplibreRef = useRef<MapLibreGl | null>(null);
   const markersRef = useRef<Marker[]>([]);
   const sourceMarkerRef = useRef<Marker | null>(null);
   const popupRef = useRef<Popup | null>(null);
@@ -305,27 +307,31 @@ export function ScooreMiniMap({
   useEffect(() => {
     if (!validCoords || !containerRef.current || !mapboxToken) return;
     let cancelled = false;
-    let map: MapboxMap | null = null;
+    let map: MapLibreMap | null = null;
 
     (async () => {
       try {
-        const loaded = await import('mapbox-gl');
-        const mod = (loaded.default ?? loaded) as unknown as MapboxGl;
+        const [loaded, style] = await Promise.all([
+          import('maplibre-gl'),
+          // MapLibre can't consume `mapbox://` styles directly — resolve the
+          // Mapbox style doc (mapbox:// → https + token) via the shared loader.
+          loadMapboxStyleForMapLibre(isDarkMode ? DARK_STYLE : LIGHT_STYLE, { token: mapboxToken }),
+        ]);
+        const mod = (loaded.default ?? loaded) as unknown as MapLibreGl;
         if (cancelled || !containerRef.current) return;
-        mapboxRef.current = mod;
-        mod.accessToken = mapboxToken;
+        maplibreRef.current = mod;
 
         map = new mod.Map({
           container: containerRef.current,
-          style: isDarkMode ? DARK_STYLE : LIGHT_STYLE,
+          style: style as unknown as StyleSpecification,
           center: [lng, lat],
           zoom: DEFAULT_ZOOM,
           attributionControl: false,
           interactive: true,
           pitch: 0,
           bearing: 0,
-          antialias: true,
-          preserveDrawingBuffer,
+          // MapLibre v5 moved the WebGL canvas attrs into canvasContextAttributes.
+          canvasContextAttributes: { antialias: true, preserveDrawingBuffer },
         });
         map.addControl(new mod.AttributionControl({ compact: true }), 'bottom-left');
         mapRef.current = map;
@@ -390,18 +396,18 @@ export function ScooreMiniMap({
 
   useEffect(() => {
     const map = mapRef.current;
-    const mapbox = mapboxRef.current;
-    if (!map || !mapbox || !validCoords) return;
+    const maplibre = maplibreRef.current;
+    if (!map || !maplibre || !validCoords) return;
 
     sourceMarkerRef.current?.remove();
     const el = document.createElement('div');
     el.innerHTML =
       '<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 24 30" fill="none"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18C24 5.4 18.6 0 12 0z" fill="#dc2626"/><circle cx="12" cy="11" r="4.5" fill="white"/></svg>';
-    sourceMarkerRef.current = new mapbox.Marker({ element: el, anchor: 'bottom' })
+    sourceMarkerRef.current = new maplibre.Marker({ element: el, anchor: 'bottom' })
       .setLngLat([lng, lat])
       .addTo(map);
 
-    const bounds = new mapbox.LngLatBounds() as LngLatBounds;
+    const bounds = new maplibre.LngLatBounds() as LngLatBounds;
     bounds.extend([lng, lat]);
     sortedPoints.forEach((point) => {
       if (point.distance <= maxInitialPoiDistance) bounds.extend([point.lng, point.lat]);
@@ -411,8 +417,8 @@ export function ScooreMiniMap({
 
   useEffect(() => {
     const map = mapRef.current;
-    const mapbox = mapboxRef.current;
-    if (!map || !mapbox) return;
+    const maplibre = maplibreRef.current;
+    if (!map || !maplibre) return;
 
     popupRef.current?.remove();
     clearMarkers(markersRef.current);
@@ -439,7 +445,7 @@ export function ScooreMiniMap({
       el.addEventListener('click', (event) => {
         event.stopPropagation();
         popupRef.current?.remove();
-        popupRef.current = new mapbox.Popup({
+        popupRef.current = new maplibre.Popup({
           offset: 16,
           closeButton: true,
           closeOnClick: true,
@@ -451,7 +457,7 @@ export function ScooreMiniMap({
           .addTo(map);
       });
 
-      markersRef.current.push(new mapbox.Marker({ element: el }).setLngLat([point.lng, point.lat]).addTo(map));
+      markersRef.current.push(new maplibre.Marker({ element: el }).setLngLat([point.lng, point.lat]).addTo(map));
     });
   }, [sortedPoints]);
 
