@@ -110,6 +110,44 @@ function computeInitials(name: string, email: string): string {
 }
 
 /**
+ * The current in-app location (path + query + hash) to round-trip through the
+ * Zitadel authorize redirect via OIDC `url_state`. Every signin redirect lands
+ * back on the bare `redirect_uri` ("/" — see {@link userManager}), so without
+ * this the original deep link is discarded: a `/de-ch#release-notes` panel link
+ * or a `?lat=&lng=` parcel link silently becomes "/". Returns undefined for the
+ * bare root so plain visits don't replay needless navigation events on return.
+ */
+function captureReturnUrl(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  const here =
+    window.location.pathname + window.location.search + window.location.hash;
+  return here && here !== '/' ? here : undefined;
+}
+
+/**
+ * Restore a {@link captureReturnUrl} value after returning from Zitadel. The
+ * callback always lands on the bare `redirect_uri`, so we rewrite the address
+ * bar back to the saved location and replay `popstate` + `hashchange` — exactly
+ * the events a real navigation would fire — so path/locale routers and the
+ * hash-driven release-notes panel react as if the user had opened the deep link
+ * directly. Only same-origin relative paths are honoured (never an absolute or
+ * protocol-relative URL), so a tampered `url_state` can't drive an open redirect.
+ */
+function restoreReturnUrl(urlState: string | null | undefined): void {
+  if (typeof window === 'undefined') return;
+  if (!urlState || !urlState.startsWith('/') || urlState.startsWith('//')) return;
+  const current =
+    window.location.pathname + window.location.search + window.location.hash;
+  if (current === urlState) return;
+  const prevHash = window.location.hash;
+  window.history.replaceState(null, document.title, urlState);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+  if (window.location.hash !== prevHash) {
+    window.dispatchEvent(new Event('hashchange'));
+  }
+}
+
+/**
  * Wraps the app, runs the suite-standard hidden-iframe silent SSO on mount
  * (unless {@link AuthProviderProps.silentSso} is `false`), and exposes auth
  * state via {@link useAuth}. Apps that keep silent SSO on must also ship a
@@ -197,6 +235,9 @@ export function AuthProvider({
             const completed = await userManager.signinRedirectCallback();
             markSsoAttempted();
             stripAuthParams();
+            // Put the user back on the deep link they started from (the callback
+            // landed on the bare redirect_uri); no-op when none was captured.
+            restoreReturnUrl(completed?.url_state);
             finish(completed ?? null);
             return;
           } catch (err) {
@@ -228,7 +269,10 @@ export function AuthProvider({
         // fire a redirect the return leg couldn't guard against looping.
         if (silentSso && !ssoAttempted() && markSsoAttempted()) {
           try {
-            await userManager.signinRedirect({ extraQueryParams: { prompt: 'none' } });
+            await userManager.signinRedirect({
+              extraQueryParams: { prompt: 'none' },
+              url_state: captureReturnUrl(),
+            });
             return;
           } catch (err) {
             console.warn('[auth] cross-app SSO redirect failed to start', err);
@@ -259,12 +303,15 @@ export function AuthProvider({
 
   const login = useCallback(async () => {
     sessionStorage.removeItem(SSO_ATTEMPTED_KEY);
-    await userManager.signinRedirect();
+    await userManager.signinRedirect({ url_state: captureReturnUrl() });
   }, []);
 
   const register = useCallback(async () => {
     sessionStorage.removeItem(SSO_ATTEMPTED_KEY);
-    await userManager.signinRedirect({ extraQueryParams: { prompt: 'create' } });
+    await userManager.signinRedirect({
+      extraQueryParams: { prompt: 'create' },
+      url_state: captureReturnUrl(),
+    });
   }, []);
 
   const logout = useCallback(async () => {
