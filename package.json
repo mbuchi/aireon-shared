@@ -53,7 +53,8 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "generate:api": "openapi-typescript ./openapi.json -o src/api/schema.ts"
+    "generate:api": "openapi-typescript ./openapi.json -o src/api/schema.ts",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "@openreplay/tracker": ">=16",
@@ -84,7 +85,8 @@
     "react-compiler-runtime": "^1.0.0",
     "react-dom": "^18.3.1",
     "tsup": "^8.3.5",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.8"
   },
   "dependencies": {
     "@tanstack/react-table": "^8.21.3",
