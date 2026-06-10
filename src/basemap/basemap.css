@@ -1,0 +1,146 @@
+/*
+ * Shared basemap picker styles — a host-agnostic port of valoo's gallery look,
+ * so the picker renders identically in Tailwind apps (valoo/woom/voogle) and
+ * non-Tailwind hosts (goody). Import once per app:
+ *   import '@aireon/shared/basemap.css';
+ * Dark theme is driven by the `aireon-bm--dark` modifier on the root, which
+ * <BasemapPicker dark> toggles.
+ *
+ * Palette mirrors the original Tailwind tokens: gray-800 #1f2937,
+ * gray-700 #374151, gray-200 #e5e7eb, gray-300 #d1d5db, gray-500 #6b7280,
+ * gray-400 #9ca3af, blue-500 #3b82f6, blue-400 #60a5fa, blue-600 #2563eb.
+ */
+
+.aireon-bm {
+  width: 18rem;
+  max-width: calc(100vw - 2rem);
+}
+
+.aireon-bm__card {
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  background: #ffffff;
+  transition: background-color 0.3s ease;
+}
+.aireon-bm--dark .aireon-bm__card { background: #1f2937; }
+
+/* Trigger */
+.aireon-bm__trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-align: left;
+  color: #374151;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.aireon-bm__trigger:hover { background: #f9fafb; }
+.aireon-bm--dark .aireon-bm__trigger { color: #e5e7eb; }
+.aireon-bm--dark .aireon-bm__trigger:hover { background: #374151; }
+
+.aireon-bm__label { flex: 1 1 auto; }
+
+.aireon-bm__chev {
+  width: 1rem;
+  height: 1rem;
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+.aireon-bm__chev.is-open { transform: rotate(180deg); }
+
+/* Menu */
+.aireon-bm__menu {
+  border-top: 1px solid #e5e7eb;
+  padding: 0.5rem;
+}
+.aireon-bm--dark .aireon-bm__menu { border-top-color: #374151; }
+
+.aireon-bm__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+/* Option button */
+.aireon-bm__opt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  outline: none;
+}
+.aireon-bm__opt:focus-visible { box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.6); }
+
+.aireon-bm__thumb {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+.aireon-bm--dark .aireon-bm__thumb { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1); }
+.aireon-bm__opt:hover .aireon-bm__thumb { box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25); }
+.aireon-bm--dark .aireon-bm__opt:hover .aireon-bm__thumb { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3); }
+.aireon-bm__opt.is-selected .aireon-bm__thumb { box-shadow: 0 0 0 2px #3b82f6; }
+
+/* Live preview canvas + loading skeleton (BasemapThumbMap) */
+.aireon-bm__thumbcanvas { position: absolute; inset: 0; }
+.aireon-bm__thumbskel {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom right, #e5e7eb, #9ca3af);
+  animation: aireon-bm-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes aireon-bm-pulse { 50% { opacity: 0.5; } }
+
+/* Selected checkmark badge */
+.aireon-bm__check {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: #3b82f6;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(255, 255, 255, 0.7);
+}
+
+/* Option label */
+.aireon-bm__optlabel {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.1;
+  text-align: center;
+  color: #374151;
+}
+.aireon-bm--dark .aireon-bm__optlabel { color: #d1d5db; }
+.aireon-bm__opt.is-selected .aireon-bm__optlabel { color: #2563eb; }
+.aireon-bm--dark .aireon-bm__opt.is-selected .aireon-bm__optlabel { color: #60a5fa; }
+
+/* Attribution */
+.aireon-bm__attr {
+  margin-top: 0.5rem;
+  font-size: 0.5625rem;
+  text-align: center;
+  user-select: none;
+  color: #9ca3af;
+}
+.aireon-bm--dark .aireon-bm__attr { color: #6b7280; }

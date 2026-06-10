@@ -43,12 +43,12 @@ export const BasemapThumbMap = ({ basemap }: { basemap: BasemapOption }) => {
     };
   }, [basemap]);
 
+  // Semantic class names (defined in basemap.css) rather than Tailwind utilities
+  // so the live preview renders identically in non-Tailwind hosts (e.g. goody).
   return (
     <>
-      <div ref={containerRef} className="absolute inset-0" />
-      {!ready && (
-        <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-gray-200 to-gray-400" />
-      )}
+      <div ref={containerRef} className="aireon-bm__thumbcanvas" />
+      {!ready && <div className="aireon-bm__thumbskel" />}
     </>
   );
 };
