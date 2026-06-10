@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import maplibregl from 'maplibre-gl';
+import type maplibregl from 'maplibre-gl';
 import type { BasemapOption } from './options';
 import { resolveBasemapStyle } from './options';
 
-// Centre of the gallery thumbnails — a dense Zürich block so the four styles
-// read as a true side-by-side comparison (streets, water, buildings all visible).
+type MapLibreGl = typeof maplibregl;
+
+// Centre of the gallery thumbnails — a dense Zürich block so the styles read as
+// a true side-by-side comparison (streets, water, buildings all visible).
 const BASEMAP_THUMB_CENTER: [number, number] = [8.5417, 47.3769];
 const BASEMAP_THUMB_ZOOM = 12.2;
 
@@ -23,11 +25,18 @@ export const BasemapThumbMap = ({ basemap }: { basemap: BasemapOption }) => {
     let ro: ResizeObserver | null = null;
     let cancelled = false;
     setReady(false);
-    void resolveBasemapStyle(basemap)
-      .then((style) => {
+    // maplibre-gl is published as CommonJS (no ESM `exports`/`module` field), so
+    // a static `import maplibregl from 'maplibre-gl'` leaves `maplibregl.Map`
+    // UNDEFINED in the consumer bundle — the real namespace lands under
+    // `.default`. The preview map then throws on construction and never loads,
+    // leaving the grey skeleton. Import it dynamically and unwrap `.default`
+    // (the proven pattern from ScooreMiniMap).
+    void Promise.all([import('maplibre-gl'), resolveBasemapStyle(basemap)])
+      .then(([loaded, style]) => {
         if (cancelled || !containerRef.current) return;
+        const mod = (loaded.default ?? loaded) as unknown as MapLibreGl;
         const container = containerRef.current;
-        map = new maplibregl.Map({
+        map = new mod.Map({
           container,
           style,
           center: BASEMAP_THUMB_CENTER,
@@ -38,11 +47,9 @@ export const BasemapThumbMap = ({ basemap }: { basemap: BasemapOption }) => {
         });
         const created = map;
         created.on('load', () => { if (!cancelled) setReady(true); });
-        // The gallery opens dynamically, so MapLibre can capture a 0×0 container
-        // at creation — for basemaps whose style resolves in a microtask the
-        // thumb's aspect-ratio height isn't laid out yet, leaving a blank canvas
-        // that never repaints. Resize once the container has real dimensions (the
-        // observer fires on the initial measure and any later layout change).
+        // The gallery opens dynamically, so the aspect-ratio thumb may not be
+        // laid out when the map is created — resize once it has real dimensions
+        // (and on any later layout change).
         ro = new ResizeObserver(() => { try { created.resize(); } catch { /* removed */ } });
         ro.observe(container);
       })
@@ -63,3 +70,5 @@ export const BasemapThumbMap = ({ basemap }: { basemap: BasemapOption }) => {
     </>
   );
 };
+
+export default BasemapThumbMap;

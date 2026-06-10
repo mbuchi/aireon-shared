@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import maplibregl from 'maplibre-gl';
 import { jsxs, Fragment, jsx } from 'react/jsx-runtime';
 import { Layers, ChevronDown, Check } from 'lucide-react';
 
@@ -321,10 +320,11 @@ var BasemapThumbMap = ({ basemap }) => {
     let ro = null;
     let cancelled = false;
     setReady(false);
-    void resolveBasemapStyle(basemap).then((style) => {
+    void Promise.all([import('maplibre-gl'), resolveBasemapStyle(basemap)]).then(([loaded, style]) => {
       if (cancelled || !containerRef.current) return;
+      const mod = loaded.default ?? loaded;
       const container = containerRef.current;
-      map = new maplibregl.Map({
+      map = new mod.Map({
         container,
         style,
         center: BASEMAP_THUMB_CENTER,
