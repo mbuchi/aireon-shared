@@ -8,10 +8,11 @@ describe('avatar catalogue', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('lists the ten illustrated people before the emoji animals', () => {
+  it('lists the illustrated people before the emoji animals', () => {
     const people = avatarOptions.filter((o) => o.group === 'people');
     const emoji = avatarOptions.filter((o) => o.group === 'emoji');
-    expect(people).toHaveLength(10);
+    // 10 original "person-*" + 20 female + 19 male illustrated headshots.
+    expect(people).toHaveLength(49);
     expect(emoji.length).toBeGreaterThan(0);
     // People occupy the front of the array (people-first picker order).
     expect(avatarOptions.slice(0, people.length).every((o) => o.group === 'people')).toBe(true);
@@ -32,7 +33,11 @@ describe('avatar catalogue', () => {
   it('people resolve to a CDN image URL, emoji to a Twemoji SVG', () => {
     const mia = avatarOptions.find((o) => o.id === 'person-01')!;
     expect(avatarUrl(mia)).toBe(
-      'https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@v1.13.2/assets/avatars/person-01.webp',
+      'https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@v1.14.0/assets/avatars/person-01.webp',
+    );
+    const emma = avatarOptions.find((o) => o.id === 'female-01')!;
+    expect(avatarUrl(emma)).toBe(
+      'https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@v1.14.0/assets/avatars/female-01.webp',
     );
     const fox = avatarOptions.find((o) => o.id === 'fox')!;
     expect(avatarUrl(fox)).toContain('jdecked/twemoji');
@@ -41,6 +46,7 @@ describe('avatar catalogue', () => {
 
   it('avatarUrlById resolves known ids and returns null otherwise', () => {
     expect(avatarUrlById('person-10')).toContain('person-10.webp');
+    expect(avatarUrlById('male-19')).toContain('male-19.webp');
     expect(avatarUrlById('panda')).toContain('1f43c.svg');
     expect(avatarUrlById('does-not-exist')).toBeNull();
     expect(avatarUrlById(null)).toBeNull();
