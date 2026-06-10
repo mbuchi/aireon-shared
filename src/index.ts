@@ -17,7 +17,7 @@ export type {
   UseReleaseNotesOptions,
   ReleaseNotesController,
 } from './releaseNotes/useReleaseNotes';
-export { KIND_META } from './releaseNotes/types';
+export { KIND_META, canonicalKind, resolveKindMeta } from './releaseNotes/types';
 export type { ChangeKind, ChangeItem, Release } from './releaseNotes/types';
 export type { ReleaseNotesPanelProps } from './releaseNotes/ReleaseNotesPanel';
 export type { ReleaseNotesButtonProps } from './releaseNotes/ReleaseNotesButton';

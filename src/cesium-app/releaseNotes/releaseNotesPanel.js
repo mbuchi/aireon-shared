@@ -137,7 +137,13 @@ function renderBody() {
                                 <ul class="rn-items">
                                     ${release.items
                                         .map((item) => {
-                                            const meta = KIND_META[item.kind];
+                                            // Tolerate non-canonical / unknown kinds (e.g. 'added',
+                                            // 'changed') — fall back to a neutral palette so the
+                                            // panel never throws on a missing KIND_META entry.
+                                            const meta = KIND_META[item.kind] || {
+                                                textColor: '#374151', bgColor: '#f3f4f6',
+                                                borderColor: '#e5e7eb', dotColor: '#9ca3af',
+                                            };
                                             return `
                                         <li class="rn-item">
                                             <div class="rn-item-icon"><i data-lucide="${escapeHtml(item.icon)}"></i></div>

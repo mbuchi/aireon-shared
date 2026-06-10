@@ -282,6 +282,33 @@ var KIND_META = {
     dot: "bg-sky-500"
   }
 };
+var KIND_ALIASES = {
+  added: "new",
+  add: "new",
+  feature: "new",
+  changed: "improved",
+  change: "improved",
+  improvement: "improved",
+  fix: "fixed",
+  bugfix: "fixed",
+  removed: "breaking",
+  doc: "docs",
+  documentation: "docs"
+};
+var FALLBACK_KIND_META = {
+  label: "Update",
+  classes: "text-gray-700 bg-gray-100 border-gray-200 dark:text-gray-300 dark:bg-white/[0.06] dark:border-white/[0.12]",
+  dot: "bg-gray-400"
+};
+function canonicalKind(kind) {
+  if (kind in KIND_META) return kind;
+  if (kind in KIND_ALIASES) return KIND_ALIASES[kind];
+  return null;
+}
+function resolveKindMeta(kind) {
+  const canonical = canonicalKind(kind);
+  return canonical ? KIND_META[canonical] : FALLBACK_KIND_META;
+}
 
 // src/releaseNotes/i18n.ts
 var RELEASE_NOTES_STRINGS = {
@@ -413,7 +440,7 @@ function ReleaseNotesPanel({
     const q = query.trim().toLowerCase();
     return releases.map((release) => {
       const items = release.items.filter((item) => {
-        const kindOk = activeFilter === "all" || item.kind === activeFilter;
+        const kindOk = activeFilter === "all" || canonicalKind(item.kind) === activeFilter;
         const queryOk = !q || item.text.toLowerCase().includes(q) || release.codename.toLowerCase().includes(q) || release.version.includes(q) || (item.prs ?? []).some((n) => `#${n}`.includes(q) || String(n) === q);
         return kindOk && queryOk;
       });
@@ -628,7 +655,8 @@ function ReleaseNotesPanel({
                             }
                           ),
                           isOpen && /* @__PURE__ */ jsx("ul", { className: "mt-3 space-y-2", children: release.items.map((item, i) => {
-                            const meta = KIND_META[item.kind];
+                            const meta = resolveKindMeta(item.kind);
+                            const ck = canonicalKind(item.kind);
                             const Icon = item.icon;
                             return /* @__PURE__ */ jsxs(
                               "li",
@@ -644,7 +672,7 @@ function ReleaseNotesPanel({
                                           className: `inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide border ${meta.classes}`,
                                           children: [
                                             /* @__PURE__ */ jsx("span", { className: `w-1 h-1 rounded-full ${meta.dot}` }),
-                                            t.kind[item.kind]
+                                            ck ? t.kind[ck] : meta.label
                                           ]
                                         }
                                       ),
@@ -7116,4 +7144,4 @@ function VirtualList({
   );
 }
 
-export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, IndexedDBCache, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocalStorageCache, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
