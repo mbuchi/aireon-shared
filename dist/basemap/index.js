@@ -369,7 +369,7 @@ var BasemapPicker = ({
   );
   const selectedId = controlled ? value : internal;
   const [open, setOpen] = useState(false);
-  const pinnedRef = useRef(value != null || defaultValue != null);
+  const pinnedRef = useRef(false);
   const styleReqRef = useRef(0);
   const onAppliedRef = useRef(onBasemapApplied);
   onAppliedRef.current = onBasemapApplied;
@@ -393,7 +393,12 @@ var BasemapPicker = ({
     onChange?.(id);
     applyBasemap(id);
   };
+  const themeMountRef = useRef(true);
   useEffect(() => {
+    if (themeMountRef.current) {
+      themeMountRef.current = false;
+      return;
+    }
     if (!pairWithTheme || !map) return;
     const next = nextThemeBasemap({ dark, pinned: pinnedRef.current, current: selectedId });
     if (!next) return;
