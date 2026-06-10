@@ -20,13 +20,15 @@ export const BasemapThumbMap = ({ basemap }: { basemap: BasemapOption }) => {
   useEffect(() => {
     if (!containerRef.current) return;
     let map: maplibregl.Map | null = null;
+    let ro: ResizeObserver | null = null;
     let cancelled = false;
     setReady(false);
     void resolveBasemapStyle(basemap)
       .then((style) => {
         if (cancelled || !containerRef.current) return;
+        const container = containerRef.current;
         map = new maplibregl.Map({
-          container: containerRef.current,
+          container,
           style,
           center: BASEMAP_THUMB_CENTER,
           zoom: BASEMAP_THUMB_ZOOM,
@@ -34,11 +36,20 @@ export const BasemapThumbMap = ({ basemap }: { basemap: BasemapOption }) => {
           attributionControl: false,
           fadeDuration: 0,
         });
-        map.on('load', () => { if (!cancelled) setReady(true); });
+        const created = map;
+        created.on('load', () => { if (!cancelled) setReady(true); });
+        // The gallery opens dynamically, so MapLibre can capture a 0×0 container
+        // at creation — for basemaps whose style resolves in a microtask the
+        // thumb's aspect-ratio height isn't laid out yet, leaving a blank canvas
+        // that never repaints. Resize once the container has real dimensions (the
+        // observer fires on the initial measure and any later layout change).
+        ro = new ResizeObserver(() => { try { created.resize(); } catch { /* removed */ } });
+        ro.observe(container);
       })
       .catch(() => { /* WebGL unavailable / style error — leave the skeleton */ });
     return () => {
       cancelled = true;
+      ro?.disconnect();
       map?.remove();
     };
   }, [basemap]);

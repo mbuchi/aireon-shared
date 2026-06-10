@@ -318,12 +318,14 @@ var BasemapThumbMap = ({ basemap }) => {
   useEffect(() => {
     if (!containerRef.current) return;
     let map = null;
+    let ro = null;
     let cancelled = false;
     setReady(false);
     void resolveBasemapStyle(basemap).then((style) => {
       if (cancelled || !containerRef.current) return;
+      const container = containerRef.current;
       map = new maplibregl.Map({
-        container: containerRef.current,
+        container,
         style,
         center: BASEMAP_THUMB_CENTER,
         zoom: BASEMAP_THUMB_ZOOM,
@@ -331,13 +333,22 @@ var BasemapThumbMap = ({ basemap }) => {
         attributionControl: false,
         fadeDuration: 0
       });
-      map.on("load", () => {
+      const created = map;
+      created.on("load", () => {
         if (!cancelled) setReady(true);
       });
+      ro = new ResizeObserver(() => {
+        try {
+          created.resize();
+        } catch {
+        }
+      });
+      ro.observe(container);
     }).catch(() => {
     });
     return () => {
       cancelled = true;
+      ro?.disconnect();
       map?.remove();
     };
   }, [basemap]);
