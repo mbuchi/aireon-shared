@@ -2,7 +2,7 @@ import { listImages, deleteImage, APP_LABELS } from './imageService.js';
 import { onAuthChange } from '../auth/authManager.js';
 import { t, onLocaleChange } from '../i18n/engine.js';
 
-const SHOWROOM_URL = 'https://swissnovo-showroom.vercel.app/';
+const SHOWROOM_URL = 'https://showroom.aireon.ch/';
 const MAX_VISIBLE_IMAGES = 3;
 const KNOWN_META_KEYS = new Set([
     'url', 'viewport', 'captured_at', 'central_lat', 'central_lng',
