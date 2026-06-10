@@ -97,8 +97,14 @@
 .aireon-bm--dark .aireon-bm__opt:hover .aireon-bm__thumb { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3); }
 .aireon-bm__opt.is-selected .aireon-bm__thumb { box-shadow: 0 0 0 2px #3b82f6; }
 
-/* Live preview canvas + loading skeleton (BasemapThumbMap) */
-.aireon-bm__thumbcanvas { position: absolute; inset: 0; }
+/* Live preview canvas + loading skeleton (BasemapThumbMap).
+ * The selector is intentionally child-scoped (`.aireon-bm__thumb > …`) to raise
+ * specificity above maplibre-gl.css's `.maplibregl-map { position: relative }`,
+ * which maplibre stamps onto this same element when the preview map mounts.
+ * Equal specificity + later import order otherwise lets maplibre win, dropping
+ * the `position:absolute; inset:0`, collapsing the container to 0 height, and
+ * leaving a blank 300px-tall canvas. */
+.aireon-bm__thumb > .aireon-bm__thumbcanvas { position: absolute; inset: 0; }
 .aireon-bm__thumbskel {
   position: absolute;
   inset: 0;
