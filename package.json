@@ -32,6 +32,10 @@
       "types": "./dist/gemini/index.d.ts",
       "default": "./dist/gemini/index.js"
     },
+    "./geoadmin": {
+      "types": "./dist/geoadmin/index.d.ts",
+      "default": "./dist/geoadmin/index.js"
+    },
     "./map-interaction": {
       "types": "./dist/map/parcelInteraction.d.ts",
       "default": "./dist/map/parcelInteraction.js"

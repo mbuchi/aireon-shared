@@ -3,6 +3,7 @@ import * as react from 'react';
 import { CSSProperties, MouseEventHandler, ReactNode, MutableRefObject, Component, ErrorInfo, ImgHTMLAttributes, ElementType } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { User, UserManager } from 'oidc-client-ts';
+export { G as GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, a as GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, b as GEOADMIN_ADDRESS_SEARCH_ENDPOINT, c as GeoAdminAddressResult, d as GeoAdminAddressSearchLanguage, e as GeoAdminAddressSearchOptions, f as GeoAdminFetch, I as IndexedDBCache, g as IndexedDBCacheOptions, L as LocalStorageCache, n as normalizeAddressSearchQuery, s as searchGeoAdminAddresses } from './index-DRWTLvQ0.js';
 export { Coordinates, GeoJSONFeatureCollection, JsonError, ParcelTree, PoiDetail, RES_API_BASE_URL, ResApiClient, ResApiClientOptions, SignalRecord, SwissnovoImage, components, createResApiClient, operations, paths } from './api/index.js';
 export { GEMINI_FALLBACK_CHAIN, GeminiFallbackAttempt, GeminiFallbackOptions, GeminiFallbackResult, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './gemini/index.js';
 export { PARCEL_INTERACTION_MIN_ZOOM, ZoomGatedClickMap, isParcelInteractive, wireZoomGatedParcelClick } from './map/parcelInteraction.js';
@@ -1016,75 +1017,6 @@ declare function identifyOpenReplayUser(userId: string, metadata?: Record<string
 /** Stop recording (best-effort). Safe to call when not started. */
 declare function stopOpenReplay(): void;
 
-/**
- * Suite-wide client-side cache primitives. Two flavours:
- *
- *   - `LocalStorageCache<T>` — small, synchronous, TTL-only. Right for tiny
- *     responses (≤ a few KB) you want to keep across reloads: geocoder hints,
- *     small JSON config, last-N selections.
- *
- *   - `IndexedDBCache<T>` — asynchronous, optional TTL, optional byte-budget
- *     with LRU eviction. Right for larger responses (tens to hundreds of KB)
- *     where you also want a hard size ceiling, e.g. parcel-data / zone-stats
- *     payloads from RES. Every failure path is silent so a broken IndexedDB
- *     never breaks a user-facing fetch.
- *
- * Originally ported from scoore → room → here. Suite convention: this is the
- * **front-of-cache layer**, sitting in front of RES (whose endpoints have their
- * own server-side Redis cache — see `feedback-redis-backend-cache`). Use both:
- * IDB makes the hot path zero-network for the same user; Redis makes the cold
- * path warm for every other user.
- *
- * IDB version-bump caveat: this implementation opens its database at version 1
- * with a single store created in `onupgradeneeded`. If you keep multiple
- * `IndexedDBCache` instances against the SAME `dbName` with different
- * `storeName`s, the *first* one to open wins; subsequent stores will be
- * missing because `onupgradeneeded` won't fire for them. Either give each
- * store its own `dbName`, or bump the constructor's `version` parameter and
- * create all stores in the upgrade handler.
- */
-declare class LocalStorageCache<T> {
-    private prefix;
-    private ttlMs;
-    constructor(prefix: string, ttlMinutes?: number);
-    private getKey;
-    get(key: string): T | null;
-    set(key: string, data: T): void;
-    delete(key: string): void;
-    clear(): void;
-}
-interface IndexedDBCacheOptions {
-    /** Time-to-live in minutes. `0` or omitted means entries never expire. */
-    ttlMinutes?: number;
-    /** Maximum total cache size in bytes. Once exceeded, the least-recently-used
-     *  entries are evicted. Omitted means unbounded. */
-    maxBytes?: number;
-    /** IDB schema version. Bump this when adding a new store to an existing DB,
-     *  otherwise the new store will not be created on already-installed clients.
-     *  Defaults to 1. */
-    version?: number;
-}
-declare class IndexedDBCache<T> {
-    private dbName;
-    private storeName;
-    private ttlMs;
-    private maxBytes;
-    private version;
-    private db;
-    constructor(dbName: string, storeName: string, options?: IndexedDBCacheOptions);
-    private byteLength;
-    private openDB;
-    get(key: string): Promise<T | null>;
-    /** Update an entry's lastAccessed timestamp without rewriting its data. */
-    private touch;
-    set(key: string, data: T): Promise<void>;
-    /** Evict least-recently-used entries until total size is within `maxBytes`. */
-    private enforceSizeLimit;
-    delete(key: string): Promise<void>;
-    /** Remove every entry in this store. */
-    clear(): Promise<void>;
-}
-
 /** Which stored asset to resolve: the original (usually SVG) or the PNG raster. */
 type FlagImageMode = 'original' | 'png';
 /** One municipality flag record, mirroring the roolez_api response envelope. */
@@ -1793,4 +1725,4 @@ interface VirtualListProps<T> {
 }
 declare function VirtualList<T>({ items, renderItem, estimateSize, overscan, getItemKey, onEndReached, endReachedThreshold, loading, skeletonRows, emptyMessage, className, style, ariaLabel, }: VirtualListProps<T>): JSX.Element;
 
-export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonHubLink, AireonHubLink as AireonHubLinkDefault, type AireonHubLinkProps, AireonLogo, AireonLogo as AireonLogoDefault, type AireonLogoProps, type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClairePoiMapPoint, type ClaireTurn, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, IndexedDBCache, type IndexedDBCacheOptions, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, type LaunchApp, LocalStorageCache, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MapUserMenu, type MapUserMenuAction, MapUserMenu as MapUserMenuDefault, type MapUserMenuLabels, type MapUserMenuProps, MunicipalityFlag, type MunicipalityFlagProps, NavIconButton, NavIconButton as NavIconButtonDefault, type NavIconButtonProps, type OpenReplay, type OpenReplayOptions, OpenWithMenu, OpenWithMenu as OpenWithMenuDefault, type OpenWithMenuProps, OverflowNav, OverflowNav as OverflowNavDefault, type OverflowNavItem, type OverflowNavMode, type OverflowNavProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail as ParcelAerialThumbnailDefault, type ParcelAerialThumbnailLabels, type ParcelAerialThumbnailProps, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, type ReleaseNotesController, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, ScooreMiniMap, ScooreMiniMap as ScooreMiniMapDefault, type ScooreMiniMapLabels, type ScooreMiniMapProps, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseReleaseNotesOptions, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonHubLink, AireonHubLink as AireonHubLinkDefault, type AireonHubLinkProps, AireonLogo, AireonLogo as AireonLogoDefault, type AireonLogoProps, type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClairePoiMapPoint, type ClaireTurn, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, type LaunchApp, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MapUserMenu, type MapUserMenuAction, MapUserMenu as MapUserMenuDefault, type MapUserMenuLabels, type MapUserMenuProps, MunicipalityFlag, type MunicipalityFlagProps, NavIconButton, NavIconButton as NavIconButtonDefault, type NavIconButtonProps, type OpenReplay, type OpenReplayOptions, OpenWithMenu, OpenWithMenu as OpenWithMenuDefault, type OpenWithMenuProps, OverflowNav, OverflowNav as OverflowNavDefault, type OverflowNavItem, type OverflowNavMode, type OverflowNavProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail as ParcelAerialThumbnailDefault, type ParcelAerialThumbnailLabels, type ParcelAerialThumbnailProps, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, type ReleaseNotesController, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, ScooreMiniMap, ScooreMiniMap as ScooreMiniMapDefault, type ScooreMiniMapLabels, type ScooreMiniMapProps, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseReleaseNotesOptions, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
