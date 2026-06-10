@@ -615,15 +615,14 @@
   justify-content: center;
   border: 1px solid transparent;
   border-radius: 0.5rem;
-  background: rgb(243 244 246);
-  color: rgb(75 85 99);
+  background: transparent;
+  color: rgb(107 114 128); /* gray-500 — matches .aireon-navbtn (variant-1 monochrome) */
   cursor: pointer;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease;
 }
 
 .aireon-onav-btn:hover {
-  background: rgb(229 231 235);
-  color: rgb(31 41 55);
+  color: rgb(17 24 39); /* gray-900 */
 }
 
 .aireon-onav-btn:active {
@@ -632,7 +631,7 @@
 
 .aireon-onav-btn:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgb(220 38 38), 0 0 0 4px rgb(255 255 255);
+  box-shadow: 0 0 0 2px rgb(17 24 39 / 0.5);
 }
 
 .aireon-onav-btn:disabled {
@@ -641,9 +640,8 @@
 }
 
 .aireon-onav-btn--active {
-  border-color: rgb(220 38 38 / 0.4);
-  background: rgb(254 242 242);
-  color: rgb(185 28 28);
+  background: rgb(243 244 246); /* gray-100 — matches .aireon-navbtn--active */
+  color: rgb(17 24 39);
 }
 
 .aireon-onav-btn--danger {
@@ -680,31 +678,28 @@
 .dark .aireon-onav-btn,
 [data-theme="dark"] .aireon-onav-btn,
 .aireon-onav--dark .aireon-onav-btn {
-  border-color: rgb(51 65 85 / 0.8);
-  background: rgb(30 41 59);
-  color: rgb(203 213 225);
+  border-color: transparent;
+  background: transparent;
+  color: rgb(203 213 225); /* slate-300 — matches .aireon-navbtn (dark) */
 }
 
 .dark .aireon-onav-btn:hover,
 [data-theme="dark"] .aireon-onav-btn:hover,
 .aireon-onav--dark .aireon-onav-btn:hover {
-  border-color: rgb(220 38 38 / 0.45);
-  background: rgb(127 29 29 / 0.24);
-  color: rgb(248 113 113);
+  color: rgb(255 255 255);
 }
 
 .dark .aireon-onav-btn--active,
 [data-theme="dark"] .aireon-onav-btn--active,
 .aireon-onav--dark .aireon-onav-btn--active {
-  border-color: rgb(220 38 38 / 0.5);
-  background: rgb(127 29 29 / 0.28);
-  color: rgb(248 113 113);
+  background: rgb(30 41 59); /* slate-800 — matches .aireon-navbtn--active (dark) */
+  color: rgb(255 255 255);
 }
 
 .dark .aireon-onav-btn:focus-visible,
 [data-theme="dark"] .aireon-onav-btn:focus-visible,
 .aireon-onav--dark .aireon-onav-btn:focus-visible {
-  box-shadow: 0 0 0 2px rgb(248 113 113), 0 0 0 4px rgb(15 23 42);
+  box-shadow: 0 0 0 2px rgb(148 163 184 / 0.7);
 }
 
 /* ---- the ⋯ trigger + dropdown ------------------------------------------- */
