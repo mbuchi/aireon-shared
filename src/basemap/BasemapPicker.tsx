@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Check, ChevronDown, Layers } from 'lucide-react';
 import type { Map as MaplibreMap } from 'maplibre-gl';
 import { BasemapThumbMap } from './BasemapThumbMap';
 import {
@@ -81,42 +82,61 @@ export const BasemapPicker = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dark]);
 
+  // Markup mirrors valoo's gallery exactly; styling ships in
+  // '@aireon/shared/basemap.css' (host-agnostic, no Tailwind dependency) so the
+  // picker is identical across Tailwind apps and non-Tailwind hosts (goody).
+  const labelFor = (id: string) => labels.options[id] ?? labels.control;
+
   return (
-    <div className={className}>
-      <button
-        type="button"
-        aria-label={labels.control}
-        onClick={() => setOpen((o) => !o)}
-        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium shadow ring-1 transition-colors ${
-          dark ? 'bg-gray-900/90 text-gray-100 ring-white/10 hover:bg-gray-800'
-               : 'bg-white/95 text-gray-800 ring-black/10 hover:bg-gray-50'
-        }`}
-      >
-        {labels.options[selectedId] ?? labels.control}
-      </button>
-      {open && (
-        <div
-          className={`mt-2 grid grid-cols-2 gap-2 rounded-xl p-2 shadow-xl ring-1 ${
-            dark ? 'bg-gray-900/95 ring-white/10' : 'bg-white/95 ring-black/10'
-          }`}
+    <div
+      className={`aireon-bm${dark ? ' aireon-bm--dark' : ''}${className ? ` ${className}` : ''}`}
+      data-tour="basemap-selector"
+    >
+      <div className="aireon-bm__card">
+        <button
+          type="button"
+          aria-label={labels.control}
+          aria-expanded={open}
+          aria-haspopup="menu"
+          onClick={() => setOpen((o) => !o)}
+          className="aireon-bm__trigger"
         >
-          {options.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => select(opt.id)}
-              className={`group relative h-20 w-28 overflow-hidden rounded-lg ring-2 transition ${
-                opt.id === selectedId ? 'ring-emerald-500' : 'ring-transparent hover:ring-emerald-300'
-              }`}
-            >
-              <BasemapThumbMap basemap={opt} />
-              <span className="absolute bottom-0 inset-x-0 bg-black/45 px-1 py-0.5 text-[10px] font-medium text-white text-center">
-                {labels.options[opt.id] ?? opt.id}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
+          <Layers size={18} aria-hidden="true" />
+          <span className="aireon-bm__label">{labelFor(selectedId)}</span>
+          <ChevronDown className={`aireon-bm__chev${open ? ' is-open' : ''}`} aria-hidden="true" />
+        </button>
+
+        {open && (
+          <div role="menu" aria-label={labels.control} className="aireon-bm__menu">
+            <div className="aireon-bm__grid">
+              {options.map((opt) => {
+                const selected = opt.id === selectedId;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={selected}
+                    onClick={() => select(opt.id)}
+                    className={`aireon-bm__opt${selected ? ' is-selected' : ''}`}
+                  >
+                    <span className="aireon-bm__thumb">
+                      <BasemapThumbMap basemap={opt} />
+                      {selected && (
+                        <span className="aireon-bm__check">
+                          <Check size={10} strokeWidth={3} aria-hidden="true" />
+                        </span>
+                      )}
+                    </span>
+                    <span className="aireon-bm__optlabel">{labelFor(opt.id)}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="aireon-bm__attr">© swisstopo</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

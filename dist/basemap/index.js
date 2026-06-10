@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import maplibregl from 'maplibre-gl';
 import { jsxs, Fragment, jsx } from 'react/jsx-runtime';
+import { Layers, ChevronDown, Check } from 'lucide-react';
 
 // src/basemap/restyle.ts
 function cloneStyle(style) {
@@ -341,8 +342,8 @@ var BasemapThumbMap = ({ basemap }) => {
     };
   }, [basemap]);
   return /* @__PURE__ */ jsxs(Fragment, { children: [
-    /* @__PURE__ */ jsx("div", { ref: containerRef, className: "absolute inset-0" }),
-    !ready && /* @__PURE__ */ jsx("div", { className: "absolute inset-0 animate-pulse bg-gradient-to-br from-gray-200 to-gray-400" })
+    /* @__PURE__ */ jsx("div", { ref: containerRef, className: "aireon-bm__thumbcanvas" }),
+    !ready && /* @__PURE__ */ jsx("div", { className: "aireon-bm__thumbskel" })
   ] });
 };
 function nextThemeBasemap({ dark, pinned, current }) {
@@ -400,37 +401,56 @@ var BasemapPicker = ({
     onChange?.(next);
     applyBasemap(next);
   }, [dark]);
-  return /* @__PURE__ */ jsxs("div", { className, children: [
-    /* @__PURE__ */ jsx(
-      "button",
-      {
-        type: "button",
-        "aria-label": labels.control,
-        onClick: () => setOpen((o) => !o),
-        className: `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium shadow ring-1 transition-colors ${dark ? "bg-gray-900/90 text-gray-100 ring-white/10 hover:bg-gray-800" : "bg-white/95 text-gray-800 ring-black/10 hover:bg-gray-50"}`,
-        children: labels.options[selectedId] ?? labels.control
-      }
-    ),
-    open && /* @__PURE__ */ jsx(
-      "div",
-      {
-        className: `mt-2 grid grid-cols-2 gap-2 rounded-xl p-2 shadow-xl ring-1 ${dark ? "bg-gray-900/95 ring-white/10" : "bg-white/95 ring-black/10"}`,
-        children: options.map((opt) => /* @__PURE__ */ jsxs(
+  const labelFor = (id) => labels.options[id] ?? labels.control;
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      className: `aireon-bm${dark ? " aireon-bm--dark" : ""}${className ? ` ${className}` : ""}`,
+      "data-tour": "basemap-selector",
+      children: /* @__PURE__ */ jsxs("div", { className: "aireon-bm__card", children: [
+        /* @__PURE__ */ jsxs(
           "button",
           {
             type: "button",
-            onClick: () => select(opt.id),
-            className: `group relative h-20 w-28 overflow-hidden rounded-lg ring-2 transition ${opt.id === selectedId ? "ring-emerald-500" : "ring-transparent hover:ring-emerald-300"}`,
+            "aria-label": labels.control,
+            "aria-expanded": open,
+            "aria-haspopup": "menu",
+            onClick: () => setOpen((o) => !o),
+            className: "aireon-bm__trigger",
             children: [
-              /* @__PURE__ */ jsx(BasemapThumbMap, { basemap: opt }),
-              /* @__PURE__ */ jsx("span", { className: "absolute bottom-0 inset-x-0 bg-black/45 px-1 py-0.5 text-[10px] font-medium text-white text-center", children: labels.options[opt.id] ?? opt.id })
+              /* @__PURE__ */ jsx(Layers, { size: 18, "aria-hidden": "true" }),
+              /* @__PURE__ */ jsx("span", { className: "aireon-bm__label", children: labelFor(selectedId) }),
+              /* @__PURE__ */ jsx(ChevronDown, { className: `aireon-bm__chev${open ? " is-open" : ""}`, "aria-hidden": "true" })
             ]
-          },
-          opt.id
-        ))
-      }
-    )
-  ] });
+          }
+        ),
+        open && /* @__PURE__ */ jsxs("div", { role: "menu", "aria-label": labels.control, className: "aireon-bm__menu", children: [
+          /* @__PURE__ */ jsx("div", { className: "aireon-bm__grid", children: options.map((opt) => {
+            const selected = opt.id === selectedId;
+            return /* @__PURE__ */ jsxs(
+              "button",
+              {
+                type: "button",
+                role: "menuitemradio",
+                "aria-checked": selected,
+                onClick: () => select(opt.id),
+                className: `aireon-bm__opt${selected ? " is-selected" : ""}`,
+                children: [
+                  /* @__PURE__ */ jsxs("span", { className: "aireon-bm__thumb", children: [
+                    /* @__PURE__ */ jsx(BasemapThumbMap, { basemap: opt }),
+                    selected && /* @__PURE__ */ jsx("span", { className: "aireon-bm__check", children: /* @__PURE__ */ jsx(Check, { size: 10, strokeWidth: 3, "aria-hidden": "true" }) })
+                  ] }),
+                  /* @__PURE__ */ jsx("span", { className: "aireon-bm__optlabel", children: labelFor(opt.id) })
+                ]
+              },
+              opt.id
+            );
+          }) }),
+          /* @__PURE__ */ jsx("p", { className: "aireon-bm__attr", children: "\xA9 swisstopo" })
+        ] })
+      ] })
+    }
+  );
 };
 var BasemapPicker_default = BasemapPicker;
 
