@@ -1,9 +1,9 @@
 import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
-import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
-export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
+import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
+export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
 export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
@@ -5010,20 +5010,20 @@ function Avatar({ url, initials, size = 28, className = "" }) {
 // src/profile/avatars.ts
 var TWEMOJI_TAG = "15.1.0";
 var TWEMOJI_BASE = `https://cdn.jsdelivr.net/gh/jdecked/twemoji@${TWEMOJI_TAG}/assets/svg`;
-var PEOPLE_ASSET_TAG = "v1.13.0";
+var PEOPLE_ASSET_TAG = "v1.13.1";
 var PEOPLE_BASE = `https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@${PEOPLE_ASSET_TAG}/assets/avatars`;
 var avatarOptions = [
   // --- People (illustrated portraits) ---------------------------------------
-  { id: "person-01", label: "Mia", group: "people", file: "person-01.jpg", tint: "#d7e3c3" },
-  { id: "person-02", label: "Leo", group: "people", file: "person-02.jpg", tint: "#c7e2e0" },
-  { id: "person-03", label: "Lena", group: "people", file: "person-03.jpg", tint: "#ecccd2" },
-  { id: "person-04", label: "Noah", group: "people", file: "person-04.jpg", tint: "#d3e1bd" },
-  { id: "person-05", label: "Luca", group: "people", file: "person-05.jpg", tint: "#cfe3e1" },
-  { id: "person-06", label: "Nina", group: "people", file: "person-06.jpg", tint: "#bcd6d2" },
-  { id: "person-07", label: "Felix", group: "people", file: "person-07.jpg", tint: "#f1cfa0" },
-  { id: "person-08", label: "Clara", group: "people", file: "person-08.jpg", tint: "#d8cce0" },
-  { id: "person-09", label: "Theo", group: "people", file: "person-09.jpg", tint: "#c6dcea" },
-  { id: "person-10", label: "Maya", group: "people", file: "person-10.jpg", tint: "#ccdcae" },
+  { id: "person-01", label: "Mia", group: "people", file: "person-01.webp", tint: "#d7e3c3" },
+  { id: "person-02", label: "Leo", group: "people", file: "person-02.webp", tint: "#c7e2e0" },
+  { id: "person-03", label: "Lena", group: "people", file: "person-03.webp", tint: "#ecccd2" },
+  { id: "person-04", label: "Noah", group: "people", file: "person-04.webp", tint: "#d3e1bd" },
+  { id: "person-05", label: "Luca", group: "people", file: "person-05.webp", tint: "#cfe3e1" },
+  { id: "person-06", label: "Nina", group: "people", file: "person-06.webp", tint: "#bcd6d2" },
+  { id: "person-07", label: "Felix", group: "people", file: "person-07.webp", tint: "#f1cfa0" },
+  { id: "person-08", label: "Clara", group: "people", file: "person-08.webp", tint: "#d8cce0" },
+  { id: "person-09", label: "Theo", group: "people", file: "person-09.webp", tint: "#c6dcea" },
+  { id: "person-10", label: "Maya", group: "people", file: "person-10.webp", tint: "#ccdcae" },
   // --- Emoji (cute animals, Twemoji SVGs) -----------------------------------
   { id: "fox", label: "Fox", group: "emoji", codepoint: "1f98a", tint: "#fde4d3" },
   { id: "panda", label: "Panda", group: "emoji", codepoint: "1f43c", tint: "#e8eef2" },

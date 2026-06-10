@@ -32,7 +32,7 @@ describe('avatar catalogue', () => {
   it('people resolve to a CDN image URL, emoji to a Twemoji SVG', () => {
     const mia = avatarOptions.find((o) => o.id === 'person-01')!;
     expect(avatarUrl(mia)).toBe(
-      'https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@v1.13.0/assets/avatars/person-01.jpg',
+      'https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@v1.13.1/assets/avatars/person-01.webp',
     );
     const fox = avatarOptions.find((o) => o.id === 'fox')!;
     expect(avatarUrl(fox)).toContain('jdecked/twemoji');
@@ -40,7 +40,7 @@ describe('avatar catalogue', () => {
   });
 
   it('avatarUrlById resolves known ids and returns null otherwise', () => {
-    expect(avatarUrlById('person-10')).toContain('person-10.jpg');
+    expect(avatarUrlById('person-10')).toContain('person-10.webp');
     expect(avatarUrlById('panda')).toContain('1f43c.svg');
     expect(avatarUrlById('does-not-exist')).toBeNull();
     expect(avatarUrlById(null)).toBeNull();
