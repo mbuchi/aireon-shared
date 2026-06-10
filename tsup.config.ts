@@ -11,6 +11,8 @@ export default defineConfig({
     'src/signal/handler.ts',
     'src/errorlog/handler.ts',
     'src/gemini/index.ts',
+    // geo.admin.ch address suggestions/geocoding for suite map search boxes.
+    'src/geoadmin/index.ts',
     // Side-effect-free parcel-interaction zoom gate — a dedicated subpath so it
     // can be imported in node/test contexts without dragging in the barrel's
     // browser-only modules (auth touches `window` at module load).
