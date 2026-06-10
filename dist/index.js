@@ -5010,25 +5010,40 @@ function Avatar({ url, initials, size = 28, className = "" }) {
 // src/profile/avatars.ts
 var TWEMOJI_TAG = "15.1.0";
 var TWEMOJI_BASE = `https://cdn.jsdelivr.net/gh/jdecked/twemoji@${TWEMOJI_TAG}/assets/svg`;
+var PEOPLE_ASSET_TAG = "v1.13.0";
+var PEOPLE_BASE = `https://cdn.jsdelivr.net/gh/mbuchi/aireon-shared@${PEOPLE_ASSET_TAG}/assets/avatars`;
 var avatarOptions = [
-  { id: "fox", label: "Fox", codepoint: "1f98a", tint: "#fde4d3" },
-  { id: "panda", label: "Panda", codepoint: "1f43c", tint: "#e8eef2" },
-  { id: "tiger", label: "Tiger", codepoint: "1f42f", tint: "#fdeecb" },
-  { id: "koala", label: "Koala", codepoint: "1f428", tint: "#e3e7ea" },
-  { id: "owl", label: "Owl", codepoint: "1f989", tint: "#ece1d2" },
-  { id: "rabbit", label: "Rabbit", codepoint: "1f430", tint: "#f6e7ee" },
-  { id: "cat", label: "Cat", codepoint: "1f431", tint: "#fbe6cf" },
-  { id: "dog", label: "Dog", codepoint: "1f436", tint: "#f0e4d4" },
-  { id: "bear", label: "Bear", codepoint: "1f43b", tint: "#e9ddcf" },
-  { id: "monkey", label: "Monkey", codepoint: "1f435", tint: "#ede0d1" },
-  { id: "penguin", label: "Penguin", codepoint: "1f427", tint: "#dde6ec" },
-  { id: "lion", label: "Lion", codepoint: "1f981", tint: "#fdeccb" },
-  { id: "frog", label: "Frog", codepoint: "1f438", tint: "#dff0d8" },
-  { id: "chick", label: "Chick", codepoint: "1f425", tint: "#fdf3cf" },
-  { id: "unicorn", label: "Unicorn", codepoint: "1f984", tint: "#f1e3f5" },
-  { id: "octopus", label: "Octopus", codepoint: "1f419", tint: "#f7dde0" }
+  // --- People (illustrated portraits) ---------------------------------------
+  { id: "person-01", label: "Mia", group: "people", file: "person-01.jpg", tint: "#d7e3c3" },
+  { id: "person-02", label: "Leo", group: "people", file: "person-02.jpg", tint: "#c7e2e0" },
+  { id: "person-03", label: "Lena", group: "people", file: "person-03.jpg", tint: "#ecccd2" },
+  { id: "person-04", label: "Noah", group: "people", file: "person-04.jpg", tint: "#d3e1bd" },
+  { id: "person-05", label: "Luca", group: "people", file: "person-05.jpg", tint: "#cfe3e1" },
+  { id: "person-06", label: "Nina", group: "people", file: "person-06.jpg", tint: "#bcd6d2" },
+  { id: "person-07", label: "Felix", group: "people", file: "person-07.jpg", tint: "#f1cfa0" },
+  { id: "person-08", label: "Clara", group: "people", file: "person-08.jpg", tint: "#d8cce0" },
+  { id: "person-09", label: "Theo", group: "people", file: "person-09.jpg", tint: "#c6dcea" },
+  { id: "person-10", label: "Maya", group: "people", file: "person-10.jpg", tint: "#ccdcae" },
+  // --- Emoji (cute animals, Twemoji SVGs) -----------------------------------
+  { id: "fox", label: "Fox", group: "emoji", codepoint: "1f98a", tint: "#fde4d3" },
+  { id: "panda", label: "Panda", group: "emoji", codepoint: "1f43c", tint: "#e8eef2" },
+  { id: "tiger", label: "Tiger", group: "emoji", codepoint: "1f42f", tint: "#fdeecb" },
+  { id: "koala", label: "Koala", group: "emoji", codepoint: "1f428", tint: "#e3e7ea" },
+  { id: "owl", label: "Owl", group: "emoji", codepoint: "1f989", tint: "#ece1d2" },
+  { id: "rabbit", label: "Rabbit", group: "emoji", codepoint: "1f430", tint: "#f6e7ee" },
+  { id: "cat", label: "Cat", group: "emoji", codepoint: "1f431", tint: "#fbe6cf" },
+  { id: "dog", label: "Dog", group: "emoji", codepoint: "1f436", tint: "#f0e4d4" },
+  { id: "bear", label: "Bear", group: "emoji", codepoint: "1f43b", tint: "#e9ddcf" },
+  { id: "monkey", label: "Monkey", group: "emoji", codepoint: "1f435", tint: "#ede0d1" },
+  { id: "penguin", label: "Penguin", group: "emoji", codepoint: "1f427", tint: "#dde6ec" },
+  { id: "lion", label: "Lion", group: "emoji", codepoint: "1f981", tint: "#fdeccb" },
+  { id: "frog", label: "Frog", group: "emoji", codepoint: "1f438", tint: "#dff0d8" },
+  { id: "chick", label: "Chick", group: "emoji", codepoint: "1f425", tint: "#fdf3cf" },
+  { id: "unicorn", label: "Unicorn", group: "emoji", codepoint: "1f984", tint: "#f1e3f5" },
+  { id: "octopus", label: "Octopus", group: "emoji", codepoint: "1f419", tint: "#f7dde0" }
 ];
 function avatarUrl(opt) {
+  if (opt.file) return `${PEOPLE_BASE}/${opt.file}`;
   return `${TWEMOJI_BASE}/${opt.codepoint}.svg`;
 }
 function avatarUrlById(id) {
@@ -5241,6 +5256,10 @@ var GENDER_OPTIONS = [
   { value: "other", label: "Other" },
   { value: "unspecified", label: "Prefer not to say" }
 ];
+var AVATAR_GROUPS = [
+  { key: "people", label: "People" },
+  { key: "emoji", label: "Emoji" }
+];
 var FIELD_CLASS = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 function ProfileModal({ user, onClose, dark = false }) {
   const modalRef = useFocusTrap({ onEscape: onClose });
@@ -5323,41 +5342,49 @@ function ProfileModal({ user, onClose, dark = false }) {
                   ] }),
                   /* @__PURE__ */ jsxs("div", { className: "mt-5", children: [
                     /* @__PURE__ */ jsx("div", { className: "mb-2 text-xs font-medium text-gray-700 dark:text-gray-300", children: "Choose your avatar" }),
-                    /* @__PURE__ */ jsx("p", { className: "mb-3 text-[11px] text-gray-500 dark:text-gray-400", children: "Your pick follows you across every SwissNovo app." }),
-                    /* @__PURE__ */ jsx("div", { className: "grid grid-cols-4 gap-2.5", children: avatarOptions.map((opt) => {
-                      const selected = opt.id === effectiveAvatarId;
-                      return /* @__PURE__ */ jsxs(
-                        "button",
-                        {
-                          type: "button",
-                          onClick: () => setPickedAvatarId(opt.id),
-                          title: opt.label,
-                          "aria-label": opt.label,
-                          "aria-pressed": selected,
-                          className: `relative aspect-square rounded-xl border-2 p-1.5 transition-all ${selected ? "border-red-500 ring-2 ring-red-500/30" : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"}`,
-                          style: { backgroundColor: opt.tint },
-                          children: [
-                            /* @__PURE__ */ jsx(
-                              "img",
-                              {
-                                src: avatarUrl(opt),
-                                alt: "",
-                                className: "h-full w-full object-contain"
-                              }
-                            ),
-                            selected && /* @__PURE__ */ jsx(
-                              "span",
-                              {
-                                "aria-hidden": "true",
-                                className: "absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow",
-                                children: /* @__PURE__ */ jsx(Check, { size: 12 })
-                              }
-                            )
-                          ]
-                        },
-                        opt.id
-                      );
-                    }) })
+                    /* @__PURE__ */ jsx("p", { className: "mb-3 text-[11px] text-gray-500 dark:text-gray-400", children: "Your pick follows you across every aireon app." }),
+                    AVATAR_GROUPS.map((grp) => {
+                      const options = avatarOptions.filter((o) => o.group === grp.key);
+                      if (options.length === 0) return null;
+                      return /* @__PURE__ */ jsxs("div", { className: "mb-4 last:mb-0", children: [
+                        /* @__PURE__ */ jsx("div", { className: "mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500", children: grp.label }),
+                        /* @__PURE__ */ jsx("div", { className: "grid grid-cols-4 gap-2.5", children: options.map((opt) => {
+                          const selected = opt.id === effectiveAvatarId;
+                          const isPhoto = opt.group === "people";
+                          return /* @__PURE__ */ jsxs(
+                            "button",
+                            {
+                              type: "button",
+                              onClick: () => setPickedAvatarId(opt.id),
+                              title: opt.label,
+                              "aria-label": opt.label,
+                              "aria-pressed": selected,
+                              className: `relative aspect-square border-2 transition-all ${isPhoto ? "rounded-full" : "rounded-xl p-1.5"} ${selected ? "border-red-500 ring-2 ring-red-500/30" : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"}`,
+                              style: { backgroundColor: opt.tint },
+                              children: [
+                                /* @__PURE__ */ jsx(
+                                  "img",
+                                  {
+                                    src: avatarUrl(opt),
+                                    alt: "",
+                                    className: `h-full w-full ${isPhoto ? "rounded-full object-cover" : "object-contain"}`
+                                  }
+                                ),
+                                selected && /* @__PURE__ */ jsx(
+                                  "span",
+                                  {
+                                    "aria-hidden": "true",
+                                    className: "absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow",
+                                    children: /* @__PURE__ */ jsx(Check, { size: 12 })
+                                  }
+                                )
+                              ]
+                            },
+                            opt.id
+                          );
+                        }) })
+                      ] }, grp.key);
+                    })
                   ] }),
                   /* @__PURE__ */ jsxs("div", { className: "mt-5 space-y-3", children: [
                     /* @__PURE__ */ jsxs("div", { children: [

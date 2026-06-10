@@ -13,7 +13,7 @@ import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
 import type { User } from 'oidc-client-ts';
 import { Avatar } from './Avatar';
-import { avatarOptions, avatarUrl } from './avatars';
+import { avatarOptions, avatarUrl, type AvatarGroup } from './avatars';
 import { emailOf, fullNameOf, initialsOf } from './identity';
 import { useUserProfile } from './useUserProfile';
 import type { Gender, SwissnovoProfile } from './profileStore';
@@ -36,6 +36,13 @@ const GENDER_OPTIONS: Array<{ value: Gender; label: string }> = [
   { value: 'female', label: 'Female' },
   { value: 'other', label: 'Other' },
   { value: 'unspecified', label: 'Prefer not to say' },
+];
+
+// Picker sections, in display order. People (illustrated portraits) first,
+// then the emoji animals.
+const AVATAR_GROUPS: Array<{ key: AvatarGroup; label: string }> = [
+  { key: 'people', label: 'People' },
+  { key: 'emoji', label: 'Emoji' },
 ];
 
 const FIELD_CLASS =
@@ -157,43 +164,62 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
               Choose your avatar
             </div>
             <p className="mb-3 text-[11px] text-gray-500 dark:text-gray-400">
-              Your pick follows you across every SwissNovo app.
+              Your pick follows you across every aireon app.
             </p>
-            <div className="grid grid-cols-4 gap-2.5">
-              {avatarOptions.map((opt) => {
-                const selected = opt.id === effectiveAvatarId;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setPickedAvatarId(opt.id)}
-                    title={opt.label}
-                    aria-label={opt.label}
-                    aria-pressed={selected}
-                    className={`relative aspect-square rounded-xl border-2 p-1.5 transition-all ${
-                      selected
-                        ? 'border-red-500 ring-2 ring-red-500/30'
-                        : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
-                    }`}
-                    style={{ backgroundColor: opt.tint }}
-                  >
-                    <img
-                      src={avatarUrl(opt)}
-                      alt=""
-                      className="h-full w-full object-contain"
-                    />
-                    {selected && (
-                      <span
-                        aria-hidden="true"
-                        className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow"
-                      >
-                        <Check size={12} />
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            {AVATAR_GROUPS.map((grp) => {
+              const options = avatarOptions.filter((o) => o.group === grp.key);
+              if (options.length === 0) return null;
+              return (
+                <div key={grp.key} className="mb-4 last:mb-0">
+                  <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                    {grp.label}
+                  </div>
+                  <div className="grid grid-cols-4 gap-2.5">
+                    {options.map((opt) => {
+                      const selected = opt.id === effectiveAvatarId;
+                      // People avatars are opaque photos with their own circular
+                      // backdrop — clip them to a round disc that fills the tile.
+                      // Emoji are transparent SVGs centred on a soft tint.
+                      const isPhoto = opt.group === 'people';
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setPickedAvatarId(opt.id)}
+                          title={opt.label}
+                          aria-label={opt.label}
+                          aria-pressed={selected}
+                          className={`relative aspect-square border-2 transition-all ${
+                            isPhoto ? 'rounded-full' : 'rounded-xl p-1.5'
+                          } ${
+                            selected
+                              ? 'border-red-500 ring-2 ring-red-500/30'
+                              : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                          }`}
+                          style={{ backgroundColor: opt.tint }}
+                        >
+                          <img
+                            src={avatarUrl(opt)}
+                            alt=""
+                            className={`h-full w-full ${
+                              isPhoto ? 'rounded-full object-cover' : 'object-contain'
+                            }`}
+                          />
+                          {selected && (
+                            <span
+                              aria-hidden="true"
+                              className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow"
+                            >
+                              <Check size={12} />
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Details */}
