@@ -1082,6 +1082,23 @@ function computeInitials(name, email) {
   const parts = source.split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map((p) => p[0].toUpperCase()).join("") || source[0].toUpperCase();
 }
+function captureReturnUrl() {
+  if (typeof window === "undefined") return void 0;
+  const here = window.location.pathname + window.location.search + window.location.hash;
+  return here && here !== "/" ? here : void 0;
+}
+function restoreReturnUrl(urlState) {
+  if (typeof window === "undefined") return;
+  if (!urlState || !urlState.startsWith("/") || urlState.startsWith("//")) return;
+  const current2 = window.location.pathname + window.location.search + window.location.hash;
+  if (current2 === urlState) return;
+  const prevHash = window.location.hash;
+  window.history.replaceState(null, document.title, urlState);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+  if (window.location.hash !== prevHash) {
+    window.dispatchEvent(new Event("hashchange"));
+  }
+}
 function AuthProvider({
   children,
   appName,
@@ -1134,6 +1151,7 @@ function AuthProvider({
             const completed = await userManager.signinRedirectCallback();
             markSsoAttempted();
             stripAuthParams();
+            restoreReturnUrl(completed?.url_state);
             finish(completed ?? null);
             return;
           } catch (err) {
@@ -1152,7 +1170,10 @@ function AuthProvider({
         });
         if (silentSso && !ssoAttempted() && markSsoAttempted()) {
           try {
-            await userManager.signinRedirect({ extraQueryParams: { prompt: "none" } });
+            await userManager.signinRedirect({
+              extraQueryParams: { prompt: "none" },
+              url_state: captureReturnUrl()
+            });
             return;
           } catch (err) {
             console.warn("[auth] cross-app SSO redirect failed to start", err);
@@ -1177,11 +1198,14 @@ function AuthProvider({
   }, [loginPromptOnFirstVisit, isLoading, isAuthenticatedNow]);
   const login = useCallback(async () => {
     sessionStorage.removeItem(SSO_ATTEMPTED_KEY);
-    await userManager.signinRedirect();
+    await userManager.signinRedirect({ url_state: captureReturnUrl() });
   }, []);
   const register = useCallback(async () => {
     sessionStorage.removeItem(SSO_ATTEMPTED_KEY);
-    await userManager.signinRedirect({ extraQueryParams: { prompt: "create" } });
+    await userManager.signinRedirect({
+      extraQueryParams: { prompt: "create" },
+      url_state: captureReturnUrl()
+    });
   }, []);
   const logout = useCallback(async () => {
     sessionStorage.setItem(SSO_ATTEMPTED_KEY, "1");
