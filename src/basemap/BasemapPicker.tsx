@@ -43,8 +43,12 @@ export const BasemapPicker = ({
   const selectedId = controlled ? (value as string) : internal;
   const [open, setOpen] = useState(false);
 
-  // An explicit initial value (controlled or defaultValue) counts as pinned.
-  const pinnedRef = useRef<boolean>(value != null || defaultValue != null);
+  // Pinned ONLY by an explicit user pick (see `select`). A controlled `value`
+  // from the host must NOT count as pinned — otherwise theme pairing (the
+  // suite-standard default) would never fire for apps that drive the picker
+  // with a controlled value. Initial / deep-linked basemaps are protected by
+  // skipping the theme effect's mount run below, not by pinning.
+  const pinnedRef = useRef<boolean>(false);
   const styleReqRef = useRef(0);
   const onAppliedRef = useRef(onBasemapApplied);
   onAppliedRef.current = onBasemapApplied;
@@ -71,8 +75,13 @@ export const BasemapPicker = ({
     applyBasemap(id);
   };
 
-  // Theme pairing: when dark flips, auto-swap unless pinned / already matching.
+  // Theme pairing: when `dark` flips (NOT on mount), auto-swap to the matching
+  // basemap — unless the user has pinned a manual pick or we're already on the
+  // matching basemap. Skipping the mount run preserves an explicit initial /
+  // deep-linked basemap (the host's first render shouldn't be overridden).
+  const themeMountRef = useRef(true);
   useEffect(() => {
+    if (themeMountRef.current) { themeMountRef.current = false; return; }
     if (!pairWithTheme || !map) return;
     const next = nextThemeBasemap({ dark, pinned: pinnedRef.current, current: selectedId });
     if (!next) return;
