@@ -2,15 +2,15 @@ import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
 export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
+import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
+export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
 export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
-import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
-export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, Check, CircleUser, UserCog, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, MessageSquareText, Check, CircleUser, UserCog, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
@@ -4382,6 +4382,8 @@ var ErrorLogBoundary = class extends Component {
 var BUG_REPORT_STRINGS = {
   de: {
     button: "Problem melden",
+    bug: "Fehler",
+    feedback: "Feedback",
     title: "Ein Problem melden",
     subtitle: "Etwas funktioniert nicht? Beschreiben Sie es kurz \u2014 wir k\xFCmmern uns darum.",
     messagePlaceholder: "Was ist passiert? Was haben Sie erwartet?",
@@ -4397,6 +4399,8 @@ var BUG_REPORT_STRINGS = {
   },
   en: {
     button: "Report a problem",
+    bug: "Bug",
+    feedback: "Feedback",
     title: "Report a problem",
     subtitle: "Something not working? Tell us briefly \u2014 we\u2019ll look into it.",
     messagePlaceholder: "What happened? What did you expect?",
@@ -4412,6 +4416,8 @@ var BUG_REPORT_STRINGS = {
   },
   fr: {
     button: "Signaler un probl\xE8me",
+    bug: "Bug",
+    feedback: "Avis",
     title: "Signaler un probl\xE8me",
     subtitle: "Quelque chose ne fonctionne pas ? D\xE9crivez-le bri\xE8vement \u2014 nous nous en occupons.",
     messagePlaceholder: "Que s\u2019est-il pass\xE9 ? \xC0 quoi vous attendiez-vous ?",
@@ -4427,6 +4433,8 @@ var BUG_REPORT_STRINGS = {
   },
   it: {
     button: "Segnala un problema",
+    bug: "Bug",
+    feedback: "Feedback",
     title: "Segnala un problema",
     subtitle: "Qualcosa non funziona? Descrivilo brevemente \u2014 ce ne occupiamo noi.",
     messagePlaceholder: "Cosa \xE8 successo? Cosa ti aspettavi?",
@@ -4475,21 +4483,42 @@ function BugReportButton({
   position = "bottom-left",
   darkMode,
   container,
-  metaData
+  metaData,
+  showLabel = false
 }) {
   const t = getBugReportStrings(locale);
   const dark = useDarkMode(darkMode);
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState("idle");
+  const [reportType, setReportType] = useState("bug");
   const [message, setMessage] = useState("");
   const [emailValue, setEmailValue] = useState(email);
+  const dialogRef = useRef(null);
   const textareaRef = useRef(null);
   const titleId = useId();
+  const subtitleId = useId();
   useEffect(() => setEmailValue(email), [email]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusables = dialogRef.current?.querySelectorAll(
+        'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusables || focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     const id = window.setTimeout(() => textareaRef.current?.focus(), 60);
@@ -4502,6 +4531,7 @@ function BugReportButton({
     setOpen(false);
     window.setTimeout(() => {
       setPhase("idle");
+      setReportType("bug");
       setMessage("");
     }, 200);
   }, []);
@@ -4512,11 +4542,15 @@ function BugReportButton({
     const ok = await logger.report({
       message: text,
       email: emailValue.trim() || void 0,
-      metaData
+      metaData: {
+        ...metaData ?? {},
+        report_type: reportType,
+        source: "bug_report_widget"
+      }
     });
     setPhase(ok ? "success" : "error");
     if (ok) window.setTimeout(close, 1800);
-  }, [message, emailValue, phase, logger, metaData, close]);
+  }, [message, emailValue, phase, logger, metaData, reportType, close]);
   if (typeof document === "undefined") return null;
   const target = container ?? document.body;
   const corner = position === "bottom-right" ? "right-4 sm:right-5" : "left-4 sm:left-5";
@@ -4528,10 +4562,12 @@ function BugReportButton({
       type: "button",
       onClick: () => setOpen(true),
       "aria-label": t.button,
-      className: `fixed bottom-4 sm:bottom-5 ${corner} z-[2147483000] inline-flex items-center gap-2 rounded-full px-3.5 py-2.5 text-sm font-semibold shadow-lg ring-1 ring-inset transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ` + (dark ? "bg-slate-800 text-rose-300 ring-white/10 hover:bg-slate-700 focus-visible:ring-offset-slate-900" : "bg-white text-rose-600 ring-rose-200 hover:bg-rose-50 focus-visible:ring-offset-white"),
+      "aria-haspopup": "dialog",
+      title: t.button,
+      className: `fixed bottom-4 sm:bottom-5 ${corner} z-[2147483000] inline-flex h-11 items-center justify-center gap-2 ${showLabel ? "w-auto px-3.5" : "w-11 px-0"} rounded-full text-sm font-semibold shadow-lg ring-1 ring-inset transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ` + (dark ? "bg-slate-800 text-rose-300 ring-white/10 hover:bg-slate-700 focus-visible:ring-offset-slate-900" : "bg-white text-rose-600 ring-rose-200 hover:bg-rose-50 focus-visible:ring-offset-white"),
       children: [
         /* @__PURE__ */ jsx(Bug, { className: "h-4 w-4", "aria-hidden": "true" }),
-        /* @__PURE__ */ jsx("span", { className: "hidden sm:inline", children: t.button })
+        /* @__PURE__ */ jsx("span", { className: showLabel ? "hidden sm:inline" : "sr-only", children: t.button })
       ]
     }
   );
@@ -4544,14 +4580,16 @@ function BugReportButton({
         if (e.target === e.currentTarget) close();
       },
       children: [
-        /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-black/40 backdrop-blur-[2px]", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-black/45", "aria-hidden": "true" }),
         /* @__PURE__ */ jsxs(
           "div",
           {
+            ref: dialogRef,
             role: "dialog",
             "aria-modal": "true",
             "aria-labelledby": titleId,
-            className: `relative w-full max-w-md rounded-2xl p-5 shadow-2xl ${panelBg}`,
+            "aria-describedby": phase === "success" ? void 0 : subtitleId,
+            className: `relative w-full max-w-md rounded-lg p-5 shadow-2xl ${panelBg}`,
             children: [
               /* @__PURE__ */ jsx(
                 "button",
@@ -4572,14 +4610,33 @@ function BugReportButton({
                   /* @__PURE__ */ jsx("span", { className: "flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300", children: /* @__PURE__ */ jsx(Bug, { className: "h-4 w-4", "aria-hidden": "true" }) }),
                   /* @__PURE__ */ jsx("h2", { id: titleId, className: "text-base font-semibold", children: t.title })
                 ] }),
-                /* @__PURE__ */ jsx("p", { className: "mb-3 text-sm text-slate-500 dark:text-slate-400", children: t.subtitle }),
+                /* @__PURE__ */ jsx("p", { id: subtitleId, className: "mb-4 text-sm text-slate-500 dark:text-slate-400", children: t.subtitle }),
+                /* @__PURE__ */ jsx("div", { className: "mb-3 grid grid-cols-2 gap-2", role: "group", "aria-label": t.dialogLabel, children: ["bug", "feedback"].map((type) => {
+                  const active = reportType === type;
+                  const Icon = type === "bug" ? Bug : MessageSquareText;
+                  return /* @__PURE__ */ jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => setReportType(type),
+                      className: "inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 " + (active ? "border-rose-500 bg-rose-50 text-rose-700 dark:border-rose-400 dark:bg-rose-500/15 dark:text-rose-200" : dark ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"),
+                      "aria-pressed": active,
+                      children: [
+                        /* @__PURE__ */ jsx(Icon, { className: "h-4 w-4", "aria-hidden": "true" }),
+                        type === "bug" ? t.bug : t.feedback
+                      ]
+                    },
+                    type
+                  );
+                }) }),
                 /* @__PURE__ */ jsx(
                   "textarea",
                   {
                     ref: textareaRef,
                     value: message,
                     onChange: (e) => setMessage(e.target.value),
-                    rows: 4,
+                    rows: 5,
+                    maxLength: 2e3,
                     placeholder: t.messagePlaceholder,
                     className: `w-full resize-none rounded-lg border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 ${inputCls}`
                   }

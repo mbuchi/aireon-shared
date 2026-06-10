@@ -908,6 +908,10 @@ type Locale = 'de' | 'en' | 'fr' | 'it';
 interface BugReportStrings {
     /** Floating button label + aria-label. */
     button: string;
+    /** Report type selector: bug. */
+    bug: string;
+    /** Report type selector: feedback. */
+    feedback: string;
     /** Dialog heading. */
     title: string;
     /** Short helper line under the heading. */
@@ -950,8 +954,10 @@ interface BugReportButtonProps {
     container?: Element | null;
     /** Extra metadata attached to every report (e.g. app version). */
     metaData?: Record<string, unknown>;
+    /** Show the text label beside the icon. Defaults to false for map apps. */
+    showLabel?: boolean;
 }
-declare function BugReportButton({ logger, locale, email, position, darkMode, container, metaData, }: BugReportButtonProps): react.ReactPortal | null;
+declare function BugReportButton({ logger, locale, email, position, darkMode, container, metaData, showLabel, }: BugReportButtonProps): react.ReactPortal | null;
 
 interface OpenReplayOptions {
     /**

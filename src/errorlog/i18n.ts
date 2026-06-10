@@ -6,6 +6,10 @@ export type Locale = 'de' | 'en' | 'fr' | 'it';
 export interface BugReportStrings {
   /** Floating button label + aria-label. */
   button: string;
+  /** Report type selector: bug. */
+  bug: string;
+  /** Report type selector: feedback. */
+  feedback: string;
   /** Dialog heading. */
   title: string;
   /** Short helper line under the heading. */
@@ -34,6 +38,8 @@ export interface BugReportStrings {
 export const BUG_REPORT_STRINGS: Record<Locale, BugReportStrings> = {
   de: {
     button: 'Problem melden',
+    bug: 'Fehler',
+    feedback: 'Feedback',
     title: 'Ein Problem melden',
     subtitle: 'Etwas funktioniert nicht? Beschreiben Sie es kurz — wir kümmern uns darum.',
     messagePlaceholder: 'Was ist passiert? Was haben Sie erwartet?',
@@ -49,6 +55,8 @@ export const BUG_REPORT_STRINGS: Record<Locale, BugReportStrings> = {
   },
   en: {
     button: 'Report a problem',
+    bug: 'Bug',
+    feedback: 'Feedback',
     title: 'Report a problem',
     subtitle: 'Something not working? Tell us briefly — we’ll look into it.',
     messagePlaceholder: 'What happened? What did you expect?',
@@ -64,6 +72,8 @@ export const BUG_REPORT_STRINGS: Record<Locale, BugReportStrings> = {
   },
   fr: {
     button: 'Signaler un problème',
+    bug: 'Bug',
+    feedback: 'Avis',
     title: 'Signaler un problème',
     subtitle: 'Quelque chose ne fonctionne pas ? Décrivez-le brièvement — nous nous en occupons.',
     messagePlaceholder: 'Que s’est-il passé ? À quoi vous attendiez-vous ?',
@@ -79,6 +89,8 @@ export const BUG_REPORT_STRINGS: Record<Locale, BugReportStrings> = {
   },
   it: {
     button: 'Segnala un problema',
+    bug: 'Bug',
+    feedback: 'Feedback',
     title: 'Segnala un problema',
     subtitle: 'Qualcosa non funziona? Descrivilo brevemente — ce ne occupiamo noi.',
     messagePlaceholder: 'Cosa è successo? Cosa ti aspettavi?',

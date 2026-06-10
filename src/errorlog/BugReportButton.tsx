@@ -13,7 +13,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { Bug, X, Send, Loader2, CheckCircle2 } from 'lucide-react';
+import { Bug, CheckCircle2, Loader2, MessageSquareText, Send, X } from 'lucide-react';
 import type { ErrorLogger } from './client';
 import { getBugReportStrings, type Locale } from './i18n';
 
@@ -32,9 +32,12 @@ export interface BugReportButtonProps {
   container?: Element | null;
   /** Extra metadata attached to every report (e.g. app version). */
   metaData?: Record<string, unknown>;
+  /** Show the text label beside the icon. Defaults to false for map apps. */
+  showLabel?: boolean;
 }
 
 type Phase = 'idle' | 'sending' | 'success' | 'error';
+type ReportType = 'bug' | 'feedback';
 
 function useDarkMode(forced?: boolean): boolean {
   const [dark, setDark] = useState(() => {
@@ -66,22 +69,43 @@ export function BugReportButton({
   darkMode,
   container,
   metaData,
+  showLabel = false,
 }: BugReportButtonProps) {
   const t = getBugReportStrings(locale);
   const dark = useDarkMode(darkMode);
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>('idle');
+  const [reportType, setReportType] = useState<ReportType>('bug');
   const [message, setMessage] = useState('');
   const [emailValue, setEmailValue] = useState(email);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const titleId = useId();
+  const subtitleId = useId();
 
   useEffect(() => setEmailValue(email), [email]);
 
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusables || focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKey);
     const id = window.setTimeout(() => textareaRef.current?.focus(), 60);
@@ -96,6 +120,7 @@ export function BugReportButton({
     // Reset shortly after the dialog is gone so the closing frame looks clean.
     window.setTimeout(() => {
       setPhase('idle');
+      setReportType('bug');
       setMessage('');
     }, 200);
   }, []);
@@ -107,11 +132,15 @@ export function BugReportButton({
     const ok = await logger.report({
       message: text,
       email: emailValue.trim() || undefined,
-      metaData,
+      metaData: {
+        ...(metaData ?? {}),
+        report_type: reportType,
+        source: 'bug_report_widget',
+      },
     });
     setPhase(ok ? 'success' : 'error');
     if (ok) window.setTimeout(close, 1800);
-  }, [message, emailValue, phase, logger, metaData, close]);
+  }, [message, emailValue, phase, logger, metaData, reportType, close]);
 
   if (typeof document === 'undefined') return null;
   const target = container ?? document.body;
@@ -132,9 +161,12 @@ export function BugReportButton({
       type="button"
       onClick={() => setOpen(true)}
       aria-label={t.button}
+      aria-haspopup="dialog"
+      title={t.button}
       className={
-        `fixed bottom-4 sm:bottom-5 ${corner} z-[2147483000] inline-flex items-center gap-2 ` +
-        'rounded-full px-3.5 py-2.5 text-sm font-semibold shadow-lg ring-1 ring-inset transition ' +
+        `fixed bottom-4 sm:bottom-5 ${corner} z-[2147483000] inline-flex h-11 items-center justify-center gap-2 ` +
+        `${showLabel ? 'w-auto px-3.5' : 'w-11 px-0'} ` +
+        'rounded-full text-sm font-semibold shadow-lg ring-1 ring-inset transition ' +
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ' +
         (dark
           ? 'bg-slate-800 text-rose-300 ring-white/10 hover:bg-slate-700 focus-visible:ring-offset-slate-900'
@@ -142,7 +174,7 @@ export function BugReportButton({
       }
     >
       <Bug className="h-4 w-4" aria-hidden="true" />
-      <span className="hidden sm:inline">{t.button}</span>
+      <span className={showLabel ? 'hidden sm:inline' : 'sr-only'}>{t.button}</span>
     </button>
   );
 
@@ -154,12 +186,14 @@ export function BugReportButton({
         if (e.target === e.currentTarget) close();
       }}
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-black/45" aria-hidden="true" />
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`relative w-full max-w-md rounded-2xl p-5 shadow-2xl ${panelBg}`}
+        aria-describedby={phase === 'success' ? undefined : subtitleId}
+        className={`relative w-full max-w-md rounded-lg p-5 shadow-2xl ${panelBg}`}
       >
         <button
           type="button"
@@ -193,13 +227,43 @@ export function BugReportButton({
                 {t.title}
               </h2>
             </div>
-            <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">{t.subtitle}</p>
+            <p id={subtitleId} className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+              {t.subtitle}
+            </p>
+
+            <div className="mb-3 grid grid-cols-2 gap-2" role="group" aria-label={t.dialogLabel}>
+              {(['bug', 'feedback'] as ReportType[]).map((type) => {
+                const active = reportType === type;
+                const Icon = type === 'bug' ? Bug : MessageSquareText;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setReportType(type)}
+                    className={
+                      'inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border px-3 text-sm font-semibold transition ' +
+                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 ' +
+                      (active
+                        ? 'border-rose-500 bg-rose-50 text-rose-700 dark:border-rose-400 dark:bg-rose-500/15 dark:text-rose-200'
+                        : dark
+                          ? 'border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')
+                    }
+                    aria-pressed={active}
+                  >
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                    {type === 'bug' ? t.bug : t.feedback}
+                  </button>
+                );
+              })}
+            </div>
 
             <textarea
               ref={textareaRef}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              rows={4}
+              rows={5}
+              maxLength={2000}
               placeholder={t.messagePlaceholder}
               className={`w-full resize-none rounded-lg border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 ${inputCls}`}
             />
