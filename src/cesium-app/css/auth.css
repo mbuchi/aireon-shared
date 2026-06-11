@@ -300,28 +300,6 @@
     display: block;
 }
 
-.auth-profile-shuffle {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--hood-radius-pill);
-    background: var(--hood-blue);
-    color: #fff;
-    border: 2px solid #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--hood-card-shadow);
-    transition: background-color var(--hood-transition);
-}
-
-.auth-profile-shuffle:hover {
-    background: var(--hood-blue-dark);
-}
-
 .auth-profile-name {
     margin: 0.25rem 0 0;
     font-size: 1.1rem;
@@ -332,6 +310,132 @@
     margin: 0 0 1rem;
     font-size: 0.8125rem;
     color: var(--hood-muted);
+}
+
+.auth-profile-avatar-picker {
+    margin: 0 0 1rem;
+    text-align: left;
+}
+
+.auth-profile-avatar-picker-head {
+    min-height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.auth-profile-avatar-label {
+    font-size: 0.8125rem;
+    color: var(--hood-text);
+    font-weight: 700;
+}
+
+.auth-profile-avatar-notice {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--hood-radius-pill);
+    padding: 0.2rem 0.5rem;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.32);
+    color: var(--hood-success);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.auth-profile-avatar-notice[hidden] {
+    display: none;
+}
+
+.auth-profile-avatar-hint {
+    margin: 0 0 0.5rem;
+    color: var(--hood-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
+}
+
+.auth-profile-avatar-rail {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(3, 44px);
+    grid-auto-columns: 44px;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding: 0.5rem 0.5rem 0.6rem;
+    border: 1px solid var(--hood-border);
+    border-radius: var(--hood-radius-md);
+    background: var(--hood-surface-2);
+    scrollbar-width: thin;
+}
+
+.auth-profile-avatar-option {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    padding: 0.35rem;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: var(--auth-avatar-tint, var(--hood-surface-3));
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color var(--hood-transition), box-shadow var(--hood-transition), transform var(--hood-transition);
+}
+
+.auth-profile-avatar-option:hover {
+    border-color: var(--hood-border-strong);
+}
+
+.auth-profile-avatar-option:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--hood-blue-ring);
+}
+
+.auth-profile-avatar-option.is-photo {
+    padding: 0;
+    border-radius: var(--hood-radius-pill);
+}
+
+.auth-profile-avatar-option.is-selected {
+    border-color: var(--hood-red);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22);
+}
+
+.auth-profile-avatar-option img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.auth-profile-avatar-option.is-photo img {
+    border-radius: var(--hood-radius-pill);
+    object-fit: cover;
+}
+
+.auth-profile-avatar-check {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--hood-radius-pill);
+    background: var(--hood-red);
+    color: #fff;
+    font-size: 0.75rem;
+    line-height: 18px;
+    text-align: center;
+    box-shadow: var(--hood-card-shadow);
+    display: none;
+}
+
+.auth-profile-avatar-option.is-selected .auth-profile-avatar-check {
+    display: block;
 }
 
 .auth-profile-form {

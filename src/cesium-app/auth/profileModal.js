@@ -1,11 +1,12 @@
 import { DICEBEAR_URL } from './authConfig.js';
 import { getCurrentUser } from './authManager.js';
 import { getProfile, updateProfile } from './profileApi.js';
-import { refreshIcon } from './icons.js';
+import { avatarOptions, avatarUrl, avatarUrlById } from './avatarCatalog.js';
 import { t, onLocaleChange } from '../i18n/engine.js';
 
 let modalEl = null;
 let escHandler = null;
+let avatarNoticeTimer = null;
 let currentProfile = {
     avatar_icon: '',
     gender: '',
@@ -13,8 +14,9 @@ let currentProfile = {
     account_info: {},
 };
 
-function randomSeed() {
-    return Math.random().toString(36).slice(2, 12);
+function tt(key, fallback) {
+    const value = t(key);
+    return value && value !== key ? value : fallback;
 }
 
 function ensureModal() {
@@ -30,12 +32,17 @@ function ensureModal() {
             <div class="auth-profile-body">
                 <div class="auth-profile-avatar-wrap">
                     <img class="auth-profile-avatar" alt="${t('auth.profile_avatar_alt')}" data-i18n-key-alt="auth.profile_avatar_alt" />
-                    <button type="button" class="auth-profile-shuffle" aria-label="${t('auth.profile_pick_avatar')}" data-i18n-key-aria="auth.profile_pick_avatar">
-                        ${refreshIcon(16)}
-                    </button>
                 </div>
                 <h2 class="auth-profile-name"></h2>
                 <p class="auth-profile-email"></p>
+                <div class="auth-profile-avatar-picker">
+                    <div class="auth-profile-avatar-picker-head">
+                        <span class="auth-profile-avatar-label">${tt('auth.profile_pick_avatar', 'Choose your avatar')}</span>
+                        <span class="auth-profile-avatar-notice" role="status" hidden>${tt('auth.profile_avatar_updated', 'Avatar updated')}</span>
+                    </div>
+                    <p class="auth-profile-avatar-hint">${tt('auth.profile_avatar_hint', 'Your pick follows you across every aireon app.')}</p>
+                    <div class="auth-profile-avatar-rail" role="group" aria-label="${tt('auth.profile_pick_avatar', 'Choose your avatar')}"></div>
+                </div>
                 <form class="auth-profile-form" novalidate>
                     <label class="auth-profile-field">
                         <span data-i18n-key="auth.profile_field_gender">${t('auth.profile_field_gender')}</span>
@@ -75,9 +82,10 @@ function ensureModal() {
     });
     modalEl.querySelector('.auth-profile-close').addEventListener('click', closeProfileModal);
     modalEl.querySelector('.auth-profile-cancel').addEventListener('click', closeProfileModal);
-    modalEl.querySelector('.auth-profile-shuffle').addEventListener('click', () => {
-        currentProfile.avatar_icon = randomSeed();
-        renderAvatar();
+    modalEl.querySelector('.auth-profile-avatar-rail').addEventListener('click', (e) => {
+        const option = e.target instanceof Element ? e.target.closest('.auth-profile-avatar-option') : null;
+        if (!option) return;
+        selectAvatar(option.getAttribute('data-avatar-id'));
     });
     modalEl.querySelector('.auth-profile-form').addEventListener('submit', handleSave);
 
@@ -86,7 +94,58 @@ function ensureModal() {
 
 function renderAvatar() {
     const img = modalEl.querySelector('.auth-profile-avatar');
-    img.src = DICEBEAR_URL(currentProfile.avatar_icon);
+    img.src = avatarUrlById(currentProfile.avatar_icon) || DICEBEAR_URL(currentProfile.avatar_icon || 'aireon');
+}
+
+function renderAvatarPicker() {
+    const rail = modalEl?.querySelector('.auth-profile-avatar-rail');
+    if (!rail) return;
+    rail.setAttribute('aria-label', tt('auth.profile_pick_avatar', 'Choose your avatar'));
+    rail.innerHTML = avatarOptions.map((opt) => {
+        const selected = opt.id === currentProfile.avatar_icon;
+        const isPhoto = opt.group === 'people';
+        return `
+            <button
+                type="button"
+                class="auth-profile-avatar-option ${isPhoto ? 'is-photo' : 'is-emoji'} ${selected ? 'is-selected' : ''}"
+                data-avatar-id="${escapeHtml(opt.id)}"
+                title="${escapeHtml(opt.label)}"
+                aria-label="${escapeHtml(opt.label)}"
+                aria-pressed="${selected ? 'true' : 'false'}"
+                style="--auth-avatar-tint: ${escapeHtml(opt.tint)}"
+            >
+                <img src="${avatarUrl(opt)}" alt="" />
+                <span class="auth-profile-avatar-check" aria-hidden="true">✓</span>
+            </button>
+        `;
+    }).join('');
+}
+
+function showAvatarNotice() {
+    const notice = modalEl.querySelector('.auth-profile-avatar-notice');
+    if (!notice) return;
+    notice.hidden = false;
+    if (avatarNoticeTimer) clearTimeout(avatarNoticeTimer);
+    avatarNoticeTimer = setTimeout(() => {
+        notice.hidden = true;
+        avatarNoticeTimer = null;
+    }, 2200);
+}
+
+async function selectAvatar(id) {
+    if (!id || id === currentProfile.avatar_icon) return;
+    currentProfile.avatar_icon = id;
+    renderAvatar();
+    renderAvatarPicker();
+    showAvatarNotice();
+    window.dispatchEvent(new CustomEvent('auth:profile-updated', { detail: currentProfile }));
+    try {
+        await updateProfile(buildPayload(currentProfile));
+        setMessage('');
+    } catch (err) {
+        console.error('Avatar update failed:', err);
+        setMessage(t('auth.profile_save_failed'), true);
+    }
 }
 
 function retranslateProfileModal() {
@@ -107,12 +166,28 @@ function retranslateProfileModal() {
         const key = el.getAttribute('data-i18n-key-placeholder');
         if (key) el.setAttribute('placeholder', t(key));
     });
+    const label = modalEl.querySelector('.auth-profile-avatar-label');
+    if (label) label.textContent = tt('auth.profile_pick_avatar', 'Choose your avatar');
+    const notice = modalEl.querySelector('.auth-profile-avatar-notice');
+    if (notice) notice.textContent = tt('auth.profile_avatar_updated', 'Avatar updated');
+    const hint = modalEl.querySelector('.auth-profile-avatar-hint');
+    if (hint) hint.textContent = tt('auth.profile_avatar_hint', 'Your pick follows you across every aireon app.');
+    renderAvatarPicker();
 }
 
 function setMessage(text, isError = false) {
     const el = modalEl.querySelector('.auth-profile-message');
     el.textContent = text || '';
     el.classList.toggle('is-error', !!(text && isError));
+}
+
+function buildPayload(profile) {
+    return {
+        avatar_icon: profile.avatar_icon || '',
+        gender: profile.gender || '',
+        age: profile.age == null || profile.age === '' ? null : Number(profile.age),
+        account_info: profile.account_info || {},
+    };
 }
 
 async function handleSave(e) {
@@ -123,13 +198,12 @@ async function handleSave(e) {
     const age = ageVal === '' ? null : Number(ageVal);
     const bio = form.elements.bio.value || '';
 
-    const account_info = { ...(currentProfile.account_info || {}), bio };
-    const payload = {
+    const payload = buildPayload({
         avatar_icon: currentProfile.avatar_icon || '',
         gender,
         age,
-        account_info,
-    };
+        account_info: { ...(currentProfile.account_info || {}), bio },
+    });
 
     const saveBtn = form.querySelector('.auth-profile-save');
     saveBtn.disabled = true;
@@ -161,6 +235,7 @@ function populateForm(profile, user) {
     modalEl.querySelector('.auth-profile-name').textContent = displayName;
     modalEl.querySelector('.auth-profile-email').textContent = email;
     renderAvatar();
+    renderAvatarPicker();
 }
 
 export async function openProfileModal() {
@@ -194,13 +269,12 @@ export async function openProfileModal() {
                 account_info: remote.account_info || {},
             };
         }
-        if (!currentProfile.avatar_icon) currentProfile.avatar_icon = randomSeed();
         populateForm(currentProfile, user);
         setMessage('');
     } catch (err) {
         console.warn('Profile load failed:', err);
-        if (!currentProfile.avatar_icon) currentProfile.avatar_icon = randomSeed();
         renderAvatar();
+        renderAvatarPicker();
         setMessage(t('auth.profile_load_failed'), true);
     }
 }
@@ -212,6 +286,10 @@ export function closeProfileModal() {
     if (escHandler) {
         document.removeEventListener('keydown', escHandler);
         escHandler = null;
+    }
+    if (avatarNoticeTimer) {
+        clearTimeout(avatarNoticeTimer);
+        avatarNoticeTimer = null;
     }
 }
 
