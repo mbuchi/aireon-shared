@@ -1,12 +1,12 @@
 import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
-import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
-export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
 export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
 export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
+import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
+export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -170,6 +170,62 @@ function AireonHubLink({
   ] });
 }
 var AireonHubLink_default = AireonHubLink;
+var WORDMARK_STYLE = {
+  fontFamily: 'var(--hood-display, "Varela Round", system-ui, sans-serif)',
+  fontWeight: 400,
+  lineHeight: 1,
+  letterSpacing: 0
+};
+var SIZE_CLASS = {
+  nav: "text-xl sm:text-2xl",
+  compact: "text-xl",
+  large: "text-2xl sm:text-3xl"
+};
+function renderWordmarkParts(name, baseClassName, accentClassName) {
+  const parts = [];
+  const re = /oo/gi;
+  let lastIndex = 0;
+  let match;
+  while ((match = re.exec(name)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(
+        /* @__PURE__ */ jsx("span", { className: baseClassName, children: name.slice(lastIndex, match.index) }, `base-${lastIndex}`)
+      );
+    }
+    parts.push(
+      /* @__PURE__ */ jsx("span", { className: accentClassName, children: name.slice(match.index, match.index + 2) }, `accent-${match.index}`)
+    );
+    lastIndex = match.index + 2;
+  }
+  if (lastIndex < name.length) {
+    parts.push(
+      /* @__PURE__ */ jsx("span", { className: baseClassName, children: name.slice(lastIndex) }, `base-${lastIndex}`)
+    );
+  }
+  return parts.length ? parts : [name];
+}
+function AireonAppWordmark({
+  name,
+  size = "nav",
+  className = "",
+  baseClassName = "text-gray-900 dark:text-gray-100",
+  accentClassName = "text-red-500 dark:text-red-400",
+  style,
+  "aria-label": ariaLabel,
+  ...rest
+}) {
+  return /* @__PURE__ */ jsx(
+    "span",
+    {
+      ...rest,
+      "aria-label": ariaLabel ?? name,
+      className: `inline-flex items-baseline whitespace-nowrap font-normal leading-none select-none ${SIZE_CLASS[size]} ${className}`.trim(),
+      style: { ...WORDMARK_STYLE, ...style },
+      children: renderWordmarkParts(name, baseClassName, accentClassName)
+    }
+  );
+}
+var AireonAppWordmark_default = AireonAppWordmark;
 function useFocusTrap(options = {}) {
   const { active = true, onEscape, restoreFocus = true } = options;
   const ref = useRef(null);
@@ -7082,4 +7138,4 @@ function VirtualList({
   );
 }
 
-export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonAppWordmark, AireonAppWordmark_default as AireonAppWordmarkDefault, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
