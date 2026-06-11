@@ -5353,10 +5353,6 @@ var GENDER_OPTIONS = [
   { value: "other", label: "Other" },
   { value: "unspecified", label: "Prefer not to say" }
 ];
-var AVATAR_GROUPS = [
-  { key: "people", label: "People" },
-  { key: "emoji", label: "Emoji" }
-];
 var FIELD_CLASS = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100";
 function ProfileModal({ user, onClose, dark = false }) {
   const modalRef = useFocusTrap({ onEscape: onClose });
@@ -5366,14 +5362,8 @@ function ProfileModal({ user, onClose, dark = false }) {
     age: profile.age,
     about: profile.about
   });
-  const [pickedAvatarId, setPickedAvatarId] = useState(null);
-  const effectiveAvatarId = pickedAvatarId ?? avatarId;
-  const avatarChanged = pickedAvatarId != null && pickedAvatarId !== avatarId;
-  const previewUrl = useMemo(() => {
-    if (pickedAvatarId == null) return chosenUrl;
-    const opt = avatarOptions.find((o) => o.id === pickedAvatarId);
-    return opt ? avatarUrl(opt) : chosenUrl;
-  }, [pickedAvatarId, chosenUrl]);
+  const [avatarNotice, setAvatarNotice] = useState(false);
+  const avatarNoticeTimer = useRef(null);
   useEffect(() => {
     function onKey(e) {
       if (e.key === "Escape") onClose();
@@ -5381,15 +5371,27 @@ function ProfileModal({ user, onClose, dark = false }) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+  useEffect(
+    () => () => {
+      if (avatarNoticeTimer.current) clearTimeout(avatarNoticeTimer.current);
+    },
+    []
+  );
   const name = fullNameOf(user) || initialsOf(user);
   const email = emailOf(user);
   const initials = initialsOf(user);
   const dirty = useMemo(
-    () => avatarChanged || draft.gender !== profile.gender || draft.age !== profile.age || draft.about !== profile.about,
-    [avatarChanged, draft, profile]
+    () => draft.gender !== profile.gender || draft.age !== profile.age || draft.about !== profile.about,
+    [draft, profile]
   );
+  function handleAvatarSelect(id) {
+    if (id === avatarId) return;
+    setAvatarId(id);
+    setAvatarNotice(true);
+    if (avatarNoticeTimer.current) clearTimeout(avatarNoticeTimer.current);
+    avatarNoticeTimer.current = setTimeout(() => setAvatarNotice(false), 2200);
+  }
   function handleSave() {
-    if (avatarChanged && pickedAvatarId != null) setAvatarId(pickedAvatarId);
     updateProfile2(draft);
     onClose();
   }
@@ -5424,7 +5426,7 @@ function ProfileModal({ user, onClose, dark = false }) {
                 ),
                 /* @__PURE__ */ jsxs("div", { className: "flex-1 overflow-y-auto px-5 pb-5 pt-6", children: [
                   /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center", children: [
-                    /* @__PURE__ */ jsx("span", { className: "rounded-full ring-2 ring-gray-100 dark:ring-gray-800", children: /* @__PURE__ */ jsx(Avatar, { url: previewUrl, initials, size: 80 }) }),
+                    /* @__PURE__ */ jsx("span", { className: "rounded-full ring-2 ring-gray-100 dark:ring-gray-800", children: /* @__PURE__ */ jsx(Avatar, { url: chosenUrl, initials, size: 80 }) }),
                     /* @__PURE__ */ jsxs("div", { className: "mt-3 text-center", children: [
                       /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-base font-semibold text-gray-900 dark:text-gray-100", children: name }),
                       email && /* @__PURE__ */ jsx("div", { className: "max-w-[16rem] truncate text-xs text-gray-500 dark:text-gray-400", children: email }),
@@ -5438,50 +5440,56 @@ function ProfileModal({ user, onClose, dark = false }) {
                     ] })
                   ] }),
                   /* @__PURE__ */ jsxs("div", { className: "mt-5", children: [
-                    /* @__PURE__ */ jsx("div", { className: "mb-2 text-xs font-medium text-gray-700 dark:text-gray-300", children: "Choose your avatar" }),
+                    /* @__PURE__ */ jsxs("div", { className: "mb-2 flex min-h-[1.5rem] items-center justify-between gap-2", children: [
+                      /* @__PURE__ */ jsx("div", { className: "text-xs font-medium text-gray-700 dark:text-gray-300", children: "Choose your avatar" }),
+                      avatarNotice && /* @__PURE__ */ jsxs(
+                        "span",
+                        {
+                          className: "inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/25",
+                          "aria-live": "polite",
+                          children: [
+                            /* @__PURE__ */ jsx(Check, { size: 11 }),
+                            "Avatar updated"
+                          ]
+                        }
+                      )
+                    ] }),
                     /* @__PURE__ */ jsx("p", { className: "mb-3 text-[11px] text-gray-500 dark:text-gray-400", children: "Your pick follows you across every aireon app." }),
-                    AVATAR_GROUPS.map((grp) => {
-                      const options = avatarOptions.filter((o) => o.group === grp.key);
-                      if (options.length === 0) return null;
-                      return /* @__PURE__ */ jsxs("div", { className: "mb-4 last:mb-0", children: [
-                        /* @__PURE__ */ jsx("div", { className: "mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500", children: grp.label }),
-                        /* @__PURE__ */ jsx("div", { className: "grid grid-cols-4 gap-2.5", children: options.map((opt) => {
-                          const selected = opt.id === effectiveAvatarId;
-                          const isPhoto = opt.group === "people";
-                          return /* @__PURE__ */ jsxs(
-                            "button",
-                            {
-                              type: "button",
-                              onClick: () => setPickedAvatarId(opt.id),
-                              title: opt.label,
-                              "aria-label": opt.label,
-                              "aria-pressed": selected,
-                              className: `relative aspect-square border-2 transition-all ${isPhoto ? "rounded-full" : "rounded-xl p-1.5"} ${selected ? "border-red-500 ring-2 ring-red-500/30" : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"}`,
-                              style: { backgroundColor: opt.tint },
-                              children: [
-                                /* @__PURE__ */ jsx(
-                                  "img",
-                                  {
-                                    src: avatarUrl(opt),
-                                    alt: "",
-                                    className: `h-full w-full ${isPhoto ? "rounded-full object-cover" : "object-contain"}`
-                                  }
-                                ),
-                                selected && /* @__PURE__ */ jsx(
-                                  "span",
-                                  {
-                                    "aria-hidden": "true",
-                                    className: "absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow",
-                                    children: /* @__PURE__ */ jsx(Check, { size: 12 })
-                                  }
-                                )
-                              ]
-                            },
-                            opt.id
-                          );
-                        }) })
-                      ] }, grp.key);
-                    })
+                    /* @__PURE__ */ jsx("div", { className: "overflow-x-auto overscroll-x-contain rounded-2xl border border-gray-200 bg-gray-50/70 p-2 pb-2.5 dark:border-gray-800 dark:bg-gray-950/30", children: /* @__PURE__ */ jsx("div", { className: "grid w-max auto-cols-[3rem] grid-flow-col grid-rows-3 gap-2.5", children: avatarOptions.map((opt) => {
+                      const selected = opt.id === avatarId;
+                      const isPhoto = opt.group === "people";
+                      return /* @__PURE__ */ jsxs(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: () => handleAvatarSelect(opt.id),
+                          title: opt.label,
+                          "aria-label": opt.label,
+                          "aria-pressed": selected,
+                          className: `relative h-12 w-12 border-2 transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${isPhoto ? "rounded-full" : "rounded-xl p-1.5"} ${selected ? "border-red-500 ring-2 ring-red-500/30" : "border-transparent hover:border-gray-300 dark:hover:border-gray-600"}`,
+                          style: { backgroundColor: opt.tint },
+                          children: [
+                            /* @__PURE__ */ jsx(
+                              "img",
+                              {
+                                src: avatarUrl(opt),
+                                alt: "",
+                                className: `h-full w-full ${isPhoto ? "rounded-full object-cover" : "object-contain"}`
+                              }
+                            ),
+                            selected && /* @__PURE__ */ jsx(
+                              "span",
+                              {
+                                "aria-hidden": "true",
+                                className: "absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow",
+                                children: /* @__PURE__ */ jsx(Check, { size: 12 })
+                              }
+                            )
+                          ]
+                        },
+                        opt.id
+                      );
+                    }) }) })
                   ] }),
                   /* @__PURE__ */ jsxs("div", { className: "mt-5 space-y-3", children: [
                     /* @__PURE__ */ jsxs("div", { children: [

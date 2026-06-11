@@ -8,12 +8,12 @@
 // Styled as a sibling of the suite `LoginModal`: a near-black panel with the
 // thin red accent strip — never the old bright banner.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
 import type { User } from 'oidc-client-ts';
 import { Avatar } from './Avatar';
-import { avatarOptions, avatarUrl, type AvatarGroup } from './avatars';
+import { avatarOptions, avatarUrl } from './avatars';
 import { emailOf, fullNameOf, initialsOf } from './identity';
 import { useUserProfile } from './useUserProfile';
 import type { Gender, SwissnovoProfile } from './profileStore';
@@ -38,13 +38,6 @@ const GENDER_OPTIONS: Array<{ value: Gender; label: string }> = [
   { value: 'unspecified', label: 'Prefer not to say' },
 ];
 
-// Picker sections, in display order. People (illustrated portraits) first,
-// then the emoji animals.
-const AVATAR_GROUPS: Array<{ key: AvatarGroup; label: string }> = [
-  { key: 'people', label: 'People' },
-  { key: 'emoji', label: 'Emoji' },
-];
-
 const FIELD_CLASS =
   'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ' +
   'focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ' +
@@ -56,23 +49,15 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
   const { profile, avatarId, avatarUrl: chosenUrl, setAvatarId, updateProfile } =
     useUserProfile(user);
 
-  // Everything is drafted so nothing persists until the user explicitly saves:
-  // the text/select details, and the avatar too — picking a new avatar previews
-  // it live and enables "Save changes", while Close cancels. (Previously the
-  // avatar applied instantly and so never enabled the Save button.)
+  // Profile details are drafted until the user explicitly saves. Avatar picks
+  // apply immediately so the header and profile image update in the same tick.
   const [draft, setDraft] = useState<Pick<SwissnovoProfile, 'gender' | 'age' | 'about'>>({
     gender: profile.gender,
     age: profile.age,
     about: profile.about,
   });
-  const [pickedAvatarId, setPickedAvatarId] = useState<string | null>(null);
-  const effectiveAvatarId = pickedAvatarId ?? avatarId;
-  const avatarChanged = pickedAvatarId != null && pickedAvatarId !== avatarId;
-  const previewUrl = useMemo(() => {
-    if (pickedAvatarId == null) return chosenUrl;
-    const opt = avatarOptions.find((o) => o.id === pickedAvatarId);
-    return opt ? avatarUrl(opt) : chosenUrl;
-  }, [pickedAvatarId, chosenUrl]);
+  const [avatarNotice, setAvatarNotice] = useState(false);
+  const avatarNoticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -82,21 +67,34 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  useEffect(
+    () => () => {
+      if (avatarNoticeTimer.current) clearTimeout(avatarNoticeTimer.current);
+    },
+    [],
+  );
+
   const name = fullNameOf(user) || initialsOf(user);
   const email = emailOf(user);
   const initials = initialsOf(user);
 
   const dirty = useMemo(
     () =>
-      avatarChanged ||
       draft.gender !== profile.gender ||
       draft.age !== profile.age ||
       draft.about !== profile.about,
-    [avatarChanged, draft, profile],
+    [draft, profile],
   );
 
+  function handleAvatarSelect(id: string) {
+    if (id === avatarId) return;
+    setAvatarId(id);
+    setAvatarNotice(true);
+    if (avatarNoticeTimer.current) clearTimeout(avatarNoticeTimer.current);
+    avatarNoticeTimer.current = setTimeout(() => setAvatarNotice(false), 2200);
+  }
+
   function handleSave() {
-    if (avatarChanged && pickedAvatarId != null) setAvatarId(pickedAvatarId);
     updateProfile(draft);
     onClose();
   }
@@ -135,7 +133,7 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
           {/* Identity */}
           <div className="flex flex-col items-center">
             <span className="rounded-full ring-2 ring-gray-100 dark:ring-gray-800">
-              <Avatar url={previewUrl} initials={initials} size={80} />
+              <Avatar url={chosenUrl} initials={initials} size={80} />
             </span>
             <div className="mt-3 text-center">
               <div className="max-w-[16rem] truncate text-base font-semibold text-gray-900 dark:text-gray-100">
@@ -160,66 +158,68 @@ export function ProfileModal({ user, onClose, dark = false }: ProfileModalProps)
 
           {/* Avatar picker */}
           <div className="mt-5">
-            <div className="mb-2 text-xs font-medium text-gray-700 dark:text-gray-300">
-              Choose your avatar
+            <div className="mb-2 flex min-h-[1.5rem] items-center justify-between gap-2">
+              <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                Choose your avatar
+              </div>
+              {avatarNotice && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/25"
+                  aria-live="polite"
+                >
+                  <Check size={11} />
+                  Avatar updated
+                </span>
+              )}
             </div>
             <p className="mb-3 text-[11px] text-gray-500 dark:text-gray-400">
               Your pick follows you across every aireon app.
             </p>
-            {AVATAR_GROUPS.map((grp) => {
-              const options = avatarOptions.filter((o) => o.group === grp.key);
-              if (options.length === 0) return null;
-              return (
-                <div key={grp.key} className="mb-4 last:mb-0">
-                  <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-                    {grp.label}
-                  </div>
-                  <div className="grid grid-cols-4 gap-2.5">
-                    {options.map((opt) => {
-                      const selected = opt.id === effectiveAvatarId;
-                      // People avatars are opaque photos with their own circular
-                      // backdrop — clip them to a round disc that fills the tile.
-                      // Emoji are transparent SVGs centred on a soft tint.
-                      const isPhoto = opt.group === 'people';
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => setPickedAvatarId(opt.id)}
-                          title={opt.label}
-                          aria-label={opt.label}
-                          aria-pressed={selected}
-                          className={`relative aspect-square border-2 transition-all ${
-                            isPhoto ? 'rounded-full' : 'rounded-xl p-1.5'
-                          } ${
-                            selected
-                              ? 'border-red-500 ring-2 ring-red-500/30'
-                              : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
-                          }`}
-                          style={{ backgroundColor: opt.tint }}
+            <div className="overflow-x-auto overscroll-x-contain rounded-2xl border border-gray-200 bg-gray-50/70 p-2 pb-2.5 dark:border-gray-800 dark:bg-gray-950/30">
+              <div className="grid w-max auto-cols-[3rem] grid-flow-col grid-rows-3 gap-2.5">
+                {avatarOptions.map((opt) => {
+                  const selected = opt.id === avatarId;
+                  // People avatars are opaque photos with their own circular
+                  // backdrop — clip them to a round disc that fills the tile.
+                  // Emoji are transparent SVGs centred on a soft tint.
+                  const isPhoto = opt.group === 'people';
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => handleAvatarSelect(opt.id)}
+                      title={opt.label}
+                      aria-label={opt.label}
+                      aria-pressed={selected}
+                      className={`relative h-12 w-12 border-2 transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                        isPhoto ? 'rounded-full' : 'rounded-xl p-1.5'
+                      } ${
+                        selected
+                          ? 'border-red-500 ring-2 ring-red-500/30'
+                          : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                      }`}
+                      style={{ backgroundColor: opt.tint }}
+                    >
+                      <img
+                        src={avatarUrl(opt)}
+                        alt=""
+                        className={`h-full w-full ${
+                          isPhoto ? 'rounded-full object-cover' : 'object-contain'
+                        }`}
+                      />
+                      {selected && (
+                        <span
+                          aria-hidden="true"
+                          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow"
                         >
-                          <img
-                            src={avatarUrl(opt)}
-                            alt=""
-                            className={`h-full w-full ${
-                              isPhoto ? 'rounded-full object-cover' : 'object-contain'
-                            }`}
-                          />
-                          {selected && (
-                            <span
-                              aria-hidden="true"
-                              className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow"
-                            >
-                              <Check size={12} />
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
+                          <Check size={12} />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           {/* Details */}
