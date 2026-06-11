@@ -4,6 +4,7 @@ export type Locale = 'de' | 'en' | 'fr' | 'it';
 
 export interface SavedParcelsStrings {
   title: string;
+  totalParcels: string;
   refresh: string;
   exportCsv: string;
   openInProom: string;
@@ -40,6 +41,7 @@ export interface SavedParcelsStrings {
 
 const en: SavedParcelsStrings = {
   title: 'My saved parcels',
+  totalParcels: 'total parcels',
   refresh: 'Refresh',
   exportCsv: 'Export CSV',
   openInProom: 'Open in proom',
@@ -85,6 +87,7 @@ const en: SavedParcelsStrings = {
 
 const fr: SavedParcelsStrings = {
   title: 'Mes parcelles enregistrées',
+  totalParcels: 'parcelles au total',
   refresh: 'Actualiser',
   exportCsv: 'Exporter en CSV',
   openInProom: 'Ouvrir dans proom',
@@ -130,6 +133,7 @@ const fr: SavedParcelsStrings = {
 
 const de: SavedParcelsStrings = {
   title: 'Meine gespeicherten Parzellen',
+  totalParcels: 'Parzellen total',
   refresh: 'Aktualisieren',
   exportCsv: 'CSV exportieren',
   openInProom: 'In proom öffnen',
@@ -175,6 +179,7 @@ const de: SavedParcelsStrings = {
 
 const it: SavedParcelsStrings = {
   title: 'Le mie particelle salvate',
+  totalParcels: 'particelle totali',
   refresh: 'Aggiorna',
   exportCsv: 'Esporta CSV',
   openInProom: 'Apri in proom',

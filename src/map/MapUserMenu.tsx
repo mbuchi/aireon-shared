@@ -1,6 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { Table2, ChevronDown, CircleUser, LogOut, UserCog } from 'lucide-react';
+import {
+  ChevronDown,
+  CircleUser,
+  Download,
+  Layers,
+  LogOut,
+  RefreshCw,
+  Table2,
+  UserCog,
+} from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar, useUserProfile } from '../profile';
 import {
@@ -11,8 +20,13 @@ import {
 } from '../profile/identity';
 import { ProfileModal } from '../profile/ProfileModal';
 import { SavedParcelsModal } from '../prm/SavedParcelsModal';
-import type { PrmRecord } from '../prm/api';
-import type { Locale as PrmLocale } from '../prm/i18n';
+import {
+  fetchPrmRecords,
+  PRM_STATES,
+  type PrmRecord,
+  type PrmState,
+} from '../prm/api';
+import { getSavedParcelsStrings, type Locale as PrmLocale } from '../prm/i18n';
 import { Skeleton } from '../skeleton/Skeleton';
 
 export interface MapUserMenuLabels {
@@ -72,6 +86,45 @@ const defaultOpenSavedParcel = (record: PrmRecord) => {
   window.location.href = `${window.location.pathname}?${params.toString()}`;
 };
 
+function downloadSavedParcelsCsv(records: PrmRecord[]) {
+  const headers = [
+    'Parcel ID',
+    'Address',
+    'Municipality',
+    'Area (m2)',
+    'State',
+    'Priority',
+    'Tags',
+    'Lat',
+    'Lng',
+    'Updated',
+  ];
+  const rows = records.map((r) => [
+    r.parcel_id,
+    r.parcel_label,
+    r.parcel_municipality,
+    r.parcel_area,
+    r.state,
+    r.priority,
+    (r.tags || []).join('; '),
+    r.parcel_lat,
+    r.parcel_lng,
+    new Date(r.updated_at).toLocaleDateString(),
+  ]);
+  const csv = [headers, ...rows]
+    .map((row) =>
+      row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','),
+    )
+    .join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `saved_parcels_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export function MapUserMenu({
   dark = false,
   labels,
@@ -85,12 +138,20 @@ export function MapUserMenu({
   dropdownWidth = 'default',
   onOpenSavedParcel = defaultOpenSavedParcel,
 }: MapUserMenuProps) {
-  const { user, isLoading, login, logout } = useAuth();
+  const { user, isLoading, login, logout, getAccessToken } = useAuth();
   const { avatarUrl } = useUserProfile(user);
   const [open, setOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showParcels, setShowParcels] = useState(false);
+  const [parcelRecords, setParcelRecords] = useState<PrmRecord[]>([]);
+  const [parcelStatus, setParcelStatus] =
+    useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [parcelError, setParcelError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const accessToken = getAccessToken() ?? null;
+  const parcelStrings = getSavedParcelsStrings(locale);
+  const hasCustomDropdownSummary = dropdownSummary != null;
+  const shouldLoadSavedSummary = showSavedParcels && !hasCustomDropdownSummary;
 
   useEffect(() => {
     const close = (event: MouseEvent) => {
@@ -101,6 +162,46 @@ export function MapUserMenu({
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
   }, []);
+
+  const refreshSavedParcels = useCallback(() => {
+    if (!shouldLoadSavedSummary || !user || !accessToken) {
+      setParcelRecords([]);
+      setParcelStatus('idle');
+      setParcelError(null);
+      return;
+    }
+    setParcelStatus('loading');
+    setParcelError(null);
+    fetchPrmRecords(accessToken)
+      .then((records) => {
+        setParcelRecords(records);
+        setParcelStatus('ready');
+      })
+      .catch((err) => {
+        setParcelError(String(err?.message ?? err));
+        setParcelStatus('error');
+      });
+  }, [accessToken, shouldLoadSavedSummary, user]);
+
+  useEffect(() => {
+    refreshSavedParcels();
+  }, [refreshSavedParcels]);
+
+  const savedParcelStats = useMemo(() => {
+    const byState = PRM_STATES.reduce<Record<PrmState, number>>((acc, state) => {
+      acc[state.value] = 0;
+      return acc;
+    }, {} as Record<PrmState, number>);
+    for (const record of parcelRecords) {
+      byState[record.state] = (byState[record.state] ?? 0) + 1;
+    }
+    return { total: parcelRecords.length, byState };
+  }, [parcelRecords]);
+
+  const openSavedParcels = () => {
+    setOpen(false);
+    setShowParcels(true);
+  };
 
   // Shared renderer for a "More tools" row, used by both the signed-in and the
   // signed-out dropdowns.
@@ -191,6 +292,11 @@ export function MapUserMenu({
   const displayName = fullNameOf(user);
   const email = emailOf(user);
   const initials = initialsOf(user);
+  const hasBuiltInSavedSummary = shouldLoadSavedSummary;
+  const isWideDropdown = dropdownWidth === 'wide' || hasBuiltInSavedSummary;
+  const dropdownClassName = `map-shell-user-dropdown ${
+    isWideDropdown ? 'map-shell-user-dropdown--wide' : ''
+  }`;
 
   return (
     <>
@@ -218,7 +324,7 @@ export function MapUserMenu({
 
         {open && (
           <div
-            className={`map-shell-user-dropdown ${dropdownWidth === 'wide' ? 'map-shell-user-dropdown--wide' : ''}`}
+            className={dropdownClassName}
             role="menu"
           >
             <div className="map-shell-user-card">
@@ -258,6 +364,86 @@ export function MapUserMenu({
               </div>
             )}
 
+            {hasBuiltInSavedSummary && (
+              <div className="map-shell-user-summary">
+                <div className="map-shell-user-saved-head">
+                  <div className="map-shell-user-saved-title">
+                    <Layers size={14} aria-hidden="true" />
+                    <span>{labels.savedParcels}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={refreshSavedParcels}
+                    className="map-shell-user-saved-refresh"
+                    aria-label={parcelStrings.refresh}
+                    title={parcelStrings.refresh}
+                  >
+                    <RefreshCw
+                      size={12}
+                      aria-hidden="true"
+                      className={parcelStatus === 'loading' ? 'map-shell-spin' : undefined}
+                    />
+                  </button>
+                </div>
+
+                <div className="map-shell-user-saved-main">
+                  <div className="map-shell-user-saved-total">
+                    <span className="map-shell-user-saved-count">
+                      {savedParcelStats.total}
+                    </span>
+                    <span className="map-shell-user-saved-total-label">
+                      {parcelStrings.totalParcels}
+                    </span>
+                  </div>
+                  <div className="map-shell-user-saved-actions">
+                    <button
+                      type="button"
+                      onClick={openSavedParcels}
+                      className="map-shell-user-saved-action"
+                      aria-label={parcelStrings.title}
+                      title={parcelStrings.title}
+                    >
+                      <Table2 size={16} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => downloadSavedParcelsCsv(parcelRecords)}
+                      disabled={parcelRecords.length === 0}
+                      className="map-shell-user-saved-action"
+                      aria-label={parcelStrings.exportCsv}
+                      title={parcelStrings.exportCsv}
+                    >
+                      <Download size={16} aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+
+                {parcelStatus === 'error' && (
+                  <p className="map-shell-user-saved-error">
+                    {parcelStrings.loadFailed}
+                    {parcelError ? `: ${parcelError}` : ''}
+                  </p>
+                )}
+
+                <div className="map-shell-user-saved-grid">
+                  {PRM_STATES.map((state) => (
+                    <div
+                      key={state.value}
+                      className="map-shell-user-saved-state"
+                      title={parcelStrings.state[state.value]}
+                    >
+                      <div className="map-shell-user-saved-state-count">
+                        {savedParcelStats.byState[state.value] ?? 0}
+                      </div>
+                      <div className="map-shell-user-saved-state-label">
+                        {parcelStrings.state[state.value]}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {toolbarItems.length > 0 && (
               <div className="map-shell-user-tools">
                 <p className="map-shell-user-section-label">{toolbarLabel}</p>
@@ -285,13 +471,12 @@ export function MapUserMenu({
                   {item.dot && <span className="map-shell-user-menu-dot" aria-hidden="true" />}
                 </button>
               ))}
-              {showSavedParcels && (
+              {showSavedParcels && hasCustomDropdownSummary && (
                 <button
                   type="button"
                   role="menuitem"
                   onClick={() => {
-                    setOpen(false);
-                    setShowParcels(true);
+                    openSavedParcels();
                   }}
                   className="map-shell-user-menu-item"
                 >
@@ -322,10 +507,14 @@ export function MapUserMenu({
       {showParcels && (
         <SavedParcelsModal
           locale={locale}
-          onClose={() => setShowParcels(false)}
+          onClose={() => {
+            setShowParcels(false);
+            refreshSavedParcels();
+          }}
           openHereLabel={savedParcelsOpenHereLabel}
           onOpenHere={(record) => {
             setShowParcels(false);
+            refreshSavedParcels();
             onOpenSavedParcel(record);
           }}
         />

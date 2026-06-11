@@ -281,6 +281,7 @@ declare const LEGACY_GEOPOOL_APP_URL = "https://swissnovo-geopool.vercel.app";
 type Locale$1 = 'de' | 'en' | 'fr' | 'it';
 interface SavedParcelsStrings {
     title: string;
+    totalParcels: string;
     refresh: string;
     exportCsv: string;
     openInProom: string;
