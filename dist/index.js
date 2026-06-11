@@ -1290,6 +1290,7 @@ function useAuth() {
 // src/prm/i18n.ts
 var en = {
   title: "My saved parcels",
+  totalParcels: "total parcels",
   refresh: "Refresh",
   exportCsv: "Export CSV",
   openInProom: "Open in proom",
@@ -1332,6 +1333,7 @@ var en = {
 };
 var fr = {
   title: "Mes parcelles enregistr\xE9es",
+  totalParcels: "parcelles au total",
   refresh: "Actualiser",
   exportCsv: "Exporter en CSV",
   openInProom: "Ouvrir dans proom",
@@ -1374,6 +1376,7 @@ var fr = {
 };
 var de = {
   title: "Meine gespeicherten Parzellen",
+  totalParcels: "Parzellen total",
   refresh: "Aktualisieren",
   exportCsv: "CSV exportieren",
   openInProom: "In proom \xF6ffnen",
@@ -1416,6 +1419,7 @@ var de = {
 };
 var it = {
   title: "Le mie particelle salvate",
+  totalParcels: "particelle totali",
   refresh: "Aggiorna",
   exportCsv: "Esporta CSV",
   openInProom: "Apri in proom",
@@ -5590,6 +5594,42 @@ var defaultOpenSavedParcel = (record) => {
   });
   window.location.href = `${window.location.pathname}?${params.toString()}`;
 };
+function downloadSavedParcelsCsv(records) {
+  const headers = [
+    "Parcel ID",
+    "Address",
+    "Municipality",
+    "Area (m2)",
+    "State",
+    "Priority",
+    "Tags",
+    "Lat",
+    "Lng",
+    "Updated"
+  ];
+  const rows = records.map((r) => [
+    r.parcel_id,
+    r.parcel_label,
+    r.parcel_municipality,
+    r.parcel_area,
+    r.state,
+    r.priority,
+    (r.tags || []).join("; "),
+    r.parcel_lat,
+    r.parcel_lng,
+    new Date(r.updated_at).toLocaleDateString()
+  ]);
+  const csv = [headers, ...rows].map(
+    (row) => row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(",")
+  ).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `saved_parcels_${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 function MapUserMenu({
   dark = false,
   labels,
@@ -5603,12 +5643,19 @@ function MapUserMenu({
   dropdownWidth = "default",
   onOpenSavedParcel = defaultOpenSavedParcel
 }) {
-  const { user, isLoading, login, logout } = useAuth();
+  const { user, isLoading, login, logout, getAccessToken } = useAuth();
   const { avatarUrl: avatarUrl2 } = useUserProfile(user);
   const [open, setOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showParcels, setShowParcels] = useState(false);
+  const [parcelRecords, setParcelRecords] = useState([]);
+  const [parcelStatus, setParcelStatus] = useState("idle");
+  const [parcelError, setParcelError] = useState(null);
   const menuRef = useRef(null);
+  const accessToken = getAccessToken() ?? null;
+  const parcelStrings = getSavedParcelsStrings(locale);
+  const hasCustomDropdownSummary = dropdownSummary != null;
+  const shouldLoadSavedSummary = showSavedParcels && !hasCustomDropdownSummary;
   useEffect(() => {
     const close = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -5618,6 +5665,40 @@ function MapUserMenu({
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
+  const refreshSavedParcels = useCallback(() => {
+    if (!shouldLoadSavedSummary || !user || !accessToken) {
+      setParcelRecords([]);
+      setParcelStatus("idle");
+      setParcelError(null);
+      return;
+    }
+    setParcelStatus("loading");
+    setParcelError(null);
+    fetchPrmRecords(accessToken).then((records) => {
+      setParcelRecords(records);
+      setParcelStatus("ready");
+    }).catch((err) => {
+      setParcelError(String(err?.message ?? err));
+      setParcelStatus("error");
+    });
+  }, [accessToken, shouldLoadSavedSummary, user]);
+  useEffect(() => {
+    refreshSavedParcels();
+  }, [refreshSavedParcels]);
+  const savedParcelStats = useMemo(() => {
+    const byState = PRM_STATES.reduce((acc, state) => {
+      acc[state.value] = 0;
+      return acc;
+    }, {});
+    for (const record of parcelRecords) {
+      byState[record.state] = (byState[record.state] ?? 0) + 1;
+    }
+    return { total: parcelRecords.length, byState };
+  }, [parcelRecords]);
+  const openSavedParcels = () => {
+    setOpen(false);
+    setShowParcels(true);
+  };
   const renderToolItem = (item) => /* @__PURE__ */ jsxs(
     "button",
     {
@@ -5705,6 +5786,9 @@ function MapUserMenu({
   const displayName = fullNameOf(user);
   const email = emailOf(user);
   const initials = initialsOf(user);
+  const hasBuiltInSavedSummary = shouldLoadSavedSummary;
+  const isWideDropdown = dropdownWidth === "wide" || hasBuiltInSavedSummary;
+  const dropdownClassName = `map-shell-user-dropdown ${isWideDropdown ? "map-shell-user-dropdown--wide" : ""}`;
   return /* @__PURE__ */ jsxs(Fragment, { children: [
     /* @__PURE__ */ jsxs("div", { ref: menuRef, className: "relative flex-shrink-0", children: [
       /* @__PURE__ */ jsxs(
@@ -5733,7 +5817,7 @@ function MapUserMenu({
       open && /* @__PURE__ */ jsxs(
         "div",
         {
-          className: `map-shell-user-dropdown ${dropdownWidth === "wide" ? "map-shell-user-dropdown--wide" : ""}`,
+          className: dropdownClassName,
           role: "menu",
           children: [
             /* @__PURE__ */ jsxs("div", { className: "map-shell-user-card", children: [
@@ -5769,6 +5853,79 @@ function MapUserMenu({
               )
             ] }),
             dropdownSummary && /* @__PURE__ */ jsx("div", { className: "map-shell-user-summary", children: dropdownSummary }),
+            hasBuiltInSavedSummary && /* @__PURE__ */ jsxs("div", { className: "map-shell-user-summary", children: [
+              /* @__PURE__ */ jsxs("div", { className: "map-shell-user-saved-head", children: [
+                /* @__PURE__ */ jsxs("div", { className: "map-shell-user-saved-title", children: [
+                  /* @__PURE__ */ jsx(Layers, { size: 14, "aria-hidden": "true" }),
+                  /* @__PURE__ */ jsx("span", { children: labels.savedParcels })
+                ] }),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: refreshSavedParcels,
+                    className: "map-shell-user-saved-refresh",
+                    "aria-label": parcelStrings.refresh,
+                    title: parcelStrings.refresh,
+                    children: /* @__PURE__ */ jsx(
+                      RefreshCw,
+                      {
+                        size: 12,
+                        "aria-hidden": "true",
+                        className: parcelStatus === "loading" ? "map-shell-spin" : void 0
+                      }
+                    )
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxs("div", { className: "map-shell-user-saved-main", children: [
+                /* @__PURE__ */ jsxs("div", { className: "map-shell-user-saved-total", children: [
+                  /* @__PURE__ */ jsx("span", { className: "map-shell-user-saved-count", children: savedParcelStats.total }),
+                  /* @__PURE__ */ jsx("span", { className: "map-shell-user-saved-total-label", children: parcelStrings.totalParcels })
+                ] }),
+                /* @__PURE__ */ jsxs("div", { className: "map-shell-user-saved-actions", children: [
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: openSavedParcels,
+                      className: "map-shell-user-saved-action",
+                      "aria-label": parcelStrings.title,
+                      title: parcelStrings.title,
+                      children: /* @__PURE__ */ jsx(Table2, { size: 16, "aria-hidden": "true" })
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => downloadSavedParcelsCsv(parcelRecords),
+                      disabled: parcelRecords.length === 0,
+                      className: "map-shell-user-saved-action",
+                      "aria-label": parcelStrings.exportCsv,
+                      title: parcelStrings.exportCsv,
+                      children: /* @__PURE__ */ jsx(Download, { size: 16, "aria-hidden": "true" })
+                    }
+                  )
+                ] })
+              ] }),
+              parcelStatus === "error" && /* @__PURE__ */ jsxs("p", { className: "map-shell-user-saved-error", children: [
+                parcelStrings.loadFailed,
+                parcelError ? `: ${parcelError}` : ""
+              ] }),
+              /* @__PURE__ */ jsx("div", { className: "map-shell-user-saved-grid", children: PRM_STATES.map((state) => /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  className: "map-shell-user-saved-state",
+                  title: parcelStrings.state[state.value],
+                  children: [
+                    /* @__PURE__ */ jsx("div", { className: "map-shell-user-saved-state-count", children: savedParcelStats.byState[state.value] ?? 0 }),
+                    /* @__PURE__ */ jsx("div", { className: "map-shell-user-saved-state-label", children: parcelStrings.state[state.value] })
+                  ]
+                },
+                state.value
+              )) })
+            ] }),
             toolbarItems.length > 0 && /* @__PURE__ */ jsxs("div", { className: "map-shell-user-tools", children: [
               /* @__PURE__ */ jsx("p", { className: "map-shell-user-section-label", children: toolbarLabel }),
               toolbarItems.map(renderToolItem)
@@ -5795,14 +5952,13 @@ function MapUserMenu({
                 },
                 item.key
               )),
-              showSavedParcels && /* @__PURE__ */ jsxs(
+              showSavedParcels && hasCustomDropdownSummary && /* @__PURE__ */ jsxs(
                 "button",
                 {
                   type: "button",
                   role: "menuitem",
                   onClick: () => {
-                    setOpen(false);
-                    setShowParcels(true);
+                    openSavedParcels();
                   },
                   className: "map-shell-user-menu-item",
                   children: [
@@ -5837,10 +5993,14 @@ function MapUserMenu({
       SavedParcelsModal,
       {
         locale,
-        onClose: () => setShowParcels(false),
+        onClose: () => {
+          setShowParcels(false);
+          refreshSavedParcels();
+        },
         openHereLabel: savedParcelsOpenHereLabel,
         onOpenHere: (record) => {
           setShowParcels(false);
+          refreshSavedParcels();
           onOpenSavedParcel(record);
         }
       }
