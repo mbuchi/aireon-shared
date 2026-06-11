@@ -28,6 +28,7 @@ export default defineConfig({
   format: ['esm'],
   dts: true,
   clean: true,
+  onSuccess: 'mkdir -p dist/assets/brand && cp assets/brand/* dist/assets/brand/',
   treeshake: true,
   external: [
     'react',

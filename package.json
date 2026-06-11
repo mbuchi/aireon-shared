@@ -48,6 +48,7 @@
       "types": "./dist/basemap/index.d.ts",
       "default": "./dist/basemap/index.js"
     },
+    "./assets/brand/*": "./dist/assets/brand/*",
     "./map-ui.css": "./src/map/mapUi.css",
     "./basemap.css": "./src/basemap/basemap.css",
     "./cesium-app": "./src/cesium-app/index.js",
