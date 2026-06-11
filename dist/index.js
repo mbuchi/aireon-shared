@@ -2318,6 +2318,9 @@ async function streamParcelChatReply({
   return trimmed;
 }
 
+// assets/brand/claire-mark-white.webp
+var claire_mark_white_default = "data:image/webp;base64,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";
+
 // src/claire/voiceWorklets.ts
 var MIC_WORKLET_SOURCE = `
 class ClaireMicProcessor extends AudioWorkletProcessor {
@@ -3158,25 +3161,6 @@ function sanitizeTurns(raw) {
     (t) => !!t && typeof t === "object" && (t.role === "user" || t.role === "assistant") && typeof t.content === "string"
   ).map(({ role, content }) => ({ role, content }));
 }
-var CLAIRE_SVG = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    .open-eyes { animation: openBlink 2.2s infinite; transform-origin: center; }
-    .closed-eyes { animation: closedBlink 2.2s infinite; opacity: 0; }
-    @keyframes openBlink { 0%, 78%, 100% { opacity: 1; } 82%, 88% { opacity: 0; } }
-    @keyframes closedBlink { 0%, 78%, 100% { opacity: 0; } 82%, 88% { opacity: 1; } }
-  </style>
-  <path d="M91 98 C84 105 74 109 63 109 C38 109 18 89 18 64 C18 39 38 19 63 19 C88 19 108 39 108 64 L108 93 C108 102 112 107 118 108" fill="none" stroke="#141414" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"></path>
-  <g class="open-eyes" fill="#141414">
-    <circle cx="51" cy="58" r="4"></circle>
-    <circle cx="77" cy="58" r="4"></circle>
-  </g>
-  <g class="closed-eyes" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round">
-    <path d="M46 58 Q51 62 56 58"></path>
-    <path d="M72 58 Q77 62 82 58"></path>
-  </g>
-  <path d="M56 75 Q64 82 72 75" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round"></path>
-</svg>`;
-var CLAIRE_AVATAR = `data:image/svg+xml,${encodeURIComponent(CLAIRE_SVG)}`;
 var QUICK_PROMPTS = [
   {
     label: "Investment potential",
@@ -3280,6 +3264,7 @@ var ClaireAssistant = ({
   lv95,
   headerAddress
 }) => {
+  const claireMark = claire_mark_white_default ;
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -3592,15 +3577,15 @@ var ClaireAssistant = ({
       onClick: () => setOpen(true),
       "aria-label": "Open Claire, the AI parcel assistant",
       title: "Ask Claire about this parcel",
-      className: `fixed z-[60] ${launcherPos} group flex items-center justify-center w-14 h-14 rounded-full transition-all duration-200 active:scale-95 ${"bg-gradient-to-br from-amber-400 to-orange-500 text-[#1a0f00] shadow-[0_10px_30px_-8px_rgba(251,191,36,0.55)] hover:brightness-110" }`,
+      className: `fixed z-[60] ${launcherPos} group flex items-center justify-center w-[6.75rem] h-14 rounded-full px-4 transition-all duration-200 active:scale-95 ${"bg-[#0b0f15] text-white ring-1 ring-amber-300/25 shadow-[0_10px_30px_-8px_rgba(251,191,36,0.55)] hover:brightness-110" }`,
       children: [
         /* @__PURE__ */ jsx("span", { className: "absolute inset-0 rounded-full bg-amber-400/50 chat-launch-ping" }),
         /* @__PURE__ */ jsx(
           "img",
           {
-            src: CLAIRE_AVATAR,
+            src: claireMark,
             alt: "",
-            className: "relative w-full h-full rounded-full object-cover"
+            className: "relative h-[1.45rem] w-full object-contain"
           }
         )
       ]
@@ -3618,36 +3603,23 @@ var ClaireAssistant = ({
           {
             className: `flex items-center gap-3 px-3.5 py-3 shrink-0 ${"bg-gradient-to-b from-white/[0.04] to-transparent border-b border-white/[0.06]" }`,
             children: [
-              /* @__PURE__ */ jsxs(
-                "div",
-                {
-                  className: `relative w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${"bg-gradient-to-br from-amber-400/20 via-orange-500/15 to-rose-500/10 ring-1 ring-amber-300/20" }`,
-                  children: [
-                    /* @__PURE__ */ jsx(
-                      "img",
-                      {
-                        src: CLAIRE_AVATAR,
-                        alt: "Claire",
-                        className: "w-full h-full rounded-xl object-cover"
-                      }
-                    ),
-                    /* @__PURE__ */ jsx(
-                      "span",
-                      {
-                        className: `absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ${contextLoading ? "bg-amber-400 ring-[#0b0f15] animate-pulse"  : "bg-emerald-400 ring-[#0b0f15]" }`
-                      }
-                    )
-                  ]
-                }
-              ),
               /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
-                /* @__PURE__ */ jsx(
-                  "div",
-                  {
-                    className: `text-[18px] font-semibold leading-tight ${"text-white" }`,
-                    children: "Claire"
-                  }
-                ),
+                /* @__PURE__ */ jsxs("div", { className: "relative inline-flex items-center max-w-[7rem]", children: [
+                  /* @__PURE__ */ jsx(
+                    "img",
+                    {
+                      src: claireMark,
+                      alt: "Claire",
+                      className: "h-6 w-auto max-w-full object-contain"
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    "span",
+                    {
+                      className: `absolute -bottom-0.5 -right-1 w-2 h-2 rounded-full ring-2 ${contextLoading ? "bg-amber-400 ring-[#0b0f15] animate-pulse"  : "bg-emerald-400 ring-[#0b0f15]" }`
+                    }
+                  )
+                ] }),
                 subtitle && /* @__PURE__ */ jsxs(
                   "div",
                   {
@@ -3762,13 +3734,13 @@ var ClaireAssistant = ({
                   /* @__PURE__ */ jsx(
                     "div",
                     {
-                      className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
+                      className: `w-10 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 px-1 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
                       children: /* @__PURE__ */ jsx(
                         "img",
                         {
-                          src: CLAIRE_AVATAR,
+                          src: claireMark,
                           alt: "",
-                          className: "w-full h-full rounded-lg object-cover"
+                          className: "w-full h-[0.7rem] object-contain"
                         }
                       )
                     }
@@ -3786,13 +3758,13 @@ var ClaireAssistant = ({
                 /* @__PURE__ */ jsx(
                   "div",
                   {
-                    className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
+                    className: `w-10 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 px-1 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
                     children: /* @__PURE__ */ jsx(
                       "img",
                       {
-                        src: CLAIRE_AVATAR,
+                        src: claireMark,
                         alt: "",
-                        className: "w-full h-full rounded-lg object-cover animate-pulse"
+                        className: "w-full h-[0.7rem] object-contain animate-pulse"
                       }
                     )
                   }
@@ -3913,9 +3885,9 @@ var ClaireAssistant = ({
                     /* @__PURE__ */ jsx(
                       "img",
                       {
-                        src: CLAIRE_AVATAR,
+                        src: claireMark,
                         alt: "",
-                        className: "w-[88%] h-[88%] rounded-full object-cover"
+                        className: "w-[78%] h-auto object-contain"
                       }
                     ),
                     /* @__PURE__ */ jsx(
@@ -3942,7 +3914,14 @@ var ClaireAssistant = ({
                   {
                     className: t.role === "user" ? "text-amber-200/90" : "text-gray-100",
                     children: [
-                      /* @__PURE__ */ jsx("span", { className: "font-semibold mr-1", children: t.role === "user" ? "You:" : "Claire:" }),
+                      t.role === "user" ? /* @__PURE__ */ jsx("span", { className: "font-semibold mr-1", children: "You:" }) : /* @__PURE__ */ jsx(
+                        "img",
+                        {
+                          src: claireMark,
+                          alt: "Claire:",
+                          className: "inline-block h-[0.7rem] w-auto max-w-[2.7rem] object-contain mr-1 translate-y-[0.08rem]"
+                        }
+                      ),
                       t.text
                     ]
                   },

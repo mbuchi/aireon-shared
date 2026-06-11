@@ -25,6 +25,8 @@ import {
   buildParcelContextSummary,
   generateParcelChatReply,
 } from './geminiClient';
+import claireMarkBlack from '../../assets/brand/claire-mark-black.webp';
+import claireMarkWhite from '../../assets/brand/claire-mark-white.webp';
 import { startVoiceCall, type VoiceCallSession } from './voiceCall';
 import { sendClaireMessageSignal } from './signal';
 import { fetchClaireContext } from './claireContext';
@@ -34,29 +36,6 @@ import {
   saveClaireConversation,
 } from './claireConversation';
 import { useAuth } from '../auth/AuthProvider';
-
-// Claire's avatar — a self-contained blinking SVG, inlined as a data URI so
-// the logo ships with this package (no per-app public/ asset needed). The
-// CSS @keyframes blink animation runs inside the <img>.
-const CLAIRE_SVG = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
-  <style>
-    .open-eyes { animation: openBlink 2.2s infinite; transform-origin: center; }
-    .closed-eyes { animation: closedBlink 2.2s infinite; opacity: 0; }
-    @keyframes openBlink { 0%, 78%, 100% { opacity: 1; } 82%, 88% { opacity: 0; } }
-    @keyframes closedBlink { 0%, 78%, 100% { opacity: 0; } 82%, 88% { opacity: 1; } }
-  </style>
-  <path d="M91 98 C84 105 74 109 63 109 C38 109 18 89 18 64 C18 39 38 19 63 19 C88 19 108 39 108 64 L108 93 C108 102 112 107 118 108" fill="none" stroke="#141414" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"></path>
-  <g class="open-eyes" fill="#141414">
-    <circle cx="51" cy="58" r="4"></circle>
-    <circle cx="77" cy="58" r="4"></circle>
-  </g>
-  <g class="closed-eyes" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round">
-    <path d="M46 58 Q51 62 56 58"></path>
-    <path d="M72 58 Q77 62 82 58"></path>
-  </g>
-  <path d="M56 75 Q64 82 72 75" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round"></path>
-</svg>`;
-const CLAIRE_AVATAR = `data:image/svg+xml,${encodeURIComponent(CLAIRE_SVG)}`;
 
 export interface ClaireAssistantProps {
   /** App mounting Claire — feeds telemetry, persistence, and the prompt. */
@@ -226,7 +205,7 @@ function renderInlineBold(line: string): ReactNode {
  *  - expose an `/api/signal-collect` proxy,
  *  - pass its `VITE_GEMINI_API_KEY` as `geminiApiKey`,
  *  - be wrapped in this package's <AuthProvider>.
- * The avatar is inlined — no per-app public/ asset is needed.
+ * The brand mark is bundled — no per-app public/ asset is needed.
  */
 const ClaireAssistant = ({
   appName,
@@ -244,6 +223,7 @@ const ClaireAssistant = ({
   // mode. The `darkMode` prop is accepted (back-compat) but intentionally
   // ignored; every `darkMode ? … : …` below resolves to the dark branch.
   const darkMode: boolean = true;
+  const claireMark = darkMode ? claireMarkWhite : claireMarkBlack;
 
   // Floating widget: a launcher bubble that is always visible while a parcel
   // is selected, expanding into a free-floating chat card.
@@ -674,17 +654,17 @@ const ClaireAssistant = ({
       onClick={() => setOpen(true)}
       aria-label="Open Claire, the AI parcel assistant"
       title="Ask Claire about this parcel"
-      className={`fixed z-[60] ${launcherPos} group flex items-center justify-center w-14 h-14 rounded-full transition-all duration-200 active:scale-95 ${
+      className={`fixed z-[60] ${launcherPos} group flex items-center justify-center w-[6.75rem] h-14 rounded-full px-4 transition-all duration-200 active:scale-95 ${
         darkMode
-          ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-[#1a0f00] shadow-[0_10px_30px_-8px_rgba(251,191,36,0.55)] hover:brightness-110'
-          : 'bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-[0_10px_30px_-8px_rgba(251,146,60,0.6)] hover:brightness-105'
+          ? 'bg-[#0b0f15] text-white ring-1 ring-amber-300/25 shadow-[0_10px_30px_-8px_rgba(251,191,36,0.55)] hover:brightness-110'
+          : 'bg-white text-gray-950 ring-1 ring-amber-200/80 shadow-[0_10px_30px_-8px_rgba(251,146,60,0.45)] hover:brightness-105'
       }`}
     >
       <span className="absolute inset-0 rounded-full bg-amber-400/50 chat-launch-ping" />
       <img
-        src={CLAIRE_AVATAR}
+        src={claireMark}
         alt=""
-        className="relative w-full h-full rounded-full object-cover"
+        className="relative h-[1.45rem] w-full object-contain"
       />
     </button>
   );
@@ -707,37 +687,24 @@ const ClaireAssistant = ({
             : 'bg-gradient-to-b from-gray-50/80 to-transparent border-b border-gray-200/70'
         }`}
       >
-        <div
-          className={`relative w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-            darkMode
-              ? 'bg-gradient-to-br from-amber-400/20 via-orange-500/15 to-rose-500/10 ring-1 ring-amber-300/20'
-              : 'bg-gradient-to-br from-amber-100 via-orange-100 to-rose-100 ring-1 ring-amber-200/70'
-          }`}
-        >
-          <img
-            src={CLAIRE_AVATAR}
-            alt="Claire"
-            className="w-full h-full rounded-xl object-cover"
-          />
-          <span
-            className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ${
-              contextLoading
-                ? darkMode
-                  ? 'bg-amber-400 ring-[#0b0f15] animate-pulse'
-                  : 'bg-amber-500 ring-white animate-pulse'
-                : darkMode
-                  ? 'bg-emerald-400 ring-[#0b0f15]'
-                  : 'bg-emerald-500 ring-white'
-            }`}
-          />
-        </div>
         <div className="min-w-0 flex-1">
-          <div
-            className={`text-[18px] font-semibold leading-tight ${
-              darkMode ? 'text-white' : 'text-gray-900'
-            }`}
-          >
-            Claire
+          <div className="relative inline-flex items-center max-w-[7rem]">
+            <img
+              src={claireMark}
+              alt="Claire"
+              className="h-6 w-auto max-w-full object-contain"
+            />
+            <span
+              className={`absolute -bottom-0.5 -right-1 w-2 h-2 rounded-full ring-2 ${
+                contextLoading
+                  ? darkMode
+                    ? 'bg-amber-400 ring-[#0b0f15] animate-pulse'
+                    : 'bg-amber-500 ring-white animate-pulse'
+                  : darkMode
+                    ? 'bg-emerald-400 ring-[#0b0f15]'
+                    : 'bg-emerald-500 ring-white'
+              }`}
+            />
           </div>
           {subtitle && (
             <div
@@ -891,16 +858,16 @@ const ClaireAssistant = ({
           ) : (
             <div key={msg.id} className="flex items-start gap-2">
               <div
-                className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+                className={`w-10 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 px-1 ${
                   darkMode
                     ? 'bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20'
                     : 'bg-gradient-to-br from-amber-100 to-rose-100 ring-1 ring-amber-200/70'
                 }`}
               >
                 <img
-                  src={CLAIRE_AVATAR}
+                  src={claireMark}
                   alt=""
-                  className="w-full h-full rounded-lg object-cover"
+                  className="w-full h-[0.7rem] object-contain"
                 />
               </div>
               <div className="flex flex-col items-start gap-1 max-w-[88%]">
@@ -921,16 +888,16 @@ const ClaireAssistant = ({
         {loading && (
           <div className="flex items-start gap-2">
             <div
-              className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+              className={`w-10 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 px-1 ${
                 darkMode
                   ? 'bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20'
                   : 'bg-gradient-to-br from-amber-100 to-rose-100 ring-1 ring-amber-200/70'
               }`}
             >
               <img
-                src={CLAIRE_AVATAR}
+                src={claireMark}
                 alt=""
-                className="w-full h-full rounded-lg object-cover animate-pulse"
+                className="w-full h-[0.7rem] object-contain animate-pulse"
               />
             </div>
             <div
@@ -1102,9 +1069,9 @@ const ClaireAssistant = ({
               }
             >
               <img
-                src={CLAIRE_AVATAR}
+                src={claireMark}
                 alt=""
-                className="w-[88%] h-[88%] rounded-full object-cover"
+                className="w-[78%] h-auto object-contain"
               />
               <span
                 className={
@@ -1138,9 +1105,15 @@ const ClaireAssistant = ({
                     t.role === 'user' ? 'text-amber-200/90' : 'text-gray-100'
                   }
                 >
-                  <span className="font-semibold mr-1">
-                    {t.role === 'user' ? 'You:' : 'Claire:'}
-                  </span>
+                  {t.role === 'user' ? (
+                    <span className="font-semibold mr-1">You:</span>
+                  ) : (
+                    <img
+                      src={claireMark}
+                      alt="Claire:"
+                      className="inline-block h-[0.7rem] w-auto max-w-[2.7rem] object-contain mr-1 translate-y-[0.08rem]"
+                    />
+                  )}
                   {t.text}
                 </div>
               ))}

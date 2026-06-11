@@ -512,7 +512,7 @@ interface ClaireAssistantProps {
  *  - expose an `/api/signal-collect` proxy,
  *  - pass its `VITE_GEMINI_API_KEY` as `geminiApiKey`,
  *  - be wrapped in this package's <AuthProvider>.
- * The avatar is inlined — no per-app public/ asset is needed.
+ * The brand mark is bundled — no per-app public/ asset is needed.
  */
 declare const ClaireAssistant: ({ appName, geminiApiKey, geminiModel, voiceCallEnabled, properties, enrichment, lngLat, lv95, headerAddress, }: ClaireAssistantProps) => react.ReactPortal;
 
