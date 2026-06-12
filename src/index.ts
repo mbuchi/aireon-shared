@@ -2,7 +2,12 @@
 // currentColor) and the back-to-hub badge apps drop into their navbars.
 export { AireonLogo, default as AireonLogoDefault } from './brand/AireonLogo';
 export type { AireonLogoProps } from './brand/AireonLogo';
-export { AireonHubLink, default as AireonHubLinkDefault } from './brand/AireonHubLink';
+export {
+  AIREON_HUB_ICON_URL,
+  AIREON_HUB_URL,
+  AireonHubLink,
+  default as AireonHubLinkDefault,
+} from './brand/AireonHubLink';
 export type { AireonHubLinkProps } from './brand/AireonHubLink';
 export { AireonAppWordmark, default as AireonAppWordmarkDefault } from './brand/AireonAppWordmark';
 export type { AireonAppWordmarkProps, AireonAppWordmarkSize } from './brand/AireonAppWordmark';
