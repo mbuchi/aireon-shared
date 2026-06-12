@@ -939,6 +939,10 @@ declare class ErrorLogBoundary extends Component<ErrorLogBoundaryProps, State> {
 }
 
 type Locale = 'de' | 'en' | 'fr' | 'it';
+interface BugReportCategoryOption {
+    id: string;
+    label: string;
+}
 interface BugReportStrings {
     /** Floating button label + aria-label. */
     button: string;
@@ -946,6 +950,12 @@ interface BugReportStrings {
     bug: string;
     /** Report type selector: feedback. */
     feedback: string;
+    /** Optional category group label. */
+    categoryPrompt: string;
+    /** Optional categories shown when reporting an error. */
+    bugCategories: BugReportCategoryOption[];
+    /** Optional categories shown when sending feedback. */
+    feedbackCategories: BugReportCategoryOption[];
     /** Dialog heading. */
     title: string;
     /** Short helper line under the heading. */

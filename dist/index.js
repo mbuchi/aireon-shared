@@ -1,12 +1,12 @@
-import './chunk-6YKTLPIC.js';
+export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
 export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
+import './chunk-6YKTLPIC.js';
+export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
-export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
-export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -4452,6 +4452,21 @@ var BUG_REPORT_STRINGS = {
     button: "Problem melden",
     bug: "Fehler",
     feedback: "Feedback",
+    categoryPrompt: "Worum geht es? (optional)",
+    bugCategories: [
+      { id: "data_error", label: "Datenfehler" },
+      { id: "ui_bug", label: "Oberfl\xE4chenfehler" },
+      { id: "map_location", label: "Karte oder Adresse" },
+      { id: "login_access", label: "Login oder Zugriff" },
+      { id: "performance_crash", label: "Absturz oder langsam" }
+    ],
+    feedbackCategories: [
+      { id: "feature_request", label: "Funktionswunsch" },
+      { id: "data_improvement", label: "Daten verbessern" },
+      { id: "usability", label: "Bedienung" },
+      { id: "design_content", label: "Design oder Inhalte" },
+      { id: "general_feedback", label: "Allgemeines Feedback" }
+    ],
     title: "Ein Problem melden",
     subtitle: "Etwas funktioniert nicht? Beschreiben Sie es kurz \u2014 wir k\xFCmmern uns darum.",
     messagePlaceholder: "Was ist passiert? Was haben Sie erwartet?",
@@ -4469,6 +4484,21 @@ var BUG_REPORT_STRINGS = {
     button: "Report a problem",
     bug: "Bug",
     feedback: "Feedback",
+    categoryPrompt: "What is it about? (optional)",
+    bugCategories: [
+      { id: "data_error", label: "Data error" },
+      { id: "ui_bug", label: "Application UI bug" },
+      { id: "map_location", label: "Map or address issue" },
+      { id: "login_access", label: "Login or access issue" },
+      { id: "performance_crash", label: "Crash or performance" }
+    ],
+    feedbackCategories: [
+      { id: "feature_request", label: "Feature request" },
+      { id: "data_improvement", label: "Data improvement" },
+      { id: "usability", label: "Usability" },
+      { id: "design_content", label: "Design or content" },
+      { id: "general_feedback", label: "General feedback" }
+    ],
     title: "Report a problem",
     subtitle: "Something not working? Tell us briefly \u2014 we\u2019ll look into it.",
     messagePlaceholder: "What happened? What did you expect?",
@@ -4486,6 +4516,21 @@ var BUG_REPORT_STRINGS = {
     button: "Signaler un probl\xE8me",
     bug: "Bug",
     feedback: "Avis",
+    categoryPrompt: "De quoi s\u2019agit-il ? (facultatif)",
+    bugCategories: [
+      { id: "data_error", label: "Erreur de donn\xE9es" },
+      { id: "ui_bug", label: "Bug d\u2019interface" },
+      { id: "map_location", label: "Carte ou adresse" },
+      { id: "login_access", label: "Connexion ou acc\xE8s" },
+      { id: "performance_crash", label: "Blocage ou lenteur" }
+    ],
+    feedbackCategories: [
+      { id: "feature_request", label: "Demande de fonction" },
+      { id: "data_improvement", label: "Am\xE9lioration des donn\xE9es" },
+      { id: "usability", label: "Utilisation" },
+      { id: "design_content", label: "Design ou contenu" },
+      { id: "general_feedback", label: "Avis g\xE9n\xE9ral" }
+    ],
     title: "Signaler un probl\xE8me",
     subtitle: "Quelque chose ne fonctionne pas ? D\xE9crivez-le bri\xE8vement \u2014 nous nous en occupons.",
     messagePlaceholder: "Que s\u2019est-il pass\xE9 ? \xC0 quoi vous attendiez-vous ?",
@@ -4503,6 +4548,21 @@ var BUG_REPORT_STRINGS = {
     button: "Segnala un problema",
     bug: "Bug",
     feedback: "Feedback",
+    categoryPrompt: "Di cosa si tratta? (facoltativo)",
+    bugCategories: [
+      { id: "data_error", label: "Errore nei dati" },
+      { id: "ui_bug", label: "Bug interfaccia app" },
+      { id: "map_location", label: "Mappa o indirizzo" },
+      { id: "login_access", label: "Login o accesso" },
+      { id: "performance_crash", label: "Crash o lentezza" }
+    ],
+    feedbackCategories: [
+      { id: "feature_request", label: "Richiesta funzione" },
+      { id: "data_improvement", label: "Miglioramento dati" },
+      { id: "usability", label: "Usabilit\xE0" },
+      { id: "design_content", label: "Design o contenuti" },
+      { id: "general_feedback", label: "Feedback generale" }
+    ],
     title: "Segnala un problema",
     subtitle: "Qualcosa non funziona? Descrivilo brevemente \u2014 ce ne occupiamo noi.",
     messagePlaceholder: "Cosa \xE8 successo? Cosa ti aspettavi?",
@@ -4523,6 +4583,7 @@ function getBugReportStrings(locale) {
   }
   return BUG_REPORT_STRINGS.de;
 }
+var emptySelectedCategories = () => ({ bug: [], feedback: [] });
 function useDarkMode(forced) {
   const [dark, setDark] = useState(() => {
     if (typeof forced === "boolean") return forced;
@@ -4559,6 +4620,9 @@ function BugReportButton({
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState("idle");
   const [reportType, setReportType] = useState("bug");
+  const [selectedCategories, setSelectedCategories] = useState(
+    emptySelectedCategories
+  );
   const [message, setMessage] = useState("");
   const [emailValue, setEmailValue] = useState(email);
   const dialogRef = useRef(null);
@@ -4600,9 +4664,20 @@ function BugReportButton({
     window.setTimeout(() => {
       setPhase("idle");
       setReportType("bug");
+      setSelectedCategories(emptySelectedCategories());
       setMessage("");
     }, 200);
   }, []);
+  const toggleCategory = useCallback((categoryId) => {
+    setSelectedCategories((current2) => {
+      const values = current2[reportType] ?? [];
+      const nextValues = values.includes(categoryId) ? values.filter((value) => value !== categoryId) : [...values, categoryId];
+      return { ...current2, [reportType]: nextValues };
+    });
+  }, [reportType]);
+  const categoryOptions = reportType === "bug" ? t.bugCategories : t.feedbackCategories;
+  const selectedCategoryIds = selectedCategories[reportType] ?? [];
+  const selectedCategoryLabels = categoryOptions.filter((category) => selectedCategoryIds.includes(category.id)).map((category) => category.label);
   const submit = useCallback(async () => {
     const text = message.trim();
     if (!text || phase === "sending") return;
@@ -4613,12 +4688,26 @@ function BugReportButton({
       metaData: {
         ...metaData ?? {},
         report_type: reportType,
-        source: "bug_report_widget"
+        source: "bug_report_widget",
+        ...selectedCategoryIds.length > 0 ? {
+          report_categories: selectedCategoryIds,
+          report_category_labels: selectedCategoryLabels
+        } : {}
       }
     });
     setPhase(ok ? "success" : "error");
     if (ok) window.setTimeout(close, 1800);
-  }, [message, emailValue, phase, logger, metaData, reportType, close]);
+  }, [
+    message,
+    emailValue,
+    phase,
+    logger,
+    metaData,
+    reportType,
+    selectedCategoryIds,
+    selectedCategoryLabels,
+    close
+  ]);
   if (typeof document === "undefined") return null;
   const target = container ?? document.body;
   const corner = position === "bottom-right" ? "right-4 sm:right-5" : "left-4 sm:left-5";
@@ -4697,6 +4786,31 @@ function BugReportButton({
                     type
                   );
                 }) }),
+                /* @__PURE__ */ jsxs("fieldset", { className: "mb-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700", children: [
+                  /* @__PURE__ */ jsx("legend", { className: "px-1 text-xs font-semibold text-slate-500 dark:text-slate-400", children: t.categoryPrompt }),
+                  /* @__PURE__ */ jsx("div", { className: "mt-1 grid gap-1.5 sm:grid-cols-2", children: categoryOptions.map((category) => {
+                    const checked = selectedCategoryIds.includes(category.id);
+                    return /* @__PURE__ */ jsxs(
+                      "label",
+                      {
+                        className: "flex min-h-[34px] cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition " + (dark ? "text-slate-300 hover:bg-white/10" : "text-slate-600 hover:bg-slate-50"),
+                        children: [
+                          /* @__PURE__ */ jsx(
+                            "input",
+                            {
+                              type: "checkbox",
+                              checked,
+                              onChange: () => toggleCategory(category.id),
+                              className: "h-4 w-4 rounded border-slate-300 accent-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:border-slate-600"
+                            }
+                          ),
+                          /* @__PURE__ */ jsx("span", { children: category.label })
+                        ]
+                      },
+                      category.id
+                    );
+                  }) })
+                ] }),
                 /* @__PURE__ */ jsx(
                   "textarea",
                   {
