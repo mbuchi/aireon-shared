@@ -2,6 +2,7 @@ export { AireonLogo, default as AireonLogoDefault } from './AireonLogo';
 export type { AireonLogoProps } from './AireonLogo';
 export {
   AIREON_HUB_ICON_URL,
+  AIREON_HUB_MARK_URL,
   AIREON_HUB_URL,
   AireonHubLink,
   default as AireonHubLinkDefault,
