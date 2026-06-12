@@ -2,11 +2,11 @@ import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
+import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
+export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
 export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
-import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
-export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -3221,6 +3221,25 @@ function sanitizeTurns(raw) {
     (t) => !!t && typeof t === "object" && (t.role === "user" || t.role === "assistant") && typeof t.content === "string"
   ).map(({ role, content }) => ({ role, content }));
 }
+var CLAIRE_SVG = `<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .open-eyes { animation: openBlink 2.2s infinite; transform-origin: center; }
+    .closed-eyes { animation: closedBlink 2.2s infinite; opacity: 0; }
+    @keyframes openBlink { 0%, 78%, 100% { opacity: 1; } 82%, 88% { opacity: 0; } }
+    @keyframes closedBlink { 0%, 78%, 100% { opacity: 0; } 82%, 88% { opacity: 1; } }
+  </style>
+  <path d="M91 98 C84 105 74 109 63 109 C38 109 18 89 18 64 C18 39 38 19 63 19 C88 19 108 39 108 64 L108 93 C108 102 112 107 118 108" fill="none" stroke="#141414" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"></path>
+  <g class="open-eyes" fill="#141414">
+    <circle cx="51" cy="58" r="4"></circle>
+    <circle cx="77" cy="58" r="4"></circle>
+  </g>
+  <g class="closed-eyes" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round">
+    <path d="M46 58 Q51 62 56 58"></path>
+    <path d="M72 58 Q77 62 82 58"></path>
+  </g>
+  <path d="M56 75 Q64 82 72 75" fill="none" stroke="#141414" stroke-width="4" stroke-linecap="round"></path>
+</svg>`;
+var CLAIRE_AVATAR = `data:image/svg+xml,${encodeURIComponent(CLAIRE_SVG)}`;
 var QUICK_PROMPTS = [
   {
     label: "Investment potential",
@@ -3637,15 +3656,15 @@ var ClaireAssistant = ({
       onClick: () => setOpen(true),
       "aria-label": "Open Claire, the AI parcel assistant",
       title: "Ask Claire about this parcel",
-      className: `fixed z-[60] ${launcherPos} group flex items-center justify-center w-[6.75rem] h-14 rounded-full px-4 transition-all duration-200 active:scale-95 ${"bg-[#0b0f15] text-white ring-1 ring-amber-300/25 shadow-[0_10px_30px_-8px_rgba(251,191,36,0.55)] hover:brightness-110" }`,
+      className: `fixed z-[60] ${launcherPos} group flex items-center justify-center w-14 h-14 rounded-full transition-all duration-200 active:scale-95 ${"bg-gradient-to-br from-amber-400 to-orange-500 text-[#1a0f00] shadow-[0_10px_30px_-8px_rgba(251,191,36,0.55)] hover:brightness-110" }`,
       children: [
         /* @__PURE__ */ jsx("span", { className: "absolute inset-0 rounded-full bg-amber-400/50 chat-launch-ping" }),
         /* @__PURE__ */ jsx(
           "img",
           {
-            src: claireMark,
+            src: CLAIRE_AVATAR,
             alt: "",
-            className: "relative h-[1.45rem] w-full object-contain"
+            className: "relative w-full h-full rounded-full object-cover"
           }
         )
       ]
@@ -3661,16 +3680,16 @@ var ClaireAssistant = ({
         /* @__PURE__ */ jsxs(
           "div",
           {
-            className: `flex items-center gap-3 px-3.5 py-3 shrink-0 ${"bg-gradient-to-b from-white/[0.04] to-transparent border-b border-white/[0.06]" }`,
+            className: `relative flex items-center justify-end gap-2 px-3.5 py-3 min-h-[3.75rem] shrink-0 ${"bg-gradient-to-b from-white/[0.04] to-transparent border-b border-white/[0.06]" }`,
             children: [
-              /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
-                /* @__PURE__ */ jsxs("div", { className: "relative inline-flex items-center max-w-[7rem]", children: [
+              /* @__PURE__ */ jsxs("div", { className: "pointer-events-none absolute left-1/2 top-2.5 flex -translate-x-1/2 flex-col items-center", children: [
+                /* @__PURE__ */ jsxs("div", { className: "relative inline-flex items-center", children: [
                   /* @__PURE__ */ jsx(
                     "img",
                     {
                       src: claireMark,
                       alt: "Claire",
-                      className: "h-6 w-auto max-w-full object-contain"
+                      className: "h-auto w-[clamp(5rem,28vw,7rem)] object-contain"
                     }
                   ),
                   /* @__PURE__ */ jsx(
@@ -3683,7 +3702,7 @@ var ClaireAssistant = ({
                 subtitle && /* @__PURE__ */ jsxs(
                   "div",
                   {
-                    className: `flex items-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em] mt-0.5 ${"text-amber-200/70" }`,
+                    className: `mt-0.5 flex w-[clamp(6rem,36vw,8.5rem)] items-center justify-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em] ${"text-amber-200/70" }`,
                     children: [
                       /* @__PURE__ */ jsx(Loader2, { size: 9, className: "animate-spin shrink-0" }),
                       /* @__PURE__ */ jsx("span", { className: "truncate", children: subtitle })
@@ -3794,13 +3813,13 @@ var ClaireAssistant = ({
                   /* @__PURE__ */ jsx(
                     "div",
                     {
-                      className: `w-10 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 px-1 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
+                      className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
                       children: /* @__PURE__ */ jsx(
                         "img",
                         {
-                          src: claireMark,
+                          src: CLAIRE_AVATAR,
                           alt: "",
-                          className: "w-full h-[0.7rem] object-contain"
+                          className: "w-full h-full rounded-lg object-cover"
                         }
                       )
                     }
@@ -3818,13 +3837,13 @@ var ClaireAssistant = ({
                 /* @__PURE__ */ jsx(
                   "div",
                   {
-                    className: `w-10 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 px-1 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
+                    className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
                     children: /* @__PURE__ */ jsx(
                       "img",
                       {
-                        src: claireMark,
+                        src: CLAIRE_AVATAR,
                         alt: "",
-                        className: "w-full h-[0.7rem] object-contain animate-pulse"
+                        className: "w-full h-full rounded-lg object-cover animate-pulse"
                       }
                     )
                   }
@@ -3945,9 +3964,9 @@ var ClaireAssistant = ({
                     /* @__PURE__ */ jsx(
                       "img",
                       {
-                        src: claireMark,
+                        src: CLAIRE_AVATAR,
                         alt: "",
-                        className: "w-[78%] h-auto object-contain"
+                        className: "w-[88%] h-[88%] rounded-full object-cover"
                       }
                     ),
                     /* @__PURE__ */ jsx(
@@ -3974,14 +3993,7 @@ var ClaireAssistant = ({
                   {
                     className: t.role === "user" ? "text-amber-200/90" : "text-gray-100",
                     children: [
-                      t.role === "user" ? /* @__PURE__ */ jsx("span", { className: "font-semibold mr-1", children: "You:" }) : /* @__PURE__ */ jsx(
-                        "img",
-                        {
-                          src: claireMark,
-                          alt: "Claire:",
-                          className: "inline-block h-[0.7rem] w-auto max-w-[2.7rem] object-contain mr-1 translate-y-[0.08rem]"
-                        }
-                      ),
+                      /* @__PURE__ */ jsx("span", { className: "font-semibold mr-1", children: t.role === "user" ? "You:" : "Claire:" }),
                       t.text
                     ]
                   },
