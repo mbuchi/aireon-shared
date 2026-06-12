@@ -38,6 +38,9 @@ export interface BugReportButtonProps {
 
 type Phase = 'idle' | 'sending' | 'success' | 'error';
 type ReportType = 'bug' | 'feedback';
+type SelectedCategories = Record<ReportType, string[]>;
+
+const emptySelectedCategories = (): SelectedCategories => ({ bug: [], feedback: [] });
 
 function useDarkMode(forced?: boolean): boolean {
   const [dark, setDark] = useState(() => {
@@ -76,6 +79,9 @@ export function BugReportButton({
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<Phase>('idle');
   const [reportType, setReportType] = useState<ReportType>('bug');
+  const [selectedCategories, setSelectedCategories] = useState<SelectedCategories>(
+    emptySelectedCategories,
+  );
   const [message, setMessage] = useState('');
   const [emailValue, setEmailValue] = useState(email);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -121,9 +127,26 @@ export function BugReportButton({
     window.setTimeout(() => {
       setPhase('idle');
       setReportType('bug');
+      setSelectedCategories(emptySelectedCategories());
       setMessage('');
     }, 200);
   }, []);
+
+  const toggleCategory = useCallback((categoryId: string) => {
+    setSelectedCategories((current) => {
+      const values = current[reportType] ?? [];
+      const nextValues = values.includes(categoryId)
+        ? values.filter((value) => value !== categoryId)
+        : [...values, categoryId];
+      return { ...current, [reportType]: nextValues };
+    });
+  }, [reportType]);
+
+  const categoryOptions = reportType === 'bug' ? t.bugCategories : t.feedbackCategories;
+  const selectedCategoryIds = selectedCategories[reportType] ?? [];
+  const selectedCategoryLabels = categoryOptions
+    .filter((category) => selectedCategoryIds.includes(category.id))
+    .map((category) => category.label);
 
   const submit = useCallback(async () => {
     const text = message.trim();
@@ -136,11 +159,27 @@ export function BugReportButton({
         ...(metaData ?? {}),
         report_type: reportType,
         source: 'bug_report_widget',
+        ...(selectedCategoryIds.length > 0
+          ? {
+              report_categories: selectedCategoryIds,
+              report_category_labels: selectedCategoryLabels,
+            }
+          : {}),
       },
     });
     setPhase(ok ? 'success' : 'error');
     if (ok) window.setTimeout(close, 1800);
-  }, [message, emailValue, phase, logger, metaData, reportType, close]);
+  }, [
+    message,
+    emailValue,
+    phase,
+    logger,
+    metaData,
+    reportType,
+    selectedCategoryIds,
+    selectedCategoryLabels,
+    close,
+  ]);
 
   if (typeof document === 'undefined') return null;
   const target = container ?? document.body;
@@ -257,6 +296,34 @@ export function BugReportButton({
                 );
               })}
             </div>
+
+            <fieldset className="mb-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
+              <legend className="px-1 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {t.categoryPrompt}
+              </legend>
+              <div className="mt-1 grid gap-1.5 sm:grid-cols-2">
+                {categoryOptions.map((category) => {
+                  const checked = selectedCategoryIds.includes(category.id);
+                  return (
+                    <label
+                      key={category.id}
+                      className={
+                        'flex min-h-[34px] cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium transition ' +
+                        (dark ? 'text-slate-300 hover:bg-white/10' : 'text-slate-600 hover:bg-slate-50')
+                      }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleCategory(category.id)}
+                        className="h-4 w-4 rounded border-slate-300 accent-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:border-slate-600"
+                      />
+                      <span>{category.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
 
             <textarea
               ref={textareaRef}
