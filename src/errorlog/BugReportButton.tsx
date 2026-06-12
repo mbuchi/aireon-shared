@@ -13,7 +13,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { Bug, CheckCircle2, Loader2, MessageSquareText, Send, X } from 'lucide-react';
+import { CheckCircle2, Loader2, MessageSquareText, Send, ShieldAlert, X } from 'lucide-react';
 import type { ErrorLogger } from './client';
 import { getBugReportStrings, type Locale } from './i18n';
 
@@ -173,7 +173,7 @@ export function BugReportButton({
           : 'bg-white text-rose-600 ring-rose-200 hover:bg-rose-50 focus-visible:ring-offset-white')
       }
     >
-      <Bug className="h-4 w-4" aria-hidden="true" />
+      <ShieldAlert className="h-4 w-4" aria-hidden="true" />
       <span className={showLabel ? 'hidden sm:inline' : 'sr-only'}>{t.button}</span>
     </button>
   );
@@ -221,7 +221,7 @@ export function BugReportButton({
           <>
             <div className="mb-3 flex items-center gap-2 pr-6">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300">
-                <Bug className="h-4 w-4" aria-hidden="true" />
+                <ShieldAlert className="h-4 w-4" aria-hidden="true" />
               </span>
               <h2 id={titleId} className="text-base font-semibold">
                 {t.title}
@@ -234,7 +234,7 @@ export function BugReportButton({
             <div className="mb-3 grid grid-cols-2 gap-2" role="group" aria-label={t.dialogLabel}>
               {(['bug', 'feedback'] as ReportType[]).map((type) => {
                 const active = reportType === type;
-                const Icon = type === 'bug' ? Bug : MessageSquareText;
+                const Icon = type === 'bug' ? ShieldAlert : MessageSquareText;
                 return (
                   <button
                     key={type}

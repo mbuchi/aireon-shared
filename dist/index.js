@@ -1,16 +1,16 @@
-export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
 import './chunk-6YKTLPIC.js';
+export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
-import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
-export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
-export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
+export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
+import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
+export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, Bug, CheckCircle2, MessageSquareText, Check, CircleUser, UserCog, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, ShieldAlert, CheckCircle2, MessageSquareText, Check, CircleUser, UserCog, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
@@ -4605,7 +4605,7 @@ function BugReportButton({
       title: t.button,
       className: `fixed bottom-4 sm:bottom-5 ${corner} z-[2147483000] inline-flex h-11 items-center justify-center gap-2 ${showLabel ? "w-auto px-3.5" : "w-11 px-0"} rounded-full text-sm font-semibold shadow-lg ring-1 ring-inset transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ` + (dark ? "bg-slate-800 text-rose-300 ring-white/10 hover:bg-slate-700 focus-visible:ring-offset-slate-900" : "bg-white text-rose-600 ring-rose-200 hover:bg-rose-50 focus-visible:ring-offset-white"),
       children: [
-        /* @__PURE__ */ jsx(Bug, { className: "h-4 w-4", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsx(ShieldAlert, { className: "h-4 w-4", "aria-hidden": "true" }),
         /* @__PURE__ */ jsx("span", { className: showLabel ? "hidden sm:inline" : "sr-only", children: t.button })
       ]
     }
@@ -4646,13 +4646,13 @@ function BugReportButton({
                 /* @__PURE__ */ jsx("p", { className: "text-sm text-slate-500 dark:text-slate-400", children: t.successBody })
               ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
                 /* @__PURE__ */ jsxs("div", { className: "mb-3 flex items-center gap-2 pr-6", children: [
-                  /* @__PURE__ */ jsx("span", { className: "flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300", children: /* @__PURE__ */ jsx(Bug, { className: "h-4 w-4", "aria-hidden": "true" }) }),
+                  /* @__PURE__ */ jsx("span", { className: "flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300", children: /* @__PURE__ */ jsx(ShieldAlert, { className: "h-4 w-4", "aria-hidden": "true" }) }),
                   /* @__PURE__ */ jsx("h2", { id: titleId, className: "text-base font-semibold", children: t.title })
                 ] }),
                 /* @__PURE__ */ jsx("p", { id: subtitleId, className: "mb-4 text-sm text-slate-500 dark:text-slate-400", children: t.subtitle }),
                 /* @__PURE__ */ jsx("div", { className: "mb-3 grid grid-cols-2 gap-2", role: "group", "aria-label": t.dialogLabel, children: ["bug", "feedback"].map((type) => {
                   const active = reportType === type;
-                  const Icon = type === "bug" ? Bug : MessageSquareText;
+                  const Icon = type === "bug" ? ShieldAlert : MessageSquareText;
                   return /* @__PURE__ */ jsxs(
                     "button",
                     {
