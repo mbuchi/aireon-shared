@@ -19,13 +19,15 @@ export type PrmState =
   | 'rejected';
 export type PrmPriority = 'low' | 'medium' | 'high' | 'urgent';
 
+// The pipeline tracks the four ACTIVE stages only. The terminal `closed` /
+// `rejected` states remain in the PrmState type (so legacy records still
+// typecheck) but are intentionally omitted from this list so they no longer
+// appear as categories anywhere in the suite UI (grid, filters, selectors).
 export const PRM_STATES: { value: PrmState; color: string; bg: string }[] = [
   { value: 'new', color: 'text-sky-400', bg: 'bg-sky-500' },
   { value: 'contacted', color: 'text-amber-400', bg: 'bg-amber-500' },
   { value: 'negotiation', color: 'text-orange-400', bg: 'bg-orange-500' },
   { value: 'due_diligence', color: 'text-teal-400', bg: 'bg-teal-500' },
-  { value: 'closed', color: 'text-emerald-400', bg: 'bg-emerald-500' },
-  { value: 'rejected', color: 'text-red-400', bg: 'bg-red-500' },
 ];
 
 export const PRM_PRIORITIES: { value: PrmPriority; color: string }[] = [

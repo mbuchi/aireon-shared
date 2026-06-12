@@ -457,7 +457,15 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  margin-top: 0.25rem;
+}
+/* Status (Active) on the left, the edit-profile button on the right — one row
+   below the name/email so those get the full card width. */
+.map-shell-user-active-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
 }
 
 .map-shell-user-active-dot {

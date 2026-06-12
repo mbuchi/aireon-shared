@@ -1,16 +1,16 @@
-export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
+import './chunk-6YKTLPIC.js';
+export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
 export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
-import './chunk-6YKTLPIC.js';
-export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
+export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, ShieldAlert, CheckCircle2, MessageSquareText, Check, CircleUser, UserCog, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, Settings, Camera, Sun, Moon, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, ShieldAlert, CheckCircle2, MessageSquareText, Check, CircleUser, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, Settings, Camera, Sun, Moon, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
@@ -49,9 +49,7 @@ var PRM_STATES = [
   { value: "new", color: "text-sky-400", bg: "bg-sky-500" },
   { value: "contacted", color: "text-amber-400", bg: "bg-amber-500" },
   { value: "negotiation", color: "text-orange-400", bg: "bg-orange-500" },
-  { value: "due_diligence", color: "text-teal-400", bg: "bg-teal-500" },
-  { value: "closed", color: "text-emerald-400", bg: "bg-emerald-500" },
-  { value: "rejected", color: "text-red-400", bg: "bg-red-500" }
+  { value: "due_diligence", color: "text-teal-400", bg: "bg-teal-500" }
 ];
 var PRM_PRIORITIES = [
   { value: "low", color: "text-slate-400" },
@@ -1359,6 +1357,7 @@ function useAuth() {
 // src/prm/i18n.ts
 var en = {
   title: "My saved parcels",
+  editProfile: "edit",
   totalParcels: "total parcels",
   refresh: "Refresh",
   exportCsv: "Export CSV",
@@ -1402,6 +1401,7 @@ var en = {
 };
 var fr = {
   title: "Mes parcelles enregistr\xE9es",
+  editProfile: "modifier",
   totalParcels: "parcelles au total",
   refresh: "Actualiser",
   exportCsv: "Exporter en CSV",
@@ -1445,6 +1445,7 @@ var fr = {
 };
 var de = {
   title: "Meine gespeicherten Parzellen",
+  editProfile: "bearbeiten",
   totalParcels: "Parzellen total",
   refresh: "Aktualisieren",
   exportCsv: "CSV exportieren",
@@ -1488,6 +1489,7 @@ var de = {
 };
 var it = {
   title: "Le mie particelle salvate",
+  editProfile: "modifica",
   totalParcels: "particelle totali",
   refresh: "Aggiorna",
   exportCsv: "Esporta CSV",
@@ -6024,32 +6026,31 @@ function MapUserMenu({
               /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
                 /* @__PURE__ */ jsx("p", { className: "map-shell-user-display-name", children: displayName || firstName || labels.fallbackUser }),
                 email && /* @__PURE__ */ jsx("p", { className: "map-shell-user-email", children: email }),
-                /* @__PURE__ */ jsxs("div", { className: "map-shell-user-active", children: [
-                  /* @__PURE__ */ jsxs("span", { className: "map-shell-user-active-dot", children: [
-                    /* @__PURE__ */ jsx("span", {}),
-                    /* @__PURE__ */ jsx("span", {})
+                /* @__PURE__ */ jsxs("div", { className: "map-shell-user-active-row", children: [
+                  /* @__PURE__ */ jsxs("div", { className: "map-shell-user-active", children: [
+                    /* @__PURE__ */ jsxs("span", { className: "map-shell-user-active-dot", children: [
+                      /* @__PURE__ */ jsx("span", {}),
+                      /* @__PURE__ */ jsx("span", {})
+                    ] }),
+                    /* @__PURE__ */ jsx("span", { children: labels.active })
                   ] }),
-                  /* @__PURE__ */ jsx("span", { children: labels.active })
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      type: "button",
+                      role: "menuitem",
+                      onClick: () => {
+                        setOpen(false);
+                        setShowProfile(true);
+                      },
+                      className: "map-shell-user-manage",
+                      "aria-label": labels.manageProfile ?? labels.viewProfile,
+                      title: labels.manageProfile ?? labels.viewProfile,
+                      children: parcelStrings.editProfile
+                    }
+                  )
                 ] })
-              ] }),
-              /* @__PURE__ */ jsxs(
-                "button",
-                {
-                  type: "button",
-                  role: "menuitem",
-                  onClick: () => {
-                    setOpen(false);
-                    setShowProfile(true);
-                  },
-                  className: "map-shell-user-manage",
-                  "aria-label": labels.manageProfile ?? labels.viewProfile,
-                  title: labels.manageProfile ?? labels.viewProfile,
-                  children: [
-                    /* @__PURE__ */ jsx(UserCog, { size: 13, "aria-hidden": "true" }),
-                    /* @__PURE__ */ jsx("span", { children: labels.manageProfile ?? labels.viewProfile })
-                  ]
-                }
-              )
+              ] })
             ] }),
             dropdownSummary && /* @__PURE__ */ jsx("div", { className: "map-shell-user-summary", children: dropdownSummary }),
             hasBuiltInSavedSummary && /* @__PURE__ */ jsxs("div", { className: "map-shell-user-summary", children: [
@@ -6104,6 +6105,18 @@ function MapUserMenu({
                       "aria-label": parcelStrings.exportCsv,
                       title: parcelStrings.exportCsv,
                       children: /* @__PURE__ */ jsx(Download, { size: 16, "aria-hidden": "true" })
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    "a",
+                    {
+                      href: `${PROOM_APP_URL}/`,
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                      className: "map-shell-user-saved-action",
+                      "aria-label": parcelStrings.openInProom,
+                      title: parcelStrings.openInProom,
+                      children: /* @__PURE__ */ jsx(ExternalLink, { size: 16, "aria-hidden": "true" })
                     }
                   )
                 ] })

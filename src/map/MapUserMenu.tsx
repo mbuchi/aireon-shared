@@ -4,11 +4,11 @@ import {
   ChevronDown,
   CircleUser,
   Download,
+  ExternalLink,
   Layers,
   LogOut,
   RefreshCw,
   Table2,
-  UserCog,
 } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar, useUserProfile } from '../profile';
@@ -23,6 +23,7 @@ import { SavedParcelsModal } from '../prm/SavedParcelsModal';
 import {
   fetchPrmRecords,
   PRM_STATES,
+  PROOM_APP_URL,
   type PrmRecord,
   type PrmState,
 } from '../prm/api';
@@ -334,28 +335,31 @@ export function MapUserMenu({
                   {displayName || firstName || labels.fallbackUser}
                 </p>
                 {email && <p className="map-shell-user-email">{email}</p>}
-                <div className="map-shell-user-active">
-                  <span className="map-shell-user-active-dot">
-                    <span />
-                    <span />
-                  </span>
-                  <span>{labels.active}</span>
+                {/* Status + edit share one line so the name/email above get the
+                    full card width (no squeeze from a side button). */}
+                <div className="map-shell-user-active-row">
+                  <div className="map-shell-user-active">
+                    <span className="map-shell-user-active-dot">
+                      <span />
+                      <span />
+                    </span>
+                    <span>{labels.active}</span>
+                  </div>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setOpen(false);
+                      setShowProfile(true);
+                    }}
+                    className="map-shell-user-manage"
+                    aria-label={labels.manageProfile ?? labels.viewProfile}
+                    title={labels.manageProfile ?? labels.viewProfile}
+                  >
+                    {parcelStrings.editProfile}
+                  </button>
                 </div>
               </div>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setOpen(false);
-                  setShowProfile(true);
-                }}
-                className="map-shell-user-manage"
-                aria-label={labels.manageProfile ?? labels.viewProfile}
-                title={labels.manageProfile ?? labels.viewProfile}
-              >
-                <UserCog size={13} aria-hidden="true" />
-                <span>{labels.manageProfile ?? labels.viewProfile}</span>
-              </button>
             </div>
 
             {dropdownSummary && (
@@ -415,6 +419,18 @@ export function MapUserMenu({
                     >
                       <Download size={16} aria-hidden="true" />
                     </button>
+                    {/* Manage the full pipeline in proom — opens the Kanban in a
+                        new tab so the user keeps their place in this app. */}
+                    <a
+                      href={`${PROOM_APP_URL}/`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="map-shell-user-saved-action"
+                      aria-label={parcelStrings.openInProom}
+                      title={parcelStrings.openInProom}
+                    >
+                      <ExternalLink size={16} aria-hidden="true" />
+                    </a>
                   </div>
                 </div>
 

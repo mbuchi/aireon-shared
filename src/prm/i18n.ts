@@ -4,6 +4,8 @@ export type Locale = 'de' | 'en' | 'fr' | 'it';
 
 export interface SavedParcelsStrings {
   title: string;
+  /** Account-card edit-profile button text (lowercase verb, e.g. "edit"). */
+  editProfile: string;
   totalParcels: string;
   refresh: string;
   exportCsv: string;
@@ -41,6 +43,7 @@ export interface SavedParcelsStrings {
 
 const en: SavedParcelsStrings = {
   title: 'My saved parcels',
+  editProfile: 'edit',
   totalParcels: 'total parcels',
   refresh: 'Refresh',
   exportCsv: 'Export CSV',
@@ -87,6 +90,7 @@ const en: SavedParcelsStrings = {
 
 const fr: SavedParcelsStrings = {
   title: 'Mes parcelles enregistrées',
+  editProfile: 'modifier',
   totalParcels: 'parcelles au total',
   refresh: 'Actualiser',
   exportCsv: 'Exporter en CSV',
@@ -133,6 +137,7 @@ const fr: SavedParcelsStrings = {
 
 const de: SavedParcelsStrings = {
   title: 'Meine gespeicherten Parzellen',
+  editProfile: 'bearbeiten',
   totalParcels: 'Parzellen total',
   refresh: 'Aktualisieren',
   exportCsv: 'CSV exportieren',
@@ -179,6 +184,7 @@ const de: SavedParcelsStrings = {
 
 const it: SavedParcelsStrings = {
   title: 'Le mie particelle salvate',
+  editProfile: 'modifica',
   totalParcels: 'particelle totali',
   refresh: 'Aggiorna',
   exportCsv: 'Esporta CSV',
