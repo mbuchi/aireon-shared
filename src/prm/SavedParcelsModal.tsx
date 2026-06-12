@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X, Download, MapPin, ArrowUpDown, Search, ExternalLink,
   Trash2, RefreshCw, Plus, Layers, LayoutGrid, Compass,
@@ -37,6 +38,12 @@ export interface SavedParcelsModalProps {
   onOpenHere?: (record: PrmRecord) => void;
   /** Override the "Open here" button label. Defaults to "Open here". */
   openHereLabel?: string;
+  /**
+   * Force dark styling. Only needed for apps that theme via a boolean rather
+   * than a `dark` class on an ancestor element — because the modal portals to
+   * `document.body`, it escapes any nested `.dark` wrapper the app applies.
+   */
+  dark?: boolean;
 }
 
 export function SavedParcelsModal({
@@ -44,6 +51,7 @@ export function SavedParcelsModal({
   onClose,
   onOpenHere,
   openHereLabel,
+  dark = false,
 }: SavedParcelsModalProps) {
   const t = getSavedParcelsStrings(locale);
   const auth = useAuth();
@@ -180,8 +188,8 @@ export function SavedParcelsModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+  return createPortal(
+    <div className={`${dark ? 'dark ' : ''}fixed inset-0 z-[200] flex items-center justify-center p-4`}>
       <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={onClose} />
       <div
         ref={modalRef}
@@ -293,7 +301,8 @@ export function SavedParcelsModal({
           to   { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

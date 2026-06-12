@@ -507,6 +507,7 @@ export function MapUserMenu({
       {showParcels && (
         <SavedParcelsModal
           locale={locale}
+          dark={dark}
           onClose={() => {
             setShowParcels(false);
             refreshSavedParcels();

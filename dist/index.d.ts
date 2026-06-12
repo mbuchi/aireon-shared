@@ -358,8 +358,14 @@ interface SavedParcelsModalProps {
     onOpenHere?: (record: PrmRecord) => void;
     /** Override the "Open here" button label. Defaults to "Open here". */
     openHereLabel?: string;
+    /**
+     * Force dark styling. Only needed for apps that theme via a boolean rather
+     * than a `dark` class on an ancestor element — because the modal portals to
+     * `document.body`, it escapes any nested `.dark` wrapper the app applies.
+     */
+    dark?: boolean;
 }
-declare function SavedParcelsModal({ locale, onClose, onOpenHere, openHereLabel, }: SavedParcelsModalProps): react_jsx_runtime.JSX.Element;
+declare function SavedParcelsModal({ locale, onClose, onOpenHere, openHereLabel, dark, }: SavedParcelsModalProps): react.ReactPortal;
 
 interface LoginModalFeature {
     /** Optional leading icon. */

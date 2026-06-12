@@ -1540,7 +1540,8 @@ function SavedParcelsModal({
   locale = "en",
   onClose,
   onOpenHere,
-  openHereLabel
+  openHereLabel,
+  dark = false
 }) {
   const t = getSavedParcelsStrings(locale);
   const auth = useAuth();
@@ -1674,139 +1675,142 @@ function SavedParcelsModal({
       setRecords(prev);
     }
   };
-  return /* @__PURE__ */ jsxs("div", { className: "fixed inset-0 z-[200] flex items-center justify-center p-4", children: [
-    /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-black/55 backdrop-blur-sm", onClick: onClose }),
-    /* @__PURE__ */ jsxs(
-      "div",
-      {
-        ref: modalRef,
-        className: "relative w-full max-w-5xl max-h-[85vh] rounded-2xl shadow-2xl border overflow-hidden flex flex-col bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700",
-        style: { animation: "savedParcelsIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both" },
-        children: [
-          /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between px-5 py-3.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0", children: [
-            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2.5 min-w-0", children: [
-              /* @__PURE__ */ jsx(MapPin, { size: 18, className: "text-emerald-600 dark:text-emerald-400 shrink-0" }),
-              /* @__PURE__ */ jsx("h2", { className: "text-base font-semibold text-gray-900 dark:text-white", children: t.title }),
-              /* @__PURE__ */ jsx("span", { className: "text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400", children: records.length })
+  return createPortal(
+    /* @__PURE__ */ jsxs("div", { className: `${dark ? "dark " : ""}fixed inset-0 z-[200] flex items-center justify-center p-4`, children: [
+      /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-black/55 backdrop-blur-sm", onClick: onClose }),
+      /* @__PURE__ */ jsxs(
+        "div",
+        {
+          ref: modalRef,
+          className: "relative w-full max-w-5xl max-h-[85vh] rounded-2xl shadow-2xl border overflow-hidden flex flex-col bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700",
+          style: { animation: "savedParcelsIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both" },
+          children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between px-5 py-3.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0", children: [
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2.5 min-w-0", children: [
+                /* @__PURE__ */ jsx(MapPin, { size: 18, className: "text-emerald-600 dark:text-emerald-400 shrink-0" }),
+                /* @__PURE__ */ jsx("h2", { className: "text-base font-semibold text-gray-900 dark:text-white", children: t.title }),
+                /* @__PURE__ */ jsx("span", { className: "text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400", children: records.length })
+              ] }),
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    onClick: refresh,
+                    title: t.refresh,
+                    "aria-label": t.refresh,
+                    className: "p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
+                    children: /* @__PURE__ */ jsx(RefreshCw, { size: 15, className: loading ? "animate-spin" : "" })
+                  }
+                ),
+                /* @__PURE__ */ jsxs(
+                  "button",
+                  {
+                    onClick: exportCsv,
+                    disabled: records.length === 0,
+                    className: "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-500/25 transition-colors disabled:opacity-40",
+                    children: [
+                      /* @__PURE__ */ jsx(Download, { size: 13 }),
+                      t.exportCsv
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxs(
+                  "a",
+                  {
+                    href: `${PROOM_APP_URL}/`,
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    className: "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
+                    children: [
+                      /* @__PURE__ */ jsx(LayoutGrid, { size: 13 }),
+                      t.openInProom
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    onClick: onClose,
+                    "aria-label": t.close,
+                    className: "p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
+                    children: /* @__PURE__ */ jsx(X, { size: 17 })
+                  }
+                )
+              ] })
             ] }),
-            /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
-              /* @__PURE__ */ jsx(
-                "button",
-                {
-                  onClick: refresh,
-                  title: t.refresh,
-                  "aria-label": t.refresh,
-                  className: "p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
-                  children: /* @__PURE__ */ jsx(RefreshCw, { size: 15, className: loading ? "animate-spin" : "" })
-                }
-              ),
+            /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center gap-2 px-5 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30", children: [
+              /* @__PURE__ */ jsxs("div", { className: "relative flex-1 min-w-[160px] max-w-sm", children: [
+                /* @__PURE__ */ jsx(Search, { size: 14, className: "absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" }),
+                /* @__PURE__ */ jsx(
+                  "input",
+                  {
+                    type: "text",
+                    value: search,
+                    onChange: (e) => setSearch(e.target.value),
+                    placeholder: t.searchPlaceholder,
+                    className: "w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                  }
+                )
+              ] }),
               /* @__PURE__ */ jsxs(
-                "button",
+                "select",
                 {
-                  onClick: exportCsv,
-                  disabled: records.length === 0,
-                  className: "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 hover:bg-emerald-100 dark:hover:bg-emerald-500/25 transition-colors disabled:opacity-40",
+                  value: stateFilter,
+                  onChange: (e) => setStateFilter(e.target.value),
+                  className: "px-2.5 py-1.5 rounded-lg text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/30",
                   children: [
-                    /* @__PURE__ */ jsx(Download, { size: 13 }),
-                    t.exportCsv
+                    /* @__PURE__ */ jsx("option", { value: "all", children: t.filterAllStates }),
+                    PRM_STATES.map((s) => /* @__PURE__ */ jsx("option", { value: s.value, children: t.state[s.value] }, s.value))
                   ]
                 }
               ),
-              /* @__PURE__ */ jsxs(
-                "a",
-                {
-                  href: `${PROOM_APP_URL}/`,
-                  target: "_blank",
-                  rel: "noopener noreferrer",
-                  className: "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors",
-                  children: [
-                    /* @__PURE__ */ jsx(LayoutGrid, { size: 13 }),
-                    t.openInProom
-                  ]
-                }
-              ),
-              /* @__PURE__ */ jsx(
-                "button",
-                {
-                  onClick: onClose,
-                  "aria-label": t.close,
-                  className: "p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
-                  children: /* @__PURE__ */ jsx(X, { size: 17 })
-                }
-              )
-            ] })
-          ] }),
-          /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center gap-2 px-5 py-2.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30", children: [
-            /* @__PURE__ */ jsxs("div", { className: "relative flex-1 min-w-[160px] max-w-sm", children: [
-              /* @__PURE__ */ jsx(Search, { size: 14, className: "absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" }),
-              /* @__PURE__ */ jsx(
-                "input",
-                {
-                  type: "text",
-                  value: search,
-                  onChange: (e) => setSearch(e.target.value),
-                  placeholder: t.searchPlaceholder,
-                  className: "w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                }
-              )
+              /* @__PURE__ */ jsx("span", { className: "ml-auto text-[11px] text-gray-500 dark:text-gray-400", children: sorted.length === records.length ? t.showingAll(records.length) : t.showingFiltered(sorted.length, records.length) })
             ] }),
-            /* @__PURE__ */ jsxs(
-              "select",
-              {
-                value: stateFilter,
-                onChange: (e) => setStateFilter(e.target.value),
-                className: "px-2.5 py-1.5 rounded-lg text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/30",
-                children: [
-                  /* @__PURE__ */ jsx("option", { value: "all", children: t.filterAllStates }),
-                  PRM_STATES.map((s) => /* @__PURE__ */ jsx("option", { value: s.value, children: t.state[s.value] }, s.value))
-                ]
-              }
-            ),
-            /* @__PURE__ */ jsx("span", { className: "ml-auto text-[11px] text-gray-500 dark:text-gray-400", children: sorted.length === records.length ? t.showingAll(records.length) : t.showingFiltered(sorted.length, records.length) })
-          ] }),
-          /* @__PURE__ */ jsx("div", { className: "flex-1 overflow-auto", children: !isAuthenticated ? /* @__PURE__ */ jsx(EmptyState, { icon: /* @__PURE__ */ jsx(MapPin, { size: 32, className: "text-gray-400" }), title: t.signinRequired }) : loading ? /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center py-16", children: /* @__PURE__ */ jsx(RefreshCw, { size: 20, className: "animate-spin text-gray-400" }) }) : error ? /* @__PURE__ */ jsx(EmptyState, { icon: /* @__PURE__ */ jsx(X, { size: 32, className: "text-red-400" }), title: t.loadFailed, hint: error }) : records.length === 0 ? /* @__PURE__ */ jsx(EmptyState, { icon: /* @__PURE__ */ jsx(MapPin, { size: 32, className: "text-gray-400" }), title: t.empty, hint: t.emptyHint }) : sorted.length === 0 ? /* @__PURE__ */ jsx(EmptyState, { icon: /* @__PURE__ */ jsx(Search, { size: 32, className: "text-gray-400" }), title: t.noMatch }) : /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
-            /* @__PURE__ */ jsx("thead", { className: "sticky top-0 z-10 bg-gray-50 dark:bg-gray-800/80 backdrop-blur", children: /* @__PURE__ */ jsxs("tr", { className: "border-b border-gray-200 dark:border-gray-700", children: [
-              /* @__PURE__ */ jsx(Th, { children: /* @__PURE__ */ jsx(SortBtn, { label: t.colAddress, field: "parcel_label", sortKey, sortAsc, onClick: handleSort }) }),
-              /* @__PURE__ */ jsx(Th, { children: /* @__PURE__ */ jsx(SortBtn, { label: t.colMunicipality, field: "parcel_municipality", sortKey, sortAsc, onClick: handleSort }) }),
-              /* @__PURE__ */ jsx(Th, { children: /* @__PURE__ */ jsx(SortBtn, { label: t.colState, field: "state", sortKey, sortAsc, onClick: handleSort }) }),
-              /* @__PURE__ */ jsx(Th, { children: /* @__PURE__ */ jsx(SortBtn, { label: t.colPriority, field: "priority", sortKey, sortAsc, onClick: handleSort }) }),
-              /* @__PURE__ */ jsx(Th, { className: "hidden md:table-cell", children: t.colTags }),
-              /* @__PURE__ */ jsx(Th, { children: /* @__PURE__ */ jsx(SortBtn, { label: t.colUpdated, field: "updated_at", sortKey, sortAsc, onClick: handleSort }) }),
-              /* @__PURE__ */ jsx(Th, { align: "right", children: t.colActions })
+            /* @__PURE__ */ jsx("div", { className: "flex-1 overflow-auto", children: !isAuthenticated ? /* @__PURE__ */ jsx(EmptyState, { icon: /* @__PURE__ */ jsx(MapPin, { size: 32, className: "text-gray-400" }), title: t.signinRequired }) : loading ? /* @__PURE__ */ jsx("div", { className: "flex items-center justify-center py-16", children: /* @__PURE__ */ jsx(RefreshCw, { size: 20, className: "animate-spin text-gray-400" }) }) : error ? /* @__PURE__ */ jsx(EmptyState, { icon: /* @__PURE__ */ jsx(X, { size: 32, className: "text-red-400" }), title: t.loadFailed, hint: error }) : records.length === 0 ? /* @__PURE__ */ jsx(EmptyState, { icon: /* @__PURE__ */ jsx(MapPin, { size: 32, className: "text-gray-400" }), title: t.empty, hint: t.emptyHint }) : sorted.length === 0 ? /* @__PURE__ */ jsx(EmptyState, { icon: /* @__PURE__ */ jsx(Search, { size: 32, className: "text-gray-400" }), title: t.noMatch }) : /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
+              /* @__PURE__ */ jsx("thead", { className: "sticky top-0 z-10 bg-gray-50 dark:bg-gray-800/80 backdrop-blur", children: /* @__PURE__ */ jsxs("tr", { className: "border-b border-gray-200 dark:border-gray-700", children: [
+                /* @__PURE__ */ jsx(Th, { children: /* @__PURE__ */ jsx(SortBtn, { label: t.colAddress, field: "parcel_label", sortKey, sortAsc, onClick: handleSort }) }),
+                /* @__PURE__ */ jsx(Th, { children: /* @__PURE__ */ jsx(SortBtn, { label: t.colMunicipality, field: "parcel_municipality", sortKey, sortAsc, onClick: handleSort }) }),
+                /* @__PURE__ */ jsx(Th, { children: /* @__PURE__ */ jsx(SortBtn, { label: t.colState, field: "state", sortKey, sortAsc, onClick: handleSort }) }),
+                /* @__PURE__ */ jsx(Th, { children: /* @__PURE__ */ jsx(SortBtn, { label: t.colPriority, field: "priority", sortKey, sortAsc, onClick: handleSort }) }),
+                /* @__PURE__ */ jsx(Th, { className: "hidden md:table-cell", children: t.colTags }),
+                /* @__PURE__ */ jsx(Th, { children: /* @__PURE__ */ jsx(SortBtn, { label: t.colUpdated, field: "updated_at", sortKey, sortAsc, onClick: handleSort }) }),
+                /* @__PURE__ */ jsx(Th, { align: "right", children: t.colActions })
+              ] }) }),
+              /* @__PURE__ */ jsx("tbody", { children: sorted.map((r) => /* @__PURE__ */ jsx(
+                Row,
+                {
+                  record: r,
+                  t,
+                  openHereLabel: openHereLabel ?? t.openHere,
+                  onChangeState,
+                  onChangePriority,
+                  onChangeTags,
+                  onDelete: () => setConfirmDeleteId(r.id),
+                  onOpenHere
+                },
+                r.id
+              )) })
             ] }) }),
-            /* @__PURE__ */ jsx("tbody", { children: sorted.map((r) => /* @__PURE__ */ jsx(
-              Row,
+            confirmDeleteId && /* @__PURE__ */ jsx(
+              ConfirmDelete,
               {
-                record: r,
                 t,
-                openHereLabel: openHereLabel ?? t.openHere,
-                onChangeState,
-                onChangePriority,
-                onChangeTags,
-                onDelete: () => setConfirmDeleteId(r.id),
-                onOpenHere
-              },
-              r.id
-            )) })
-          ] }) }),
-          confirmDeleteId && /* @__PURE__ */ jsx(
-            ConfirmDelete,
-            {
-              t,
-              onCancel: () => setConfirmDeleteId(null),
-              onConfirm: () => onDelete(confirmDeleteId)
-            }
-          )
-        ]
-      }
-    ),
-    /* @__PURE__ */ jsx("style", { children: `
+                onCancel: () => setConfirmDeleteId(null),
+                onConfirm: () => onDelete(confirmDeleteId)
+              }
+            )
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsx("style", { children: `
         @keyframes savedParcelsIn {
           from { opacity: 0; transform: scale(0.92) translateY(8px); }
           to   { opacity: 1; transform: scale(1) translateY(0); }
         }
       ` })
-  ] });
+    ] }),
+    document.body
+  );
 }
 function Th({ children, align = "left", className = "" }) {
   return /* @__PURE__ */ jsx("th", { className: `px-3 py-2.5 text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-gray-400 ${align === "right" ? "text-right" : "text-left"} ${className}`, children });
@@ -6074,6 +6078,7 @@ function MapUserMenu({
       SavedParcelsModal,
       {
         locale,
+        dark,
         onClose: () => {
           setShowParcels(false);
           refreshSavedParcels();
