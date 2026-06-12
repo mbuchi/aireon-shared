@@ -60,13 +60,13 @@ interface AireonHubLinkProps {
     onClick?: MouseEventHandler<HTMLAnchorElement>;
 }
 /**
- * Back-to-hub badge: the canonical Aireon favicon mark as a link to the suite
- * hub.
+ * Back-to-hub badge: a monochrome Aireon mark as a link to the suite hub.
  *
  * Dropped into an app's navbar (typically to the left of the app's own
  * wordmark) it establishes "this is an Aireon tool" and gives a one-click
- * route home to hub.aireon.ch. The image source is centralized on the hub so
- * every app renders the same artwork as the browser favicon.
+ * route home to hub.aireon.ch. The browser favicon remains the canonical
+ * red-on-white asset on the hub; this navbar mark is transparent and inherits
+ * currentColor so it can switch between light and dark themes.
  */
 declare function AireonHubLink({ href, label, className, linkClassName, iconClassName, withDivider, dividerClassName, style, target, rel, onClick, }: AireonHubLinkProps): react_jsx_runtime.JSX.Element;
 
