@@ -1,6 +1,8 @@
 import type { CSSProperties, MouseEventHandler } from 'react';
-import { AireonLogo } from './AireonLogo';
 import { TOOLBOX_APP_URL } from '../prm/api';
+
+export const AIREON_HUB_URL = `${TOOLBOX_APP_URL}/`;
+export const AIREON_HUB_ICON_URL = `${TOOLBOX_APP_URL}/favicon.svg`;
 
 export interface AireonHubLinkProps {
   /** Destination. Defaults to the Aireon hub (hub.aireon.ch). */
@@ -13,7 +15,9 @@ export interface AireonHubLinkProps {
   className?: string;
   /** Extra classes on the <a> itself (rarely needed). */
   linkClassName?: string;
-  /** Classes controlling the wordmark size/colour. Height-based recommended. */
+  /** Classes controlling the icon size. */
+  iconClassName?: string;
+  /** @deprecated Use iconClassName. Retained so existing consumers compile. */
   logoClassName?: string;
   /** Render a thin vertical rule after the badge — used when the badge sits to
    *  the left of an app's own product wordmark (`aireon │ groove`). */
@@ -27,20 +31,20 @@ export interface AireonHubLinkProps {
 }
 
 /**
- * Back-to-hub badge: the Aireon wordmark as a link to the suite hub.
+ * Back-to-hub badge: the canonical Aireon favicon mark as a link to the suite
+ * hub.
  *
  * Dropped into an app's navbar (typically to the left of the app's own
  * wordmark) it establishes "this is an Aireon tool" and gives a one-click
- * route home to hub.aireon.ch. The mark inherits `currentColor` and is muted
- * by default so it reads as secondary to the app's own brand; it brightens on
- * hover/focus.
+ * route home to hub.aireon.ch. The image source is centralized on the hub so
+ * every app renders the same artwork as the browser favicon.
  */
 export function AireonHubLink({
-  href = TOOLBOX_APP_URL,
+  href = AIREON_HUB_URL,
   label = 'Aireon hub',
-  className = '',
+  className = 'text-gray-900 dark:text-white',
   linkClassName = '',
-  logoClassName = 'h-[17px] w-auto',
+  iconClassName = 'h-6 w-6 object-contain',
   withDivider = false,
   dividerClassName = 'h-5 w-px bg-current opacity-20',
   style,
@@ -58,11 +62,17 @@ export function AireonHubLink({
         aria-label={label}
         title={label}
         className={
-          'inline-flex items-center rounded-md opacity-60 transition-opacity duration-150 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ' +
+          'inline-flex h-9 w-9 items-center justify-center rounded-lg border border-current/10 bg-transparent opacity-75 transition-colors duration-150 hover:border-current/20 hover:bg-current/10 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ' +
           linkClassName
         }
       >
-        <AireonLogo className={logoClassName} title="" />
+        <img
+          src={AIREON_HUB_ICON_URL}
+          alt=""
+          aria-hidden="true"
+          className={iconClassName}
+          decoding="async"
+        />
       </a>
       {withDivider && <span aria-hidden="true" className={dividerClassName} />}
     </span>
