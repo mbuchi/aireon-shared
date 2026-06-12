@@ -1281,3 +1281,25 @@
 .aireon-openwith--dark .aireon-openwith-item-icon {
   color: rgb(100 116 139);
 }
+
+/* Settings gear placeholder empty state — a normal muted line (not the uppercase
+   section label), shown when an app has no settings yet. */
+.aireon-settings-empty {
+  margin: 0;
+  padding: 0.5rem 0.625rem;
+  color: rgb(107 114 128);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+.dark .aireon-settings-empty,
+[data-theme="dark"] .aireon-settings-empty,
+.aireon-onav--dark .aireon-settings-empty {
+  color: rgb(148 163 184);
+}
+
+/* MapToolbar desktop cluster — neutral inline row. */
+.aireon-maptoolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}

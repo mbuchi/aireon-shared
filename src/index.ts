@@ -334,6 +334,10 @@ export { NavIconButton, default as NavIconButtonDefault } from './nav/NavIconBut
 export type { NavIconButtonProps } from './nav/NavIconButton';
 export { OpenWithMenu, default as OpenWithMenuDefault } from './nav/OpenWithMenu';
 export type { OpenWithMenuProps } from './nav/OpenWithMenu';
+export { SettingsMenu, default as SettingsMenuDefault } from './nav/SettingsMenu';
+export type { SettingsMenuProps, SettingsMenuItem } from './nav/SettingsMenu';
+export { MapToolbar, default as MapToolbarDefault } from './nav/MapToolbar';
+export type { MapToolbarProps, MapToolbarLabels } from './nav/MapToolbar';
 export {
   LAUNCH_APPS,
   LAUNCH_DEFAULT_ZOOM,

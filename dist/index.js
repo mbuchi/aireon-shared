@@ -1,5 +1,4 @@
 import './chunk-6YKTLPIC.js';
-export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
@@ -7,10 +6,11 @@ export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
 export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
+export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useInsertionEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, ShieldAlert, CheckCircle2, MessageSquareText, Check, CircleUser, UserCog, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, ShieldAlert, CheckCircle2, MessageSquareText, Check, CircleUser, UserCog, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, Settings, Camera, Sun, Moon, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
@@ -6964,6 +6964,140 @@ function OpenWithMenu({
   );
 }
 var OpenWithMenu_default = OpenWithMenu;
+function SettingsMenu({
+  dark = false,
+  label,
+  emptyLabel,
+  menuLabel,
+  items,
+  iconSize = 18,
+  buttonClassName = "aireon-navbtn",
+  className
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const triggerRef = useRef(null);
+  const menuId = useId();
+  const hasItems = !!items && items.length > 0;
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e) => {
+      if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+  const rootClass = "aireon-navbtn-wrap" + (dark ? " aireon-navbtn-wrap--dark aireon-onav--dark" : "") + (className ? ` ${className}` : "");
+  return /* @__PURE__ */ jsxs("div", { ref: rootRef, className: rootClass, children: [
+    /* @__PURE__ */ jsx(
+      "button",
+      {
+        ref: triggerRef,
+        type: "button",
+        onClick: () => setOpen((v) => !v),
+        "aria-label": label,
+        title: label,
+        "aria-haspopup": "menu",
+        "aria-expanded": open,
+        "aria-controls": menuId,
+        className: buttonClassName + (open ? ` ${buttonClassName}--active` : ""),
+        children: /* @__PURE__ */ jsx(Settings, { size: iconSize, "aria-hidden": "true" })
+      }
+    ),
+    !open && /* @__PURE__ */ jsx("span", { role: "tooltip", className: "aireon-navbtn-tip", children: label }),
+    open && /* @__PURE__ */ jsxs("div", { id: menuId, role: "menu", className: "aireon-onav-menu", children: [
+      menuLabel && /* @__PURE__ */ jsx("p", { className: "aireon-onav-menu-label", children: menuLabel }),
+      hasItems ? items.map(
+        (item) => item.render ? /* @__PURE__ */ jsx("div", { className: "aireon-onav-menu-custom", role: "none", children: item.render() }, item.key) : /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            role: "menuitem",
+            onClick: () => {
+              setOpen(false);
+              item.onSelect?.();
+            },
+            className: "aireon-onav-menu-item",
+            children: [
+              item.icon,
+              /* @__PURE__ */ jsx("span", { className: "aireon-onav-menu-item-label", children: item.label })
+            ]
+          },
+          item.key
+        )
+      ) : /* @__PURE__ */ jsx("p", { className: "aireon-settings-empty", children: emptyLabel })
+    ] })
+  ] });
+}
+var SettingsMenu_default = SettingsMenu;
+function useMediaQuery2(query) {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mql = window.matchMedia(query);
+    const onChange = () => setMatches(mql.matches);
+    onChange();
+    if (mql.addEventListener) mql.addEventListener("change", onChange);
+    else mql.addListener(onChange);
+    return () => {
+      if (mql.removeEventListener) mql.removeEventListener("change", onChange);
+      else mql.removeListener(onChange);
+    };
+  }, [query]);
+  return matches;
+}
+function MapToolbar({
+  dark = false,
+  labels,
+  locale,
+  onLocaleChange,
+  onCapture,
+  isCapturing = false,
+  onShowImages,
+  onToggleTheme,
+  onLocate,
+  isLocating = false,
+  settingsItems,
+  hideSettings = false,
+  collapseBelow = 768,
+  className
+}) {
+  const isMobile = useMediaQuery2(`(max-width: ${collapseBelow - 1}px)`);
+  if (isMobile) {
+    const items = [];
+    if (onCapture)
+      items.push({ key: "save", label: labels.saveImage, icon: /* @__PURE__ */ jsx(Camera, { size: 16, "aria-hidden": "true" }), onSelect: onCapture, disabled: isCapturing });
+    if (onShowImages)
+      items.push({ key: "images", label: labels.myImages, icon: /* @__PURE__ */ jsx(Layers, { size: 16, "aria-hidden": "true" }), onSelect: onShowImages });
+    if (onToggleTheme)
+      items.push({ key: "theme", label: dark ? labels.toggleLight : labels.toggleDark, icon: dark ? /* @__PURE__ */ jsx(Sun, { size: 16, "aria-hidden": "true" }) : /* @__PURE__ */ jsx(Moon, { size: 16, "aria-hidden": "true" }), onSelect: onToggleTheme });
+    if (onLocate)
+      items.push({ key: "locate", label: labels.locateMe, icon: /* @__PURE__ */ jsx(MapPin, { size: 16, "aria-hidden": "true" }), onSelect: onLocate, disabled: isLocating });
+    if (!hideSettings)
+      items.push({ key: "settings", label: labels.settings, render: () => /* @__PURE__ */ jsx(SettingsMenu, { dark, label: labels.settings, emptyLabel: labels.settingsComingSoon, items: settingsItems }) });
+    items.push({ key: "language", label: labels.selectLanguage, render: (mode) => /* @__PURE__ */ jsx(LocaleSelector, { locale, onChange: onLocaleChange, ariaLabel: labels.selectLanguage, className: mode === "menu" ? "w-full" : void 0 }) });
+    return /* @__PURE__ */ jsx(OverflowNav, { dark, items, collapseBelow, moreLabel: labels.more, menuLabel: labels.more, className });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "aireon-maptoolbar" + (className ? ` ${className}` : ""), children: [
+    onCapture && /* @__PURE__ */ jsx(NavIconButton, { dark, icon: /* @__PURE__ */ jsx(Camera, { size: 18, "aria-hidden": "true" }), label: labels.saveImage, onClick: isCapturing ? void 0 : onCapture }),
+    onShowImages && /* @__PURE__ */ jsx(NavIconButton, { dark, icon: /* @__PURE__ */ jsx(Layers, { size: 18, "aria-hidden": "true" }), label: labels.myImages, onClick: onShowImages }),
+    onToggleTheme && /* @__PURE__ */ jsx(NavIconButton, { dark, icon: dark ? /* @__PURE__ */ jsx(Sun, { size: 18, "aria-hidden": "true" }) : /* @__PURE__ */ jsx(Moon, { size: 18, "aria-hidden": "true" }), label: dark ? labels.toggleLight : labels.toggleDark, onClick: onToggleTheme }),
+    onLocate && /* @__PURE__ */ jsx(NavIconButton, { dark, icon: /* @__PURE__ */ jsx(MapPin, { size: 18, "aria-hidden": "true" }), label: labels.locateMe, onClick: isLocating ? void 0 : onLocate }),
+    !hideSettings && /* @__PURE__ */ jsx(SettingsMenu, { dark, label: labels.settings, emptyLabel: labels.settingsComingSoon, items: settingsItems }),
+    /* @__PURE__ */ jsx(LocaleSelector, { locale, onChange: onLocaleChange, ariaLabel: labels.selectLanguage })
+  ] });
+}
+var MapToolbar_default = MapToolbar;
 var DATA_TABLE_STRINGS_EN = {
   searchPlaceholder: "Search\u2026",
   sortBy: "Sort by {column}",
@@ -7328,4 +7462,4 @@ function VirtualList({
   );
 }
 
-export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonAppWordmark, AireonAppWordmark_default as AireonAppWordmarkDefault, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonAppWordmark, AireonAppWordmark_default as AireonAppWordmarkDefault, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapToolbar, MapToolbar_default as MapToolbarDefault, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, SettingsMenu, SettingsMenu_default as SettingsMenuDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
