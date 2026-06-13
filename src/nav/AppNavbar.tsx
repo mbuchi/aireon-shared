@@ -33,6 +33,13 @@ export interface AppNavbarProps {
   /** Map action cluster (Save · My images · Theme · Locate · Settings · Language). Omit to hide. */
   toolbar?: Omit<MapToolbarProps, 'dark'>;
 
+  /**
+   * App-specific controls rendered in the right cluster, just before the map
+   * toolbar / account menu — for buttons the shared toolbar doesn't cover
+   * (e.g. a Share button, or a non-map app's own navbar controls).
+   */
+  actionsExtra?: ReactNode;
+
   /** The app's account menu node (typically a wrapped <MapUserMenu>). */
   userMenu?: ReactNode;
 
@@ -71,6 +78,7 @@ export function AppNavbar({
   search,
   openWith,
   toolbar,
+  actionsExtra,
   userMenu,
   position = 'absolute top-0 left-0 right-0 z-40',
   brandTourId,
@@ -112,6 +120,7 @@ export function AppNavbar({
                 onOpen={openWith.onOpen}
               />
             )}
+            {actionsExtra}
             {toolbar && <MapToolbar dark={dark} {...toolbar} />}
             {userMenu && <div data-tour={userMenuTourId}>{userMenu}</div>}
           </div>

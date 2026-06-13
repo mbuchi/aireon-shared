@@ -1,4 +1,3 @@
-export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
 import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { Skeleton } from './chunk-756PMNQV.js';
@@ -9,6 +8,7 @@ import { LocalStorageCache, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js'
 export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
+export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId } from 'react';
 import { createPortal } from 'react-dom';
@@ -7308,6 +7308,7 @@ function AppNavbar({
   search,
   openWith,
   toolbar,
+  actionsExtra,
   userMenu,
   position = "absolute top-0 left-0 right-0 z-40",
   brandTourId,
@@ -7337,6 +7338,7 @@ function AppNavbar({
           onOpen: openWith.onOpen
         }
       ),
+      actionsExtra,
       toolbar && /* @__PURE__ */ jsx(MapToolbar, { dark, ...toolbar }),
       userMenu && /* @__PURE__ */ jsx("div", { "data-tour": userMenuTourId, children: userMenu })
     ] })

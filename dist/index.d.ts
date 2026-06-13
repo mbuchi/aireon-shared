@@ -1821,6 +1821,12 @@ interface AppNavbarProps {
     };
     /** Map action cluster (Save · My images · Theme · Locate · Settings · Language). Omit to hide. */
     toolbar?: Omit<MapToolbarProps, 'dark'>;
+    /**
+     * App-specific controls rendered in the right cluster, just before the map
+     * toolbar / account menu — for buttons the shared toolbar doesn't cover
+     * (e.g. a Share button, or a non-map app's own navbar controls).
+     */
+    actionsExtra?: ReactNode;
     /** The app's account menu node (typically a wrapped <MapUserMenu>). */
     userMenu?: ReactNode;
     /**
@@ -1848,7 +1854,7 @@ interface AppNavbarProps {
  * search/toolbar and keep the same shell. Styling is self-contained
  * (`@aireon/shared/map-ui.css`); the app supplies positioning via `position`.
  */
-declare function AppNavbar({ appName, dark, hideHubLink, search, openWith, toolbar, userMenu, position, brandTourId, searchTourId, userMenuTourId, className, }: AppNavbarProps): react_jsx_runtime.JSX.Element;
+declare function AppNavbar({ appName, dark, hideHubLink, search, openWith, toolbar, actionsExtra, userMenu, position, brandTourId, searchTourId, userMenuTourId, className, }: AppNavbarProps): react_jsx_runtime.JSX.Element;
 
 declare module '@tanstack/react-table' {
     interface ColumnMeta<TData extends RowData, TValue> {
