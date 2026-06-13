@@ -24,6 +24,10 @@ export default defineConfig({
     // Dedicated subpath to keep it out of the window-touching auth barrel;
     // maplibre-gl stays an external peer.
     'src/basemap/index.ts',
+    // "Nearby comparables" parcel-panel feature. Dedicated subpath so the pure
+    // rankComparables() logic can be imported in tests/node without dragging in
+    // the barrel's browser-only modules (auth touches `window` at load).
+    'src/comparables/index.ts',
   ],
   format: ['esm'],
   dts: true,

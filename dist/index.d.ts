@@ -4,6 +4,7 @@ import { CSSProperties, MouseEventHandler, HTMLAttributes, ReactNode, MutableRef
 import { LucideIcon } from 'lucide-react';
 import { User, UserManager } from 'oidc-client-ts';
 export { G as GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, a as GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, b as GEOADMIN_ADDRESS_SEARCH_ENDPOINT, c as GeoAdminAddressResult, d as GeoAdminAddressSearchLanguage, e as GeoAdminAddressSearchOptions, f as GeoAdminFetch, I as IndexedDBCache, g as IndexedDBCacheOptions, L as LocalStorageCache, n as normalizeAddressSearchQuery, s as searchGeoAdminAddresses } from './index-DRWTLvQ0.js';
+export { Comparable, ComparableInput, ComparablesLabels, ComparablesLocale, ComparablesPanel, ComparablesPanelProps, getComparablesStrings, rankComparables } from './comparables/index.js';
 export { Coordinates, GeoJSONFeatureCollection, JsonError, ParcelTree, PoiDetail, RES_API_BASE_URL, ResApiClient, ResApiClientOptions, SignalRecord, SwissnovoImage, components, createResApiClient, operations, paths } from './api/index.js';
 export { GEMINI_FALLBACK_CHAIN, GeminiFallbackAttempt, GeminiFallbackOptions, GeminiFallbackResult, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './gemini/index.js';
 export { PARCEL_INTERACTION_MIN_ZOOM, ZoomGatedClickMap, isParcelInteractive, wireZoomGatedParcelClick } from './map/parcelInteraction.js';

@@ -208,6 +208,15 @@ export type {
   SkeletonProviderProps,
 } from './skeleton/Skeleton';
 
+export { ComparablesPanel, rankComparables, getComparablesStrings } from './comparables';
+export type {
+  ComparablesPanelProps,
+  ComparableInput,
+  Comparable,
+  ComparablesLabels,
+  ComparablesLocale,
+} from './comparables';
+
 export { ProfileModal, Avatar, useUserProfile } from './profile';
 export type {
   ProfileModalProps,
