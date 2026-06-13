@@ -42,6 +42,8 @@ export interface AppNavbarProps {
    */
   position?: string;
 
+  /** data-tour anchor for the brand/wordmark (tours often target "app-title"). */
+  brandTourId?: string;
   /** data-tour anchor for the search box (tours target it). */
   searchTourId?: string;
   /** data-tour anchor for the account menu. */
@@ -71,6 +73,7 @@ export function AppNavbar({
   toolbar,
   userMenu,
   position = 'absolute top-0 left-0 right-0 z-40',
+  brandTourId,
   searchTourId,
   userMenuTourId,
   className,
@@ -86,7 +89,7 @@ export function AppNavbar({
     <header className={position + (className ? ` ${className}` : '')}>
       <div className={'aireon-appnav-bar' + (dark ? ' aireon-appnav-bar--dark' : '')}>
         <div className="aireon-appnav-inner">
-          <div className="aireon-appnav-brand">
+          <div className="aireon-appnav-brand" data-tour={brandTourId}>
             {!hideHubLink && (
               <AireonHubLink withDivider className="" style={{ color: dark ? 'rgb(248 250 252)' : 'rgb(17 24 39)' }} />
             )}
