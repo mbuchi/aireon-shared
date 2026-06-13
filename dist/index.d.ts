@@ -1827,6 +1827,8 @@ interface AppNavbarProps {
      * map (the valoo pattern). Pass e.g. "sticky top-0 z-40" for an in-flow bar.
      */
     position?: string;
+    /** data-tour anchor for the brand/wordmark (tours often target "app-title"). */
+    brandTourId?: string;
     /** data-tour anchor for the search box (tours target it). */
     searchTourId?: string;
     /** data-tour anchor for the account menu. */
@@ -1845,7 +1847,7 @@ interface AppNavbarProps {
  * search/toolbar and keep the same shell. Styling is self-contained
  * (`@aireon/shared/map-ui.css`); the app supplies positioning via `position`.
  */
-declare function AppNavbar({ appName, dark, hideHubLink, search, openWith, toolbar, userMenu, position, searchTourId, userMenuTourId, className, }: AppNavbarProps): react_jsx_runtime.JSX.Element;
+declare function AppNavbar({ appName, dark, hideHubLink, search, openWith, toolbar, userMenu, position, brandTourId, searchTourId, userMenuTourId, className, }: AppNavbarProps): react_jsx_runtime.JSX.Element;
 
 declare module '@tanstack/react-table' {
     interface ColumnMeta<TData extends RowData, TValue> {
