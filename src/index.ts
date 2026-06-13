@@ -338,6 +338,10 @@ export { SettingsMenu, default as SettingsMenuDefault } from './nav/SettingsMenu
 export type { SettingsMenuProps, SettingsMenuItem } from './nav/SettingsMenu';
 export { MapToolbar, default as MapToolbarDefault } from './nav/MapToolbar';
 export type { MapToolbarProps, MapToolbarLabels } from './nav/MapToolbar';
+export { AddressSearch, default as AddressSearchDefault } from './nav/AddressSearch';
+export type { AddressSearchProps, AddressSearchLabels, AddressSearchResult } from './nav/AddressSearch';
+export { AppNavbar, default as AppNavbarDefault } from './nav/AppNavbar';
+export type { AppNavbarProps } from './nav/AppNavbar';
 export {
   LAUNCH_APPS,
   LAUNCH_DEFAULT_ZOOM,
