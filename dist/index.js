@@ -1,12 +1,12 @@
 export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
 import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
-import { Skeleton } from './chunk-756PMNQV.js';
-export { ComparablesPanel, Skeleton, SkeletonGroup, SkeletonText, getComparablesStrings, rankComparables } from './chunk-756PMNQV.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { LocalStorageCache, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
+import { Skeleton } from './chunk-756PMNQV.js';
+export { ComparablesPanel, Skeleton, SkeletonGroup, SkeletonText, getComparablesStrings, rankComparables } from './chunk-756PMNQV.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
@@ -7306,6 +7306,7 @@ function AppNavbar({
   dark = false,
   hideHubLink = false,
   search,
+  centerSlot,
   openWith,
   toolbar,
   actionsExtra,
@@ -7326,7 +7327,7 @@ function AppNavbar({
       !hideHubLink && /* @__PURE__ */ jsx(AireonHubLink, { withDivider: true, className: "", style: { color: dark ? "rgb(248 250 252)" : "rgb(17 24 39)" } }),
       /* @__PURE__ */ jsx(AireonAppWordmark, { name: appName })
     ] }),
-    search && /* @__PURE__ */ jsx("div", { className: "aireon-appnav-search", "data-tour": searchTourId, children: /* @__PURE__ */ jsx(AddressSearch, { dark, ...search, onSelect: handlePick }) }),
+    search ? /* @__PURE__ */ jsx("div", { className: "aireon-appnav-search", "data-tour": searchTourId, children: /* @__PURE__ */ jsx(AddressSearch, { dark, ...search, onSelect: handlePick }) }) : centerSlot ? /* @__PURE__ */ jsx("div", { className: "aireon-appnav-center", "data-tour": searchTourId, children: centerSlot }) : null,
     /* @__PURE__ */ jsxs("div", { className: "aireon-appnav-actions", children: [
       openWith && picked && /* @__PURE__ */ jsx(
         OpenWithMenu,

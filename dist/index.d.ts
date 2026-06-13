@@ -1811,6 +1811,12 @@ interface AppNavbarProps {
      */
     search?: Pick<AddressSearchProps, 'onSelect' | 'labels' | 'search' | 'locale' | 'onError' | 'minChars'>;
     /**
+     * Custom center content (replaces the address search) for apps whose center
+     * control isn't a plain address lookup — e.g. a multi-mode district search or
+     * a selector bar. Ignored when `search` is provided.
+     */
+    centerSlot?: ReactNode;
+    /**
      * Cross-app "Open with" menu — appears once a search result is picked, so the
      * user can open the same spot in another suite app.
      */
@@ -1854,7 +1860,7 @@ interface AppNavbarProps {
  * search/toolbar and keep the same shell. Styling is self-contained
  * (`@aireon/shared/map-ui.css`); the app supplies positioning via `position`.
  */
-declare function AppNavbar({ appName, dark, hideHubLink, search, openWith, toolbar, actionsExtra, userMenu, position, brandTourId, searchTourId, userMenuTourId, className, }: AppNavbarProps): react_jsx_runtime.JSX.Element;
+declare function AppNavbar({ appName, dark, hideHubLink, search, centerSlot, openWith, toolbar, actionsExtra, userMenu, position, brandTourId, searchTourId, userMenuTourId, className, }: AppNavbarProps): react_jsx_runtime.JSX.Element;
 
 declare module '@tanstack/react-table' {
     interface ColumnMeta<TData extends RowData, TValue> {

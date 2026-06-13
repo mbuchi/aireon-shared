@@ -1407,3 +1407,8 @@
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
 }
+
+/* Custom center content (non-map apps' own search/selector) — flexes like the
+   search area but without the address-box max-width. */
+.aireon-appnav-center { display: flex; align-items: center; flex: 1 1 0%; min-width: 0; margin-left: 1rem; }
+@media (min-width: 640px) { .aireon-appnav-center { margin-left: 2rem; } }
