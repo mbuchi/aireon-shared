@@ -1,9 +1,9 @@
 import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
-import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
-export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
 export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
+import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
+export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
 export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
@@ -3351,6 +3351,22 @@ function renderInlineBold(line) {
     return /* @__PURE__ */ jsx("span", { children: p }, i);
   });
 }
+function ClaireMsgAvatar({ darkMode, pulse = false }) {
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${darkMode ? "bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" : "bg-gradient-to-br from-amber-100 to-rose-100 ring-1 ring-amber-200/70"}`,
+      children: /* @__PURE__ */ jsx(
+        "img",
+        {
+          src: CLAIRE_AVATAR,
+          alt: "",
+          className: `w-full h-full rounded-lg object-cover${pulse ? " animate-pulse" : ""}`
+        }
+      )
+    }
+  );
+}
 var ClaireAssistant = ({
   appName,
   geminiApiKey,
@@ -3362,6 +3378,7 @@ var ClaireAssistant = ({
   lv95,
   headerAddress
 }) => {
+  const darkMode = true;
   const claireMark = claire_mark_white_default ;
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -3701,7 +3718,7 @@ var ClaireAssistant = ({
           {
             className: `relative flex items-center justify-end gap-2 px-3.5 py-3 min-h-[3.75rem] shrink-0 ${"bg-gradient-to-b from-white/[0.04] to-transparent border-b border-white/[0.06]" }`,
             children: [
-              /* @__PURE__ */ jsxs("div", { className: "pointer-events-none absolute left-1/2 top-2.5 flex -translate-x-1/2 flex-col items-center", children: [
+              /* @__PURE__ */ jsxs("div", { className: "pointer-events-none absolute left-3.5 top-2.5 flex flex-col items-start", children: [
                 /* @__PURE__ */ jsxs("div", { className: "relative inline-flex items-center", children: [
                   /* @__PURE__ */ jsx(
                     "img",
@@ -3721,7 +3738,7 @@ var ClaireAssistant = ({
                 subtitle && /* @__PURE__ */ jsxs(
                   "div",
                   {
-                    className: `mt-0.5 flex w-[clamp(6rem,36vw,8.5rem)] items-center justify-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em] ${"text-amber-200/70" }`,
+                    className: `mt-0.5 flex w-[clamp(6rem,36vw,8.5rem)] items-center justify-start gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em] ${"text-amber-200/70" }`,
                     children: [
                       /* @__PURE__ */ jsx(Loader2, { size: 9, className: "animate-spin shrink-0" }),
                       /* @__PURE__ */ jsx("span", { className: "truncate", children: subtitle })
@@ -3814,13 +3831,16 @@ var ClaireAssistant = ({
                   ]
                 }
               ),
-              messages.length === 0 && !historyLoading && /* @__PURE__ */ jsx(
-                "div",
-                {
-                  className: `rounded-xl px-3 py-2.5 text-[12px] leading-relaxed ${"bg-white/[0.025] text-gray-300 ring-1 ring-white/[0.04]" }`,
-                  children: "Hi, I'm Claire. Ask me anything about this parcel."
-                }
-              ),
+              messages.length === 0 && !historyLoading && /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-2", children: [
+                /* @__PURE__ */ jsx(ClaireMsgAvatar, { darkMode }),
+                /* @__PURE__ */ jsx(
+                  "div",
+                  {
+                    className: `max-w-[88%] rounded-2xl rounded-tl-md px-3 py-2 text-[12.5px] leading-relaxed ${"bg-white/[0.04] text-gray-100 ring-1 ring-white/[0.05]" }`,
+                    children: "Hi, I'm Claire. Ask me anything about this parcel."
+                  }
+                )
+              ] }),
               messages.map(
                 (msg) => msg.role === "user" ? /* @__PURE__ */ jsx("div", { className: "flex justify-end", children: /* @__PURE__ */ jsx(
                   "div",
@@ -3829,20 +3849,7 @@ var ClaireAssistant = ({
                     children: msg.content
                   }
                 ) }, msg.id) : /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-2", children: [
-                  /* @__PURE__ */ jsx(
-                    "div",
-                    {
-                      className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
-                      children: /* @__PURE__ */ jsx(
-                        "img",
-                        {
-                          src: CLAIRE_AVATAR,
-                          alt: "",
-                          className: "w-full h-full rounded-lg object-cover"
-                        }
-                      )
-                    }
-                  ),
+                  /* @__PURE__ */ jsx(ClaireMsgAvatar, { darkMode }),
                   /* @__PURE__ */ jsx("div", { className: "flex flex-col items-start gap-1 max-w-[88%]", children: /* @__PURE__ */ jsx(
                     "div",
                     {
@@ -3853,20 +3860,7 @@ var ClaireAssistant = ({
                 ] }, msg.id)
               ),
               loading && /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-2", children: [
-                /* @__PURE__ */ jsx(
-                  "div",
-                  {
-                    className: `w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${"bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20" }`,
-                    children: /* @__PURE__ */ jsx(
-                      "img",
-                      {
-                        src: CLAIRE_AVATAR,
-                        alt: "",
-                        className: "w-full h-full rounded-lg object-cover animate-pulse"
-                      }
-                    )
-                  }
-                ),
+                /* @__PURE__ */ jsx(ClaireMsgAvatar, { darkMode, pulse: true }),
                 /* @__PURE__ */ jsxs(
                   "div",
                   {

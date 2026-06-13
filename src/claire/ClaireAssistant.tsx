@@ -220,6 +220,30 @@ function renderInlineBold(line: string): ReactNode {
 }
 
 /**
+ * Claire's cute blinking face, shown in front of every Claire message (the
+ * opening greeting, each reply, and the typing indicator) so the assistant has
+ * one consistent presence. The blink animation lives inside the SVG itself
+ * (see CLAIRE_SVG); `pulse` adds a soft fade while Claire is thinking.
+ */
+function ClaireMsgAvatar({ darkMode, pulse = false }: { darkMode: boolean; pulse?: boolean }) {
+  return (
+    <div
+      className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
+        darkMode
+          ? 'bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20'
+          : 'bg-gradient-to-br from-amber-100 to-rose-100 ring-1 ring-amber-200/70'
+      }`}
+    >
+      <img
+        src={CLAIRE_AVATAR}
+        alt=""
+        className={`w-full h-full rounded-lg object-cover${pulse ? ' animate-pulse' : ''}`}
+      />
+    </div>
+  );
+}
+
+/**
  * Claire — the SwissNovo AI parcel assistant. A floating launcher bubble that
  * expands into a chat card scoped to the selected parcel. Conversations are
  * persisted per signed-in user per parcel on the RES API.
@@ -710,7 +734,7 @@ const ClaireAssistant = ({
             : 'bg-gradient-to-b from-gray-50/80 to-transparent border-b border-gray-200/70'
         }`}
       >
-        <div className="pointer-events-none absolute left-1/2 top-2.5 flex -translate-x-1/2 flex-col items-center">
+        <div className="pointer-events-none absolute left-3.5 top-2.5 flex flex-col items-start">
           <div className="relative inline-flex items-center">
             <img
               src={claireMark}
@@ -731,7 +755,7 @@ const ClaireAssistant = ({
           </div>
           {subtitle && (
             <div
-              className={`mt-0.5 flex w-[clamp(6rem,36vw,8.5rem)] items-center justify-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em] ${
+              className={`mt-0.5 flex w-[clamp(6rem,36vw,8.5rem)] items-center justify-start gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em] ${
                 darkMode ? 'text-amber-200/70' : 'text-amber-700/80'
               }`}
             >
@@ -854,14 +878,17 @@ const ClaireAssistant = ({
         )}
 
         {messages.length === 0 && !historyLoading && (
-          <div
-            className={`rounded-xl px-3 py-2.5 text-[12px] leading-relaxed ${
-              darkMode
-                ? 'bg-white/[0.025] text-gray-300 ring-1 ring-white/[0.04]'
-                : 'bg-gray-50 text-gray-600 ring-1 ring-gray-200/70'
-            }`}
-          >
-            Hi, I'm Claire. Ask me anything about this parcel.
+          <div className="flex items-start gap-2">
+            <ClaireMsgAvatar darkMode={darkMode} />
+            <div
+              className={`max-w-[88%] rounded-2xl rounded-tl-md px-3 py-2 text-[12.5px] leading-relaxed ${
+                darkMode
+                  ? 'bg-white/[0.04] text-gray-100 ring-1 ring-white/[0.05]'
+                  : 'bg-gray-50 text-gray-800 ring-1 ring-gray-200/70'
+              }`}
+            >
+              Hi, I'm Claire. Ask me anything about this parcel.
+            </div>
           </div>
         )}
 
@@ -880,19 +907,7 @@ const ClaireAssistant = ({
             </div>
           ) : (
             <div key={msg.id} className="flex items-start gap-2">
-              <div
-                className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                  darkMode
-                    ? 'bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20'
-                    : 'bg-gradient-to-br from-amber-100 to-rose-100 ring-1 ring-amber-200/70'
-                }`}
-              >
-                <img
-                  src={CLAIRE_AVATAR}
-                  alt=""
-                  className="w-full h-full rounded-lg object-cover"
-                />
-              </div>
+              <ClaireMsgAvatar darkMode={darkMode} />
               <div className="flex flex-col items-start gap-1 max-w-[88%]">
                 <div
                   className={`rounded-2xl rounded-tl-md px-3 py-2 text-[12.5px] leading-relaxed ${
@@ -910,19 +925,7 @@ const ClaireAssistant = ({
 
         {loading && (
           <div className="flex items-start gap-2">
-            <div
-              className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                darkMode
-                  ? 'bg-gradient-to-br from-amber-400/25 to-rose-500/15 ring-1 ring-amber-300/20'
-                  : 'bg-gradient-to-br from-amber-100 to-rose-100 ring-1 ring-amber-200/70'
-              }`}
-            >
-              <img
-                src={CLAIRE_AVATAR}
-                alt=""
-                className="w-full h-full rounded-lg object-cover animate-pulse"
-              />
-            </div>
+            <ClaireMsgAvatar darkMode={darkMode} pulse />
             <div
               className={`rounded-2xl rounded-tl-md px-3 py-2.5 flex items-center gap-1.5 ${
                 darkMode
