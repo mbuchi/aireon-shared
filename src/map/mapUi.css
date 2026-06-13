@@ -1311,3 +1311,99 @@
   align-items: center;
   gap: 0.375rem;
 }
+
+/* ============================================================================
+   AddressSearch — the suite address autocomplete (geo.admin default).
+   ============================================================================ */
+.aireon-search { position: relative; width: 100%; }
+.aireon-search-field { position: relative; }
+.aireon-search-icon {
+  position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+  color: rgb(156 163 175); pointer-events: none;
+}
+.aireon-search--dark .aireon-search-icon { color: rgb(100 116 139); }
+.aireon-search-input {
+  width: 100%; height: 2.25rem; padding: 0 2.25rem; border-radius: 0.5rem;
+  border: 1px solid rgb(229 231 235); background: rgb(243 244 246);
+  color: rgb(17 24 39); font-family: inherit; font-size: 0.875rem;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.aireon-search-input::placeholder { color: rgb(156 163 175); }
+.aireon-search-input:focus-visible {
+  outline: none; border-color: rgb(248 113 113);
+  box-shadow: 0 0 0 2px rgb(239 68 68 / 0.25);
+}
+.aireon-search--dark .aireon-search-input {
+  border-color: rgb(75 85 99); background: rgb(31 41 55 / 0.8); color: rgb(243 244 246);
+}
+.aireon-search--dark .aireon-search-input::placeholder { color: rgb(107 114 128); }
+.aireon-search-clear {
+  position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%);
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.75rem; height: 1.75rem; border: 0; border-radius: 0.375rem;
+  background: transparent; color: rgb(156 163 175); cursor: pointer; transition: color 0.15s;
+}
+.aireon-search-clear:hover { color: rgb(75 85 99); }
+.aireon-search--dark .aireon-search-clear { color: rgb(107 114 128); }
+.aireon-search--dark .aireon-search-clear:hover { color: rgb(203 213 225); }
+.aireon-search-spinner {
+  position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
+  width: 1rem; height: 1rem; border: 2px solid rgb(209 213 219);
+  border-top-color: rgb(239 68 68); border-radius: 9999px;
+  animation: aireon-spin 0.7s linear infinite;
+}
+@keyframes aireon-spin { to { transform: translateY(-50%) rotate(360deg); } }
+.aireon-search-menu {
+  position: absolute; top: calc(100% + 0.25rem); left: 0; right: 0; z-index: 60;
+  max-height: 18rem; overflow-y: auto; border-radius: 0.5rem;
+  border: 1px solid rgb(229 231 235); background: white;
+  box-shadow: 0 20px 40px rgb(15 23 42 / 0.18);
+}
+.aireon-search--dark .aireon-search-menu {
+  border-color: rgb(51 65 85); background: rgb(30 41 59); box-shadow: 0 20px 44px rgb(0 0 0 / 0.34);
+}
+.aireon-search-option {
+  display: flex; width: 100%; align-items: flex-start; gap: 0.75rem; border: 0;
+  background: transparent; padding: 0.75rem 1rem; text-align: left; cursor: pointer;
+  color: rgb(55 65 81); font-family: inherit; transition: background-color 0.12s, color 0.12s;
+}
+.aireon-search-option:hover { background: rgb(249 250 251); }
+.aireon-search-option--active { background: rgb(254 242 242); color: rgb(185 28 28); }
+.aireon-search--dark .aireon-search-option { color: rgb(209 213 219); }
+.aireon-search--dark .aireon-search-option:hover { background: rgb(51 65 85); }
+.aireon-search--dark .aireon-search-option--active { background: rgb(127 29 29 / 0.4); color: rgb(248 113 113); }
+.aireon-search-option-icon { flex-shrink: 0; margin-top: 0.125rem; color: rgb(156 163 175); }
+.aireon-search-option--active .aireon-search-option-icon { color: rgb(239 68 68); }
+.aireon-search-option-label { font-size: 0.875rem; line-height: 1.35; }
+.aireon-search-empty {
+  display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 1rem;
+  font-size: 0.875rem; color: rgb(107 114 128);
+}
+.aireon-search--dark .aireon-search-empty { color: rgb(148 163 184); }
+
+/* ============================================================================
+   AppNavbar — the suite-canonical top bar shell (valoo pattern).
+   ============================================================================ */
+.aireon-appnav-bar {
+  pointer-events: auto; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgb(229 231 235 / 0.6); background: rgb(255 255 255 / 0.9);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+.aireon-appnav-bar--dark {
+  border-bottom-color: rgb(55 65 81 / 0.6); background: rgb(17 24 39 / 0.95);
+}
+.aireon-appnav-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 3.5rem; padding: 0 1rem;
+}
+@media (min-width: 640px) { .aireon-appnav-inner { padding: 0 1.25rem; } }
+.aireon-appnav-brand { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+.aireon-appnav-search { position: relative; flex: 1 1 0%; max-width: 32rem; margin-left: 1rem; }
+@media (min-width: 640px) { .aireon-appnav-search { margin-left: 2rem; } }
+.aireon-appnav-actions { display: flex; align-items: center; gap: 0.375rem; flex-shrink: 0; margin-left: 1rem; }
+
+/* sr-only (shared components must not assume the host ships it). */
+.aireon-search .sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}

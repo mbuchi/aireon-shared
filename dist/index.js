@@ -1,6 +1,6 @@
 import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
-import { LocalStorageCache } from './chunk-SCW3XOJJ.js';
+import { LocalStorageCache, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
@@ -7219,6 +7219,206 @@ function MapToolbar({
   ] });
 }
 var MapToolbar_default = MapToolbar;
+var defaultProvider = (text, opts) => searchGeoAdminAddresses(text, {
+  signal: opts.signal,
+  lang: opts.lang
+});
+function AddressSearch({
+  dark = false,
+  locale,
+  labels,
+  onSelect,
+  search = defaultProvider,
+  minChars = 3,
+  debounceMs = 300,
+  onError,
+  className
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const containerRef = useRef(null);
+  const debounceRef = useRef();
+  const abortRef = useRef(null);
+  const listboxId = useId();
+  const runSearch = useCallback(
+    async (text) => {
+      if (text.trim().length < minChars) {
+        setResults([]);
+        setIsOpen(false);
+        return;
+      }
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setIsLoading(true);
+      try {
+        const matches = await search(text, { signal: controller.signal, lang: locale });
+        if (controller.signal.aborted) return;
+        setResults(matches);
+        setIsOpen(true);
+        setSelectedIndex(-1);
+      } catch (err) {
+        if (err?.name !== "AbortError") {
+          setResults([]);
+          setIsOpen(false);
+          onError?.(err);
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    },
+    [search, locale, minChars, onError]
+  );
+  const handleInputChange = (value) => {
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => runSearch(value), debounceMs);
+  };
+  const handleSelect = (result) => {
+    setQuery(result.label);
+    setIsOpen(false);
+    setResults([]);
+    onSelect(result);
+  };
+  const handleKeyDown = (e) => {
+    if (!isOpen || results.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((p) => p < results.length - 1 ? p + 1 : 0);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((p) => p > 0 ? p - 1 : results.length - 1);
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
+      e.preventDefault();
+      handleSelect(results[selectedIndex]);
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+    }
+  };
+  const clearSearch = () => {
+    setQuery("");
+    setResults([]);
+    setIsOpen(false);
+  };
+  useEffect(() => {
+    const onPointer = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointer);
+    return () => document.removeEventListener("mousedown", onPointer);
+  }, []);
+  const showDropdown = isOpen && !isLoading && (results.length > 0 || query.trim().length >= minChars);
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      ref: containerRef,
+      className: "aireon-search" + (dark ? " aireon-search--dark" : "") + (className ? ` ${className}` : ""),
+      children: [
+        /* @__PURE__ */ jsxs("div", { className: "aireon-search-field", children: [
+          /* @__PURE__ */ jsx(Search, { size: 16, className: "aireon-search-icon", "aria-hidden": "true" }),
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              type: "text",
+              value: query,
+              onChange: (e) => handleInputChange(e.target.value),
+              onKeyDown: handleKeyDown,
+              onFocus: () => {
+                if (results.length > 0 || query.trim().length >= minChars && !isLoading) setIsOpen(true);
+              },
+              placeholder: labels.placeholder,
+              role: "combobox",
+              "aria-expanded": isOpen,
+              "aria-controls": listboxId,
+              "aria-activedescendant": selectedIndex >= 0 ? `${listboxId}-opt-${selectedIndex}` : void 0,
+              "aria-autocomplete": "list",
+              "aria-busy": isLoading,
+              "aria-label": labels.placeholder,
+              className: "aireon-search-input"
+            }
+          ),
+          isLoading ? /* @__PURE__ */ jsx("span", { className: "aireon-search-spinner", "aria-hidden": "true" }) : query && /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: clearSearch,
+              "aria-label": labels.clear,
+              title: labels.clear,
+              className: "aireon-search-clear",
+              children: /* @__PURE__ */ jsx(X, { size: 14, "aria-hidden": "true" })
+            }
+          )
+        ] }),
+        showDropdown && /* @__PURE__ */ jsx("div", { id: listboxId, role: "listbox", "aria-label": labels.placeholder, className: "aireon-search-menu", children: results.length > 0 ? results.map((result, index) => /* @__PURE__ */ jsxs(
+          "button",
+          {
+            id: `${listboxId}-opt-${index}`,
+            role: "option",
+            "aria-selected": index === selectedIndex,
+            onClick: () => handleSelect(result),
+            className: "aireon-search-option" + (index === selectedIndex ? " aireon-search-option--active" : ""),
+            children: [
+              /* @__PURE__ */ jsx(MapPin, { size: 16, className: "aireon-search-option-icon", "aria-hidden": "true" }),
+              /* @__PURE__ */ jsx("span", { className: "aireon-search-option-label", children: result.label })
+            ]
+          },
+          result.id
+        )) : /* @__PURE__ */ jsxs("div", { role: "status", className: "aireon-search-empty", children: [
+          /* @__PURE__ */ jsx(Search, { size: 16, "aria-hidden": "true" }),
+          /* @__PURE__ */ jsx("span", { children: labels.noResults })
+        ] }) }),
+        /* @__PURE__ */ jsx("div", { className: "sr-only", role: "status", "aria-live": "polite", children: isLoading ? labels.loading : isOpen && results.length > 0 ? labels.resultsCount?.(results.length) ?? "" : isOpen && query.trim().length >= minChars ? labels.noResults : "" })
+      ]
+    }
+  );
+}
+var AddressSearch_default = AddressSearch;
+function AppNavbar({
+  appName,
+  dark = false,
+  hideHubLink = false,
+  search,
+  openWith,
+  toolbar,
+  userMenu,
+  position = "absolute top-0 left-0 right-0 z-40",
+  searchTourId,
+  userMenuTourId,
+  className
+}) {
+  const [picked, setPicked] = useState(null);
+  const handlePick = (result) => {
+    setPicked({ lat: result.lat, lng: result.lng });
+    search?.onSelect(result);
+  };
+  return /* @__PURE__ */ jsx("header", { className: position + (className ? ` ${className}` : ""), children: /* @__PURE__ */ jsx("div", { className: "aireon-appnav-bar" + (dark ? " aireon-appnav-bar--dark" : ""), children: /* @__PURE__ */ jsxs("div", { className: "aireon-appnav-inner", children: [
+    /* @__PURE__ */ jsxs("div", { className: "aireon-appnav-brand", children: [
+      !hideHubLink && /* @__PURE__ */ jsx(AireonHubLink, { withDivider: true, className: "", style: { color: dark ? "rgb(248 250 252)" : "rgb(17 24 39)" } }),
+      /* @__PURE__ */ jsx(AireonAppWordmark, { name: appName })
+    ] }),
+    search && /* @__PURE__ */ jsx("div", { className: "aireon-appnav-search", "data-tour": searchTourId, children: /* @__PURE__ */ jsx(AddressSearch, { dark, ...search, onSelect: handlePick }) }),
+    /* @__PURE__ */ jsxs("div", { className: "aireon-appnav-actions", children: [
+      openWith && picked && /* @__PURE__ */ jsx(
+        OpenWithMenu,
+        {
+          location: picked,
+          currentAppId: openWith.currentAppId,
+          dark,
+          label: openWith.label,
+          onOpen: openWith.onOpen
+        }
+      ),
+      toolbar && /* @__PURE__ */ jsx(MapToolbar, { dark, ...toolbar }),
+      userMenu && /* @__PURE__ */ jsx("div", { "data-tour": userMenuTourId, children: userMenu })
+    ] })
+  ] }) }) });
+}
+var AppNavbar_default = AppNavbar;
 var DATA_TABLE_STRINGS_EN = {
   searchPlaceholder: "Search\u2026",
   sortBy: "Sort by {column}",
@@ -7583,4 +7783,4 @@ function VirtualList({
   );
 }
 
-export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AireonAppWordmark, AireonAppWordmark_default as AireonAppWordmarkDefault, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapToolbar, MapToolbar_default as MapToolbarDefault, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, SettingsMenu, SettingsMenu_default as SettingsMenuDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AddressSearch, AddressSearch_default as AddressSearchDefault, AireonAppWordmark, AireonAppWordmark_default as AireonAppWordmarkDefault, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AppNavbar, AppNavbar_default as AppNavbarDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapToolbar, MapToolbar_default as MapToolbarDefault, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, SettingsMenu, SettingsMenu_default as SettingsMenuDefault, Skeleton, SkeletonGroup, SkeletonText, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
