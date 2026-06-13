@@ -21,6 +21,13 @@ export interface AppNavbarProps {
   search?: Pick<AddressSearchProps, 'onSelect' | 'labels' | 'search' | 'locale' | 'onError' | 'minChars'>;
 
   /**
+   * Custom center content (replaces the address search) for apps whose center
+   * control isn't a plain address lookup — e.g. a multi-mode district search or
+   * a selector bar. Ignored when `search` is provided.
+   */
+  centerSlot?: ReactNode;
+
+  /**
    * Cross-app "Open with" menu — appears once a search result is picked, so the
    * user can open the same spot in another suite app.
    */
@@ -76,6 +83,7 @@ export function AppNavbar({
   dark = false,
   hideHubLink = false,
   search,
+  centerSlot,
   openWith,
   toolbar,
   actionsExtra,
@@ -104,11 +112,13 @@ export function AppNavbar({
             <AireonAppWordmark name={appName} />
           </div>
 
-          {search && (
+          {search ? (
             <div className="aireon-appnav-search" data-tour={searchTourId}>
               <AddressSearch dark={dark} {...search} onSelect={handlePick} />
             </div>
-          )}
+          ) : centerSlot ? (
+            <div className="aireon-appnav-center" data-tour={searchTourId}>{centerSlot}</div>
+          ) : null}
 
           <div className="aireon-appnav-actions">
             {openWith && picked && (
