@@ -390,6 +390,40 @@ export {
 } from './nav/launchApps';
 export type { LaunchApp } from './nav/launchApps';
 
+// Cross-app address search history — recorded by AddressSearch on every pick,
+// surfaced in its "Recent" dropdown and in the account menu's "My search
+// history" modal. Persists per user on the RES backend (suite-wide SSO → same
+// history in every app), with a localStorage fallback when signed out.
+export { useSearchHistory } from './searchHistory/useSearchHistory';
+export type {
+  UseSearchHistoryResult,
+  UseSearchHistoryOptions,
+} from './searchHistory/useSearchHistory';
+export { searchHistoryStore } from './searchHistory/store';
+export type { SearchHistorySnapshot, SearchHistoryStore } from './searchHistory/store';
+export { SearchHistoryModal } from './searchHistory/SearchHistoryModal';
+export type { SearchHistoryModalProps } from './searchHistory/SearchHistoryModal';
+export {
+  fetchSearchHistory,
+  recordSearchEntry,
+  deleteSearchEntry,
+  clearSearchHistoryRemote,
+  SEARCH_HISTORY_API_BASE,
+} from './searchHistory/api';
+export {
+  SEARCH_HISTORY_STRINGS,
+  getSearchHistoryStrings,
+} from './searchHistory/i18n';
+export type {
+  SearchHistoryStrings,
+  Locale as SearchHistoryLocale,
+} from './searchHistory/i18n';
+export type {
+  SearchHistoryEntry,
+  RecordSearchInput,
+  SearchHistoryStatus,
+} from './searchHistory/types';
+
 // Suite-default data primitives — TanStack Table / Virtual.
 export { DataTable, DATA_TABLE_STRINGS_EN } from './table/DataTable';
 export type { DataTableProps, DataTableStrings } from './table/DataTable';

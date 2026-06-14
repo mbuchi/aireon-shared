@@ -3,16 +3,16 @@ import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { Skeleton } from './chunk-756PMNQV.js';
 export { ComparablesPanel, Skeleton, SkeletonGroup, SkeletonText, getComparablesStrings, rankComparables } from './chunk-756PMNQV.js';
-import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
-export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { LocalStorageCache, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
+import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
+export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
-import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId } from 'react';
+import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, ShieldAlert, CheckCircle2, MessageSquareText, Check, CircleUser, Table2, LogOut, Map as Map$1, Maximize2, Scale, MoreHorizontal, Settings, Camera, Sun, Moon, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Copy } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, ShieldAlert, CheckCircle2, MessageSquareText, Check, Clock, CircleUser, Table2, LogOut, Map as Map$1, Maximize2, Scale, MoreHorizontal, Settings, Camera, Sun, Moon, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Copy } from 'lucide-react';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
@@ -249,8 +249,9 @@ function useFocusTrap(options = {}) {
       previousFocus.current = document.activeElement;
     }
     return () => {
-      if (restoreFocus && previousFocus.current && typeof previousFocus.current.focus === "function") {
-        previousFocus.current.focus();
+      const prev = previousFocus.current;
+      if (restoreFocus && prev && typeof prev.focus === "function" && typeof document !== "undefined" && document.contains(prev)) {
+        prev.focus();
       }
     };
   }, [active, restoreFocus]);
@@ -817,13 +818,13 @@ function ReleaseNotesPanel({
 var HASH = "#release-notes";
 function useReleaseNotes({
   currentVersion,
-  storageKey
+  storageKey: storageKey2
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
   useEffect(() => {
     try {
-      const lastSeen = localStorage.getItem(storageKey);
+      const lastSeen = localStorage.getItem(storageKey2);
       if (lastSeen !== currentVersion) setHasUnread(true);
     } catch {
     }
@@ -833,7 +834,7 @@ function useReleaseNotes({
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
-  }, [storageKey, currentVersion]);
+  }, [storageKey2, currentVersion]);
   const openPanel = useCallback(() => {
     setIsOpen(true);
     if (window.location.hash !== HASH) {
@@ -848,7 +849,7 @@ function useReleaseNotes({
     setIsOpen(false);
     setHasUnread(false);
     try {
-      localStorage.setItem(storageKey, currentVersion);
+      localStorage.setItem(storageKey2, currentVersion);
     } catch {
     }
     if (window.location.hash === HASH) {
@@ -858,13 +859,13 @@ function useReleaseNotes({
         `${window.location.pathname}${window.location.search}`
       );
     }
-  }, [storageKey, currentVersion]);
+  }, [storageKey2, currentVersion]);
   return { hasUnread, isOpen, openPanel, closePanel };
 }
 function ReleaseNotesButton({
   releases,
   locale = "en",
-  storageKey,
+  storageKey: storageKey2,
   repoUrl,
   brandPrefix,
   brandSuffix = "",
@@ -876,7 +877,7 @@ function ReleaseNotesButton({
   const currentVersion = releases[0].version;
   const { hasUnread, isOpen: open, openPanel, closePanel } = useReleaseNotes({
     currentVersion,
-    storageKey
+    storageKey: storageKey2
   });
   const closeRef = useRef(null);
   const handleToggle = useCallback(() => {
@@ -5705,6 +5706,540 @@ function Portal({ children, container }) {
   const target = container || document.body;
   return createPortal(children, target);
 }
+
+// src/searchHistory/api.ts
+var SEARCH_HISTORY_API_BASE = "https://res.zeroo.ch/res_api/search_history";
+function rowToEntry(row) {
+  return {
+    id: String(row.id),
+    label: row.label,
+    lat: row.lat,
+    lng: row.lng,
+    featureId: row.feature_id,
+    appName: row.app_name,
+    searchCount: row.search_count,
+    createdAt: row.created_at,
+    lastSearchedAt: row.last_searched_at
+  };
+}
+async function historyFetch(path, init, token) {
+  const res = await fetch(`${SEARCH_HISTORY_API_BASE}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+      ...init.headers
+    }
+  });
+  if (!res.ok) {
+    let detail = "";
+    try {
+      detail = (await res.json())?.error ?? "";
+    } catch {
+    }
+    throw new Error(`${res.status} ${res.statusText}${detail ? `: ${detail}` : ""}`);
+  }
+  if (res.status === 204) return void 0;
+  return await res.json();
+}
+async function fetchSearchHistory(token) {
+  const rows = await historyFetch("", { method: "GET" }, token);
+  return (rows ?? []).map(rowToEntry);
+}
+async function recordSearchEntry(token, input) {
+  const row = await historyFetch(
+    "",
+    {
+      method: "POST",
+      // The RES POST handler reads camelCase keys (featureId/appName); GET rows
+      // come back snake_case and are mapped by rowToEntry. The asymmetry is
+      // deliberate and matches the backend contract.
+      body: JSON.stringify({
+        label: input.label,
+        lat: input.lat ?? null,
+        lng: input.lng ?? null,
+        featureId: input.featureId ?? null,
+        appName: input.appName ?? null
+      })
+    },
+    token
+  );
+  return rowToEntry(row);
+}
+async function deleteSearchEntry(token, id) {
+  await historyFetch(
+    `/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+    token
+  );
+}
+async function clearSearchHistoryRemote(token) {
+  await historyFetch("", { method: "DELETE" }, token);
+}
+
+// src/searchHistory/store.ts
+var MAX_ENTRIES = 50;
+var STORAGE_PREFIX = "aireon:search-history:";
+var EMPTY = { entries: [], status: "idle", authed: false };
+var snapshot = EMPTY;
+var listeners = /* @__PURE__ */ new Set();
+var currentSub = null;
+var initialized = false;
+var opSeq = 0;
+function emit() {
+  for (const l of listeners) l();
+}
+function setSnapshot(next) {
+  snapshot = { ...snapshot, ...next };
+  emit();
+}
+async function safeAuthToken() {
+  try {
+    return await getAuthToken();
+  } catch {
+    return null;
+  }
+}
+function subFromToken(token) {
+  if (!token || typeof atob !== "function") return null;
+  try {
+    const part = token.split(".")[1];
+    if (!part) return null;
+    const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+    const json = decodeURIComponent(
+      atob(b64).split("").map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join("")
+    );
+    const payload = JSON.parse(json);
+    return payload.sub ?? null;
+  } catch {
+    return null;
+  }
+}
+function storageKey(sub) {
+  return STORAGE_PREFIX + (sub ?? "anon");
+}
+function readLocal(sub) {
+  try {
+    const raw = localStorage.getItem(storageKey(sub));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+function writeLocal2(sub, entries) {
+  try {
+    localStorage.setItem(storageKey(sub), JSON.stringify(entries.slice(0, MAX_ENTRIES)));
+  } catch {
+  }
+}
+function removeLocal(sub) {
+  try {
+    localStorage.removeItem(storageKey(sub));
+  } catch {
+  }
+}
+var labelKey = (label) => label.trim().toLowerCase();
+function upsertLocal(entries, input, nowIso) {
+  const key = labelKey(input.label);
+  const existing = entries.find((e) => labelKey(e.label) === key);
+  const rest = entries.filter((e) => labelKey(e.label) !== key);
+  const merged = existing ? {
+    ...existing,
+    lat: input.lat ?? existing.lat,
+    lng: input.lng ?? existing.lng,
+    featureId: input.featureId ?? existing.featureId,
+    appName: input.appName ?? existing.appName,
+    searchCount: existing.searchCount + 1,
+    lastSearchedAt: nowIso
+  } : {
+    id: `local:${key}`,
+    label: input.label.trim(),
+    lat: input.lat ?? null,
+    lng: input.lng ?? null,
+    featureId: input.featureId ?? null,
+    appName: input.appName ?? null,
+    searchCount: 1,
+    createdAt: nowIso,
+    lastSearchedAt: nowIso
+  };
+  return [merged, ...rest].slice(0, MAX_ENTRIES);
+}
+async function load() {
+  const seq = ++opSeq;
+  const token = await safeAuthToken();
+  const sub = subFromToken(token);
+  const prevSub = currentSub;
+  currentSub = sub;
+  if (prevSub !== null && prevSub !== sub) removeLocal(prevSub);
+  const local = readLocal(sub);
+  if (seq === opSeq) {
+    setSnapshot({
+      entries: local,
+      status: token ? "loading" : "ready",
+      authed: !!token
+    });
+  }
+  if (!token) return;
+  try {
+    let remote = await fetchSearchHistory(token);
+    const anon = readLocal(null);
+    if (anon.length > 0) {
+      const have = new Set(remote.map((e) => labelKey(e.label)));
+      const toMigrate = anon.filter((e) => !have.has(labelKey(e.label)));
+      if (toMigrate.length === 0) {
+        removeLocal(null);
+      } else {
+        const settled = await Promise.allSettled(
+          toMigrate.map(
+            (e) => recordSearchEntry(token, {
+              label: e.label,
+              lat: e.lat,
+              lng: e.lng,
+              featureId: e.featureId,
+              appName: e.appName
+            })
+          )
+        );
+        const anyOk = settled.some((s) => s.status === "fulfilled");
+        const allOk = settled.every((s) => s.status === "fulfilled");
+        if (anyOk) remote = await fetchSearchHistory(token);
+        if (allOk) {
+          removeLocal(null);
+        } else {
+          const failed = new Set(
+            settled.map((s, i) => s.status === "rejected" ? labelKey(toMigrate[i].label) : null).filter((k) => k != null)
+          );
+          writeLocal2(null, anon.filter((e) => failed.has(labelKey(e.label))));
+        }
+      }
+    }
+    if (seq === opSeq) {
+      writeLocal2(sub, remote);
+      setSnapshot({ entries: remote, status: "ready", authed: true });
+    }
+  } catch {
+    if (seq === opSeq) setSnapshot({ status: local.length ? "ready" : "error" });
+  }
+}
+var searchHistoryStore = {
+  subscribe(listener) {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  },
+  getSnapshot() {
+    return snapshot;
+  },
+  getServerSnapshot() {
+    return EMPTY;
+  },
+  /** Load once (first hook mount). Safe to call repeatedly. */
+  ensureInitialized() {
+    if (initialized) return;
+    initialized = true;
+    try {
+      userManager.events.addUserLoaded(() => {
+        void load();
+      });
+      userManager.events.addUserUnloaded(() => {
+        void load();
+      });
+    } catch {
+    }
+    void load();
+  },
+  /** Re-check identity; reload when the signed-in user changed (login/logout). */
+  async notifyAuthChanged() {
+    const token = await safeAuthToken();
+    const sub = subFromToken(token);
+    if (sub !== currentSub || !initialized) {
+      initialized = true;
+      await load();
+    }
+  },
+  /** Force a reload from the backend. */
+  reload() {
+    return load();
+  },
+  /** Record (or bump) a search — optimistic, then persisted. */
+  async record(input) {
+    const label = input.label?.trim();
+    if (!label) return;
+    const seq = ++opSeq;
+    const nowIso = (/* @__PURE__ */ new Date()).toISOString();
+    const optimistic = upsertLocal(snapshot.entries, { ...input, label }, nowIso);
+    setSnapshot({ entries: optimistic });
+    const token = await safeAuthToken();
+    const sub = subFromToken(token);
+    if (!token) {
+      if (seq === opSeq) writeLocal2(null, optimistic);
+      return;
+    }
+    try {
+      await recordSearchEntry(token, { ...input, label });
+      const remote = await fetchSearchHistory(token);
+      if (seq === opSeq) {
+        writeLocal2(sub, remote);
+        setSnapshot({ entries: remote, status: "ready", authed: true });
+      }
+    } catch {
+      if (seq === opSeq) writeLocal2(sub, optimistic);
+    }
+  },
+  /** Remove one entry. */
+  async remove(id) {
+    const seq = ++opSeq;
+    const next = snapshot.entries.filter((e) => e.id !== id);
+    setSnapshot({ entries: next });
+    const token = await safeAuthToken();
+    const sub = subFromToken(token);
+    if (seq === opSeq) writeLocal2(sub, next);
+    if (token && !id.startsWith("local:")) {
+      try {
+        await deleteSearchEntry(token, id);
+      } catch {
+      }
+    }
+  },
+  /** Clear the whole history for the current user. */
+  async clear() {
+    const seq = ++opSeq;
+    setSnapshot({ entries: [] });
+    const token = await safeAuthToken();
+    const sub = subFromToken(token);
+    if (seq === opSeq) writeLocal2(sub, []);
+    if (token) {
+      try {
+        await clearSearchHistoryRemote(token);
+      } catch {
+      }
+    }
+  }
+};
+
+// src/searchHistory/useSearchHistory.ts
+function useSearchHistory(options = {}) {
+  const { authToken } = options;
+  const snapshot2 = useSyncExternalStore(
+    searchHistoryStore.subscribe,
+    searchHistoryStore.getSnapshot,
+    searchHistoryStore.getServerSnapshot
+  );
+  useEffect(() => {
+    searchHistoryStore.ensureInitialized();
+  }, []);
+  useEffect(() => {
+    if (authToken === void 0) return;
+    void searchHistoryStore.notifyAuthChanged();
+  }, [authToken]);
+  return {
+    entries: snapshot2.entries,
+    status: snapshot2.status,
+    authed: snapshot2.authed,
+    record: searchHistoryStore.record,
+    remove: searchHistoryStore.remove,
+    clear: searchHistoryStore.clear,
+    reload: searchHistoryStore.reload
+  };
+}
+
+// src/searchHistory/i18n.ts
+var en2 = {
+  menuRow: "My search history",
+  title: "My search history",
+  recent: "Recent searches",
+  empty: "No searches yet",
+  emptyHint: "Addresses you search across Aireon apps appear here.",
+  signinRequired: "Sign in to keep your search history across apps",
+  clearAll: "Clear all",
+  clearAllConfirm: "Confirm clear?",
+  open: "Open",
+  remove: "Remove",
+  close: "Close",
+  searchedTimes: (n) => n > 1 ? `searched ${n}\xD7` : "searched once"
+};
+var de2 = {
+  menuRow: "Mein Suchverlauf",
+  title: "Mein Suchverlauf",
+  recent: "Zuletzt gesucht",
+  empty: "Noch keine Suchen",
+  emptyHint: "Adressen, die du in Aireon-Apps suchst, erscheinen hier.",
+  signinRequired: "Melde dich an, um deinen Suchverlauf app\xFCbergreifend zu behalten",
+  clearAll: "Alle l\xF6schen",
+  clearAllConfirm: "Wirklich l\xF6schen?",
+  open: "\xD6ffnen",
+  remove: "Entfernen",
+  close: "Schliessen",
+  searchedTimes: (n) => n > 1 ? `${n}\xD7 gesucht` : "einmal gesucht"
+};
+var fr2 = {
+  menuRow: "Mon historique de recherche",
+  title: "Mon historique de recherche",
+  recent: "Recherches r\xE9centes",
+  empty: "Aucune recherche",
+  emptyHint: "Les adresses recherch\xE9es dans les apps Aireon apparaissent ici.",
+  signinRequired: "Connectez-vous pour conserver votre historique entre les apps",
+  clearAll: "Tout effacer",
+  clearAllConfirm: "Confirmer ?",
+  open: "Ouvrir",
+  remove: "Supprimer",
+  close: "Fermer",
+  searchedTimes: (n) => n > 1 ? `recherch\xE9 ${n}\xD7` : "recherch\xE9 une fois"
+};
+var it2 = {
+  menuRow: "Cronologia ricerche",
+  title: "Cronologia ricerche",
+  recent: "Ricerche recenti",
+  empty: "Nessuna ricerca",
+  emptyHint: "Gli indirizzi cercati nelle app Aireon compaiono qui.",
+  signinRequired: "Accedi per mantenere la cronologia tra le app",
+  clearAll: "Cancella tutto",
+  clearAllConfirm: "Confermi?",
+  open: "Apri",
+  remove: "Rimuovi",
+  close: "Chiudi",
+  searchedTimes: (n) => n > 1 ? `cercato ${n}\xD7` : "cercato una volta"
+};
+var SEARCH_HISTORY_STRINGS = {
+  en: en2,
+  de: de2,
+  fr: fr2,
+  it: it2
+};
+function getSearchHistoryStrings(locale = "en") {
+  return SEARCH_HISTORY_STRINGS[locale] ?? en2;
+}
+function defaultOpen(entry) {
+  if (entry.lat == null || entry.lng == null) return;
+  const params = new URLSearchParams({
+    lat: String(entry.lat),
+    lng: String(entry.lng),
+    address: entry.label
+  });
+  window.location.href = `${window.location.pathname}?${params.toString()}`;
+}
+function SearchHistoryModal({
+  locale = "en",
+  onClose,
+  onOpen,
+  authToken,
+  dark = false
+}) {
+  const t = getSearchHistoryStrings(locale);
+  const { entries, authed, clear, remove } = useSearchHistory({ authToken });
+  const modalRef = useFocusTrap({ onEscape: onClose });
+  const [confirmClear, setConfirmClear] = useState(false);
+  const open = onOpen ?? defaultOpen;
+  return createPortal(
+    /* @__PURE__ */ jsxs("div", { className: `${dark ? "dark " : ""}fixed inset-0 z-[200] flex items-center justify-center p-4`, children: [
+      /* @__PURE__ */ jsx("div", { className: "absolute inset-0 bg-black/55 backdrop-blur-sm", onClick: onClose }),
+      /* @__PURE__ */ jsxs(
+        "div",
+        {
+          ref: modalRef,
+          className: "relative w-full max-w-md max-h-[80vh] rounded-2xl shadow-2xl border overflow-hidden flex flex-col bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700",
+          style: { animation: "searchHistoryIn 0.22s cubic-bezier(0.34,1.56,0.64,1) both" },
+          role: "dialog",
+          "aria-modal": "true",
+          "aria-label": t.title,
+          children: [
+            /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between px-5 py-3.5 border-b border-gray-200 dark:border-gray-700 flex-shrink-0", children: [
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2.5 min-w-0", children: [
+                /* @__PURE__ */ jsx(Clock, { size: 18, className: "text-sky-600 dark:text-sky-400 shrink-0" }),
+                /* @__PURE__ */ jsx("h2", { className: "text-base font-semibold text-gray-900 dark:text-white", children: t.title }),
+                /* @__PURE__ */ jsx("span", { className: "text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400", children: entries.length })
+              ] }),
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+                entries.length > 0 && /* @__PURE__ */ jsxs(
+                  "button",
+                  {
+                    onClick: () => {
+                      if (confirmClear) {
+                        clear();
+                        setConfirmClear(false);
+                      } else {
+                        setConfirmClear(true);
+                      }
+                    },
+                    onBlur: () => setConfirmClear(false),
+                    className: "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors " + (confirmClear ? "bg-red-600 hover:bg-red-500 text-white border-red-600" : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700"),
+                    children: [
+                      /* @__PURE__ */ jsx(Trash2, { size: 13 }),
+                      confirmClear ? t.clearAllConfirm : t.clearAll
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    onClick: onClose,
+                    "aria-label": t.close,
+                    className: "p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors",
+                    children: /* @__PURE__ */ jsx(X, { size: 17 })
+                  }
+                )
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "flex-1 overflow-auto", children: entries.length === 0 ? /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center justify-center py-16 gap-2 px-4 text-center", children: [
+              /* @__PURE__ */ jsx(Search, { size: 32, className: "text-gray-400" }),
+              /* @__PURE__ */ jsx("p", { className: "text-sm text-gray-700 dark:text-gray-300", children: authed ? t.empty : t.signinRequired }),
+              authed && /* @__PURE__ */ jsx("p", { className: "text-xs text-gray-500 dark:text-gray-400 max-w-xs", children: t.emptyHint })
+            ] }) : /* @__PURE__ */ jsx("ul", { className: "py-1.5", children: entries.map((entry) => /* @__PURE__ */ jsxs(
+              "li",
+              {
+                className: "group flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors",
+                children: [
+                  /* @__PURE__ */ jsxs(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => {
+                        open(entry);
+                        onClose();
+                      },
+                      title: t.open,
+                      className: "flex items-center gap-2.5 min-w-0 flex-1 text-left",
+                      children: [
+                        /* @__PURE__ */ jsx(MapPin, { size: 15, className: "shrink-0 text-gray-400 group-hover:text-sky-500" }),
+                        /* @__PURE__ */ jsxs("span", { className: "min-w-0", children: [
+                          /* @__PURE__ */ jsx("span", { className: "block truncate text-sm text-gray-800 dark:text-gray-100", children: entry.label }),
+                          /* @__PURE__ */ jsxs("span", { className: "block text-[11px] text-gray-400 dark:text-gray-500", children: [
+                            new Date(entry.lastSearchedAt).toLocaleDateString(locale),
+                            entry.searchCount > 1 ? ` \xB7 ${t.searchedTimes(entry.searchCount)}` : ""
+                          ] })
+                        ] })
+                      ]
+                    }
+                  ),
+                  /* @__PURE__ */ jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => remove(entry.id),
+                      "aria-label": t.remove,
+                      title: t.remove,
+                      className: "p-1.5 rounded-md text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition",
+                      children: /* @__PURE__ */ jsx(Trash2, { size: 14 })
+                    }
+                  )
+                ]
+              },
+              entry.id
+            )) }) })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsx("style", { children: `
+        @keyframes searchHistoryIn {
+          from { opacity: 0; transform: scale(0.92) translateY(8px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      ` })
+    ] }),
+    document.body
+  );
+}
 var defaultOpenSavedParcel = (record) => {
   const params = new URLSearchParams({
     lat: String(record.parcel_lat),
@@ -5759,19 +6294,25 @@ function MapUserMenu({
   toolbarLabel = "More tools",
   dropdownSummary,
   dropdownWidth = "default",
-  onOpenSavedParcel = defaultOpenSavedParcel
+  onOpenSavedParcel = defaultOpenSavedParcel,
+  showSearchHistory = true,
+  searchHistoryLabel,
+  onOpenSearch
 }) {
   const { user, isLoading, login, logout, getAccessToken } = useAuth();
   const { avatarUrl: avatarUrl2 } = useUserProfile(user);
   const [open, setOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showParcels, setShowParcels] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [parcelRecords, setParcelRecords] = useState([]);
   const [parcelStatus, setParcelStatus] = useState("idle");
   const [parcelError, setParcelError] = useState(null);
   const menuRef = useRef(null);
   const accessToken = getAccessToken() ?? null;
   const parcelStrings = getSavedParcelsStrings(locale);
+  const { entries: searchEntries } = useSearchHistory({ authToken: accessToken });
+  const searchStrings = getSearchHistoryStrings(locale);
   const hasCustomDropdownSummary = dropdownSummary != null;
   const shouldLoadSavedSummary = showSavedParcels && !hasCustomDropdownSummary;
   useEffect(() => {
@@ -6081,6 +6622,23 @@ function MapUserMenu({
                 },
                 item.key
               )),
+              showSearchHistory && /* @__PURE__ */ jsxs(
+                "button",
+                {
+                  type: "button",
+                  role: "menuitem",
+                  onClick: () => {
+                    setOpen(false);
+                    setShowSearch(true);
+                  },
+                  className: "map-shell-user-menu-item",
+                  children: [
+                    /* @__PURE__ */ jsx(Clock, { size: 16, "aria-hidden": "true" }),
+                    /* @__PURE__ */ jsx("span", { children: searchHistoryLabel ?? searchStrings.menuRow }),
+                    searchEntries.length > 0 && /* @__PURE__ */ jsx("span", { className: "map-shell-user-menu-badge", children: searchEntries.length })
+                  ]
+                }
+              ),
               showSavedParcels && hasCustomDropdownSummary && /* @__PURE__ */ jsxs(
                 "button",
                 {
@@ -6118,6 +6676,16 @@ function MapUserMenu({
       )
     ] }),
     showProfile && /* @__PURE__ */ jsx(ProfileModal, { user, onClose: () => setShowProfile(false), dark }),
+    showSearch && /* @__PURE__ */ jsx(
+      SearchHistoryModal,
+      {
+        locale,
+        dark,
+        authToken: accessToken,
+        onOpen: onOpenSearch,
+        onClose: () => setShowSearch(false)
+      }
+    ),
     showParcels && /* @__PURE__ */ jsx(
       SavedParcelsModal,
       {
@@ -7278,9 +7846,9 @@ function OverflowNav({
   if (!isMobile) {
     return /* @__PURE__ */ jsx("div", { ref: rootRef, className: rootClass, children: items.map((item) => /* @__PURE__ */ jsx(InlineButton, { item }, item.key)) });
   }
-  const visible = items.filter((it2) => it2.keepInline && !it2.desktopOnly);
-  const collapsed = items.filter((it2) => !it2.keepInline && !it2.desktopOnly);
-  const hasBadge = collapsed.some((it2) => it2.badge != null);
+  const visible = items.filter((it3) => it3.keepInline && !it3.desktopOnly);
+  const collapsed = items.filter((it3) => !it3.keepInline && !it3.desktopOnly);
+  const hasBadge = collapsed.some((it3) => it3.badge != null);
   return /* @__PURE__ */ jsxs("div", { ref: rootRef, className: rootClass, children: [
     visible.map((item) => /* @__PURE__ */ jsx(InlineButton, { item }, item.key)),
     collapsed.length > 0 && /* @__PURE__ */ jsxs("div", { className: "aireon-onav-more", children: [
@@ -7585,6 +8153,9 @@ function AddressSearch({
   minChars = 3,
   debounceMs = 300,
   onError,
+  history = true,
+  appName,
+  maxRecent = 6,
   className
 }) {
   const [query, setQuery] = useState("");
@@ -7596,11 +8167,22 @@ function AddressSearch({
   const debounceRef = useRef();
   const abortRef = useRef(null);
   const listboxId = useId();
+  const { entries, record } = useSearchHistory();
+  const recentResults = useMemo(() => {
+    if (!history) return [];
+    return entries.filter((e) => e.lat != null && e.lng != null).slice(0, maxRecent).map((e) => ({
+      id: `recent:${e.id}`,
+      label: e.label,
+      lat: e.lat,
+      lng: e.lng
+    }));
+  }, [history, entries, maxRecent]);
+  const isRecentMode = query.trim().length < minChars;
+  const activeOptions = isRecentMode ? recentResults : results;
   const runSearch = useCallback(
     async (text) => {
       if (text.trim().length < minChars) {
         setResults([]);
-        setIsOpen(false);
         return;
       }
       abortRef.current?.abort();
@@ -7627,6 +8209,8 @@ function AddressSearch({
   );
   const handleInputChange = (value) => {
     setQuery(value);
+    setSelectedIndex(-1);
+    if (value.trim().length < minChars) setIsOpen(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => runSearch(value), debounceMs);
   };
@@ -7634,19 +8218,29 @@ function AddressSearch({
     setQuery(result.label);
     setIsOpen(false);
     setResults([]);
+    if (history && Number.isFinite(result.lat) && Number.isFinite(result.lng)) {
+      record({
+        label: result.label,
+        lat: result.lat,
+        lng: result.lng,
+        featureId: result.id.startsWith("recent:") ? void 0 : result.id,
+        appName
+      });
+    }
     onSelect(result);
   };
   const handleKeyDown = (e) => {
-    if (!isOpen || results.length === 0) return;
+    if (!isOpen || activeOptions.length === 0) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex((p) => p < results.length - 1 ? p + 1 : 0);
+      setSelectedIndex((p) => p < activeOptions.length - 1 ? p + 1 : 0);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex((p) => p > 0 ? p - 1 : results.length - 1);
+      setSelectedIndex((p) => p > 0 ? p - 1 : activeOptions.length - 1);
     } else if (e.key === "Enter" && selectedIndex >= 0) {
       e.preventDefault();
-      handleSelect(results[selectedIndex]);
+      const opt = activeOptions[selectedIndex];
+      if (opt) handleSelect(opt);
     } else if (e.key === "Escape") {
       setIsOpen(false);
     }
@@ -7654,7 +8248,8 @@ function AddressSearch({
   const clearSearch = () => {
     setQuery("");
     setResults([]);
-    setIsOpen(false);
+    setSelectedIndex(-1);
+    setIsOpen(recentResults.length > 0);
   };
   useEffect(() => {
     const onPointer = (e) => {
@@ -7665,7 +8260,29 @@ function AddressSearch({
     document.addEventListener("mousedown", onPointer);
     return () => document.removeEventListener("mousedown", onPointer);
   }, []);
-  const showDropdown = isOpen && !isLoading && (results.length > 0 || query.trim().length >= minChars);
+  useEffect(() => {
+    setSelectedIndex((i) => i >= activeOptions.length ? -1 : i);
+  }, [activeOptions.length]);
+  const renderOption = (result, index, recent) => /* @__PURE__ */ jsxs(
+    "button",
+    {
+      id: `${listboxId}-opt-${index}`,
+      role: "option",
+      "aria-selected": index === selectedIndex,
+      onClick: () => handleSelect(result),
+      className: "aireon-search-option" + (index === selectedIndex ? " aireon-search-option--active" : ""),
+      children: [
+        recent ? /* @__PURE__ */ jsx(Clock, { size: 16, className: "aireon-search-option-icon", "aria-hidden": "true" }) : /* @__PURE__ */ jsx(MapPin, { size: 16, className: "aireon-search-option-icon", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsx("span", { className: "aireon-search-option-label", children: result.label })
+      ]
+    },
+    result.id
+  );
+  const showRecentDropdown = isOpen && !isLoading && isRecentMode && recentResults.length > 0;
+  const showResultsDropdown = isOpen && !isLoading && !isRecentMode && (results.length > 0 || query.trim().length >= minChars);
+  const showDropdown = showRecentDropdown || showResultsDropdown;
+  const hasOptions = activeOptions.length > 0;
+  const recentLabel = labels.recent ?? "Recent searches";
   return /* @__PURE__ */ jsxs(
     "div",
     {
@@ -7682,7 +8299,9 @@ function AddressSearch({
               onChange: (e) => handleInputChange(e.target.value),
               onKeyDown: handleKeyDown,
               onFocus: () => {
-                if (results.length > 0 || query.trim().length >= minChars && !isLoading) setIsOpen(true);
+                if (activeOptions.length > 0 || query.trim().length >= minChars && !isLoading) {
+                  setIsOpen(true);
+                }
               },
               placeholder: labels.placeholder,
               role: "combobox",
@@ -7707,25 +8326,26 @@ function AddressSearch({
             }
           )
         ] }),
-        showDropdown && /* @__PURE__ */ jsx("div", { id: listboxId, role: "listbox", "aria-label": labels.placeholder, className: "aireon-search-menu", children: results.length > 0 ? results.map((result, index) => /* @__PURE__ */ jsxs(
-          "button",
+        showDropdown && /* @__PURE__ */ jsx(
+          "div",
           {
-            id: `${listboxId}-opt-${index}`,
-            role: "option",
-            "aria-selected": index === selectedIndex,
-            onClick: () => handleSelect(result),
-            className: "aireon-search-option" + (index === selectedIndex ? " aireon-search-option--active" : ""),
-            children: [
-              /* @__PURE__ */ jsx(MapPin, { size: 16, className: "aireon-search-option-icon", "aria-hidden": "true" }),
-              /* @__PURE__ */ jsx("span", { className: "aireon-search-option-label", children: result.label })
-            ]
-          },
-          result.id
-        )) : /* @__PURE__ */ jsxs("div", { role: "status", className: "aireon-search-empty", children: [
-          /* @__PURE__ */ jsx(Search, { size: 16, "aria-hidden": "true" }),
-          /* @__PURE__ */ jsx("span", { children: labels.noResults })
-        ] }) }),
-        /* @__PURE__ */ jsx("div", { className: "sr-only", role: "status", "aria-live": "polite", children: isLoading ? labels.loading : isOpen && results.length > 0 ? labels.resultsCount?.(results.length) ?? "" : isOpen && query.trim().length >= minChars ? labels.noResults : "" })
+            id: listboxId,
+            role: hasOptions ? "listbox" : void 0,
+            "aria-label": labels.placeholder,
+            className: "aireon-search-menu",
+            children: !hasOptions ? /* @__PURE__ */ jsxs("div", { role: "status", className: "aireon-search-empty", children: [
+              /* @__PURE__ */ jsx(Search, { size: 16, "aria-hidden": "true" }),
+              /* @__PURE__ */ jsx("span", { children: labels.noResults })
+            ] }) : showRecentDropdown ? /* @__PURE__ */ jsxs("div", { role: "group", "aria-label": recentLabel, children: [
+              /* @__PURE__ */ jsxs("p", { className: "aireon-search-section", "aria-hidden": "true", children: [
+                /* @__PURE__ */ jsx(Clock, { size: 12, "aria-hidden": "true" }),
+                /* @__PURE__ */ jsx("span", { children: recentLabel })
+              ] }),
+              activeOptions.map((result, index) => renderOption(result, index, true))
+            ] }) : activeOptions.map((result, index) => renderOption(result, index, false))
+          }
+        ),
+        /* @__PURE__ */ jsx("div", { className: "sr-only", role: "status", "aria-live": "polite", children: isLoading ? labels.loading : isOpen && results.length > 0 ? labels.resultsCount?.(results.length) ?? "" : isOpen && !isRecentMode && query.trim().length >= minChars ? labels.noResults : "" })
       ]
     }
   );
@@ -7757,7 +8377,7 @@ function AppNavbar({
       !hideHubLink && /* @__PURE__ */ jsx(AireonHubLink, { withDivider: true, className: "", style: { color: dark ? "rgb(248 250 252)" : "rgb(17 24 39)" } }),
       /* @__PURE__ */ jsx(AireonAppWordmark, { name: appName })
     ] }),
-    search ? /* @__PURE__ */ jsx("div", { className: "aireon-appnav-search", "data-tour": searchTourId, children: /* @__PURE__ */ jsx(AddressSearch, { dark, ...search, onSelect: handlePick }) }) : centerSlot ? /* @__PURE__ */ jsx("div", { className: "aireon-appnav-center", "data-tour": searchTourId, children: centerSlot }) : null,
+    search ? /* @__PURE__ */ jsx("div", { className: "aireon-appnav-search", "data-tour": searchTourId, children: /* @__PURE__ */ jsx(AddressSearch, { dark, appName, ...search, onSelect: handlePick }) }) : centerSlot ? /* @__PURE__ */ jsx("div", { className: "aireon-appnav-center", "data-tour": searchTourId, children: centerSlot }) : null,
     /* @__PURE__ */ jsxs("div", { className: "aireon-appnav-actions", children: [
       openWith && picked && /* @__PURE__ */ jsx(
         OpenWithMenu,
@@ -8140,4 +8760,4 @@ function VirtualList({
   );
 }
 
-export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AddressSearch, AddressSearch_default as AddressSearchDefault, AireonAppWordmark, AireonAppWordmark_default as AireonAppWordmarkDefault, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AppNavbar, AppNavbar_default as AppNavbarDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, CompareToggleButton, CompareToggleButton_default as CompareToggleButtonDefault, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapToolbar, MapToolbar_default as MapToolbarDefault, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, ParcelOpenInMenu, ParcelPanelShell, ParcelPanelShell_default as ParcelPanelShellDefault, ParcelStatusBadge, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, SettingsMenu, SettingsMenu_default as SettingsMenuDefault, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AddressSearch, AddressSearch_default as AddressSearchDefault, AireonAppWordmark, AireonAppWordmark_default as AireonAppWordmarkDefault, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AppNavbar, AppNavbar_default as AppNavbarDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, CompareToggleButton, CompareToggleButton_default as CompareToggleButtonDefault, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapToolbar, MapToolbar_default as MapToolbarDefault, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, ParcelOpenInMenu, ParcelPanelShell, ParcelPanelShell_default as ParcelPanelShellDefault, ParcelStatusBadge, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SEARCH_HISTORY_API_BASE, SEARCH_HISTORY_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, SearchHistoryModal, SettingsMenu, SettingsMenu_default as SettingsMenuDefault, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, clearSearchHistoryRemote, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, deleteSearchEntry, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, fetchSearchHistory, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, getSearchHistoryStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, recordSearchEntry, resolveKindMeta, saveClaireConversation, searchHistoryStore, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useSearchHistory, useUserProfile, userManager };

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import {
   ChevronDown,
   CircleUser,
+  Clock,
   Download,
   ExternalLink,
   Layers,
@@ -29,6 +30,10 @@ import {
 } from '../prm/api';
 import { getSavedParcelsStrings, type Locale as PrmLocale } from '../prm/i18n';
 import { Skeleton } from '../skeleton/Skeleton';
+import { useSearchHistory } from '../searchHistory/useSearchHistory';
+import { SearchHistoryModal } from '../searchHistory/SearchHistoryModal';
+import { getSearchHistoryStrings } from '../searchHistory/i18n';
+import type { SearchHistoryEntry } from '../searchHistory/types';
 
 export interface MapUserMenuLabels {
   signIn: string;
@@ -77,6 +82,20 @@ export interface MapUserMenuProps {
   dropdownSummary?: ReactNode;
   dropdownWidth?: 'default' | 'wide';
   onOpenSavedParcel?: (record: PrmRecord) => void;
+  /**
+   * Show the "My search history" row (opens the cross-app search-history modal).
+   * Defaults to `true` — the user's address searches roam across every Aireon
+   * app, so the account menu is the suite-standard place to review them.
+   */
+  showSearchHistory?: boolean;
+  /** Override the "My search history" row label (defaults to the localized string). */
+  searchHistoryLabel?: string;
+  /**
+   * "Open" a past search — the host decides what that means (map apps recenter on
+   * the entry's lat/lng). When omitted, falls back to a `?lat=&lng=&address=`
+   * reload of the current page.
+   */
+  onOpenSearch?: (entry: SearchHistoryEntry) => void;
 }
 
 const defaultOpenSavedParcel = (record: PrmRecord) => {
@@ -138,12 +157,16 @@ export function MapUserMenu({
   dropdownSummary,
   dropdownWidth = 'default',
   onOpenSavedParcel = defaultOpenSavedParcel,
+  showSearchHistory = true,
+  searchHistoryLabel,
+  onOpenSearch,
 }: MapUserMenuProps) {
   const { user, isLoading, login, logout, getAccessToken } = useAuth();
   const { avatarUrl } = useUserProfile(user);
   const [open, setOpen] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showParcels, setShowParcels] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [parcelRecords, setParcelRecords] = useState<PrmRecord[]>([]);
   const [parcelStatus, setParcelStatus] =
     useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
@@ -151,6 +174,9 @@ export function MapUserMenu({
   const menuRef = useRef<HTMLDivElement>(null);
   const accessToken = getAccessToken() ?? null;
   const parcelStrings = getSavedParcelsStrings(locale);
+  // Token hint so the history reloads the instant the user signs in/out.
+  const { entries: searchEntries } = useSearchHistory({ authToken: accessToken });
+  const searchStrings = getSearchHistoryStrings(locale);
   const hasCustomDropdownSummary = dropdownSummary != null;
   const shouldLoadSavedSummary = showSavedParcels && !hasCustomDropdownSummary;
 
@@ -487,6 +513,23 @@ export function MapUserMenu({
                   {item.dot && <span className="map-shell-user-menu-dot" aria-hidden="true" />}
                 </button>
               ))}
+              {showSearchHistory && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setOpen(false);
+                    setShowSearch(true);
+                  }}
+                  className="map-shell-user-menu-item"
+                >
+                  <Clock size={16} aria-hidden="true" />
+                  <span>{searchHistoryLabel ?? searchStrings.menuRow}</span>
+                  {searchEntries.length > 0 && (
+                    <span className="map-shell-user-menu-badge">{searchEntries.length}</span>
+                  )}
+                </button>
+              )}
               {showSavedParcels && hasCustomDropdownSummary && (
                 <button
                   type="button"
@@ -519,6 +562,15 @@ export function MapUserMenu({
 
       {showProfile && (
         <ProfileModal user={user} onClose={() => setShowProfile(false)} dark={dark} />
+      )}
+      {showSearch && (
+        <SearchHistoryModal
+          locale={locale}
+          dark={dark}
+          authToken={accessToken}
+          onOpen={onOpenSearch}
+          onClose={() => setShowSearch(false)}
+        />
       )}
       {showParcels && (
         <SavedParcelsModal

@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { Search, X, MapPin } from 'lucide-react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { Search, X, MapPin, Clock } from 'lucide-react';
 import {
   searchGeoAdminAddresses,
   type GeoAdminAddressSearchLanguage,
 } from '../geoadmin/addressSearch';
+import { useSearchHistory } from '../searchHistory/useSearchHistory';
 
 /** Default provider: the shared Swiss geo.admin geocoder (lang bridged to its union). */
 const defaultProvider = (
@@ -29,6 +30,8 @@ export interface AddressSearchLabels {
   clear: string;
   /** Optional sr-only live-region count, e.g. n => `${n} results`. */
   resultsCount?: (n: number) => string;
+  /** Header above the recent-searches list. Defaults to "Recent searches". */
+  recent?: string;
 }
 
 export interface AddressSearchProps {
@@ -52,6 +55,17 @@ export interface AddressSearchProps {
   debounceMs?: number;
   /** Called on a non-abort search error (e.g. to toast). */
   onError?: (err: unknown) => void;
+  /**
+   * Record every pick into the user's cross-app search history (and surface a
+   * "Recent searches" dropdown when the box is focused empty). Default `true`.
+   * The history persists per user on the RES backend, so it follows the user to
+   * every Aireon app.
+   */
+  history?: boolean;
+  /** App id stored alongside recorded searches (telemetry / provenance). */
+  appName?: string;
+  /** Max recent searches to show in the dropdown. Default 6. */
+  maxRecent?: number;
   className?: string;
 }
 
@@ -59,7 +73,9 @@ export interface AddressSearchProps {
  * `AddressSearch` — the suite's address autocomplete: a search box with a
  * debounced, abortable lookup and a keyboard-navigable result dropdown (combobox
  * a11y, loading spinner, empty state). Defaults to the shared Swiss geo.admin
- * geocoder; pass `search` to plug in any provider. Self-contained styling via
+ * geocoder; pass `search` to plug in any provider. When `history` is on (the
+ * default) every pick is saved to the user's cross-app search history and the
+ * box shows a "Recent searches" dropdown on focus. Self-contained styling via
  * `@aireon/shared/map-ui.css` (the `aireon-search-*` classes), so it matches in
  * any host without Tailwind.
  */
@@ -72,6 +88,9 @@ export function AddressSearch({
   minChars = 3,
   debounceMs = 300,
   onError,
+  history = true,
+  appName,
+  maxRecent = 6,
   className,
 }: AddressSearchProps) {
   const [query, setQuery] = useState('');
@@ -84,11 +103,33 @@ export function AddressSearch({
   const abortRef = useRef<AbortController | null>(null);
   const listboxId = useId();
 
+  const { entries, record } = useSearchHistory();
+
+  // The recent list only makes sense for entries we can re-open (need coords).
+  const recentResults = useMemo<AddressSearchResult[]>(() => {
+    if (!history) return [];
+    return entries
+      .filter((e) => e.lat != null && e.lng != null)
+      .slice(0, maxRecent)
+      .map((e) => ({
+        id: `recent:${e.id}`,
+        label: e.label,
+        lat: e.lat as number,
+        lng: e.lng as number,
+      }));
+  }, [history, entries, maxRecent]);
+
+  // Below `minChars` we're in "recent" mode (show history); at/above it we show
+  // live geocoder results. `activeOptions` is whichever list is on screen, so
+  // keyboard navigation and selection treat both lists uniformly.
+  const isRecentMode = query.trim().length < minChars;
+  const activeOptions = isRecentMode ? recentResults : results;
+
   const runSearch = useCallback(
     async (text: string) => {
       if (text.trim().length < minChars) {
         setResults([]);
-        setIsOpen(false);
+        // Keep the dropdown open for recent searches if we have any.
         return;
       }
       abortRef.current?.abort();
@@ -117,6 +158,8 @@ export function AddressSearch({
 
   const handleInputChange = (value: string) => {
     setQuery(value);
+    setSelectedIndex(-1);
+    if (value.trim().length < minChars) setIsOpen(true); // reveal recent list
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => runSearch(value), debounceMs);
   };
@@ -125,20 +168,30 @@ export function AddressSearch({
     setQuery(result.label);
     setIsOpen(false);
     setResults([]);
+    if (history && Number.isFinite(result.lat) && Number.isFinite(result.lng)) {
+      record({
+        label: result.label,
+        lat: result.lat,
+        lng: result.lng,
+        featureId: result.id.startsWith('recent:') ? undefined : result.id,
+        appName,
+      });
+    }
     onSelect(result);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen || results.length === 0) return;
+    if (!isOpen || activeOptions.length === 0) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex((p) => (p < results.length - 1 ? p + 1 : 0));
+      setSelectedIndex((p) => (p < activeOptions.length - 1 ? p + 1 : 0));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex((p) => (p > 0 ? p - 1 : results.length - 1));
+      setSelectedIndex((p) => (p > 0 ? p - 1 : activeOptions.length - 1));
     } else if (e.key === 'Enter' && selectedIndex >= 0) {
       e.preventDefault();
-      handleSelect(results[selectedIndex]);
+      const opt = activeOptions[selectedIndex];
+      if (opt) handleSelect(opt);
     } else if (e.key === 'Escape') {
       setIsOpen(false);
     }
@@ -147,7 +200,9 @@ export function AddressSearch({
   const clearSearch = () => {
     setQuery('');
     setResults([]);
-    setIsOpen(false);
+    setSelectedIndex(-1);
+    // Leave the dropdown open so the recent list takes over after clearing.
+    setIsOpen(recentResults.length > 0);
   };
 
   useEffect(() => {
@@ -160,7 +215,37 @@ export function AddressSearch({
     return () => document.removeEventListener('mousedown', onPointer);
   }, []);
 
-  const showDropdown = isOpen && !isLoading && (results.length > 0 || query.trim().length >= minChars);
+  // The recent list can shrink out-of-band (the shared store mutates when the
+  // user records/removes elsewhere). Clamp the highlight so aria-activedescendant
+  // and Enter never reference an index past the end of the rendered list.
+  useEffect(() => {
+    setSelectedIndex((i) => (i >= activeOptions.length ? -1 : i));
+  }, [activeOptions.length]);
+
+  const renderOption = (result: AddressSearchResult, index: number, recent: boolean) => (
+    <button
+      key={result.id}
+      id={`${listboxId}-opt-${index}`}
+      role="option"
+      aria-selected={index === selectedIndex}
+      onClick={() => handleSelect(result)}
+      className={'aireon-search-option' + (index === selectedIndex ? ' aireon-search-option--active' : '')}
+    >
+      {recent ? (
+        <Clock size={16} className="aireon-search-option-icon" aria-hidden="true" />
+      ) : (
+        <MapPin size={16} className="aireon-search-option-icon" aria-hidden="true" />
+      )}
+      <span className="aireon-search-option-label">{result.label}</span>
+    </button>
+  );
+
+  const showRecentDropdown = isOpen && !isLoading && isRecentMode && recentResults.length > 0;
+  const showResultsDropdown =
+    isOpen && !isLoading && !isRecentMode && (results.length > 0 || query.trim().length >= minChars);
+  const showDropdown = showRecentDropdown || showResultsDropdown;
+  const hasOptions = activeOptions.length > 0;
+  const recentLabel = labels.recent ?? 'Recent searches';
 
   return (
     <div
@@ -175,7 +260,9 @@ export function AddressSearch({
           onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (results.length > 0 || (query.trim().length >= minChars && !isLoading)) setIsOpen(true);
+            if (activeOptions.length > 0 || (query.trim().length >= minChars && !isLoading)) {
+              setIsOpen(true);
+            }
           }}
           placeholder={labels.placeholder}
           role="combobox"
@@ -205,26 +292,27 @@ export function AddressSearch({
       </div>
 
       {showDropdown && (
-        <div id={listboxId} role="listbox" aria-label={labels.placeholder} className="aireon-search-menu">
-          {results.length > 0 ? (
-            results.map((result, index) => (
-              <button
-                key={result.id}
-                id={`${listboxId}-opt-${index}`}
-                role="option"
-                aria-selected={index === selectedIndex}
-                onClick={() => handleSelect(result)}
-                className={'aireon-search-option' + (index === selectedIndex ? ' aireon-search-option--active' : '')}
-              >
-                <MapPin size={16} className="aireon-search-option-icon" aria-hidden="true" />
-                <span className="aireon-search-option-label">{result.label}</span>
-              </button>
-            ))
-          ) : (
+        <div
+          id={listboxId}
+          role={hasOptions ? 'listbox' : undefined}
+          aria-label={labels.placeholder}
+          className="aireon-search-menu"
+        >
+          {!hasOptions ? (
             <div role="status" className="aireon-search-empty">
               <Search size={16} aria-hidden="true" />
               <span>{labels.noResults}</span>
             </div>
+          ) : showRecentDropdown ? (
+            <div role="group" aria-label={recentLabel}>
+              <p className="aireon-search-section" aria-hidden="true">
+                <Clock size={12} aria-hidden="true" />
+                <span>{recentLabel}</span>
+              </p>
+              {activeOptions.map((result, index) => renderOption(result, index, true))}
+            </div>
+          ) : (
+            activeOptions.map((result, index) => renderOption(result, index, false))
           )}
         </div>
       )}
@@ -234,7 +322,7 @@ export function AddressSearch({
           ? labels.loading
           : isOpen && results.length > 0
             ? (labels.resultsCount?.(results.length) ?? '')
-            : isOpen && query.trim().length >= minChars
+            : isOpen && !isRecentMode && query.trim().length >= minChars
               ? labels.noResults
               : ''}
       </div>

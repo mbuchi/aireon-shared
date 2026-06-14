@@ -22,8 +22,19 @@ export function useFocusTrap<T extends HTMLElement = HTMLElement>(
     }
 
     return () => {
-      if (restoreFocus && previousFocus.current && typeof previousFocus.current.focus === 'function') {
-        previousFocus.current.focus();
+      const prev = previousFocus.current;
+      // Only restore focus if the trigger is still in the document. A common
+      // pattern closes a menu (unmounting its trigger) before opening the modal,
+      // so the captured element can be detached — refocusing it would silently
+      // drop focus to <body>. In that case leave focus where the browser put it.
+      if (
+        restoreFocus &&
+        prev &&
+        typeof prev.focus === 'function' &&
+        typeof document !== 'undefined' &&
+        document.contains(prev)
+      ) {
+        prev.focus();
       }
     };
   }, [active, restoreFocus]);

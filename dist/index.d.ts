@@ -130,7 +130,7 @@ declare function resolveKindMeta(kind: string): {
 };
 
 /** Languages supported across the SwissNovo suite. */
-type Locale$2 = 'de' | 'en' | 'fr' | 'it';
+type Locale$3 = 'de' | 'en' | 'fr' | 'it';
 interface ReleaseNotesStrings {
     /** Panel <h1>, followed by the brand wordmark. */
     whatsNewIn: string;
@@ -167,14 +167,14 @@ interface ReleaseNotesStrings {
     /** Change-kind labels (badges + filter chips). */
     kind: Record<ChangeKind, string>;
 }
-declare const RELEASE_NOTES_STRINGS: Record<Locale$2, ReleaseNotesStrings>;
-declare const getReleaseNotesStrings: (locale?: Locale$2) => ReleaseNotesStrings;
+declare const RELEASE_NOTES_STRINGS: Record<Locale$3, ReleaseNotesStrings>;
+declare const getReleaseNotesStrings: (locale?: Locale$3) => ReleaseNotesStrings;
 
 interface ReleaseNotesPanelProps {
     /** Called when the panel finishes its close animation. */
     onClose: () => void;
     /** UI language for the panel chrome. Defaults to English. */
-    locale?: Locale$2;
+    locale?: Locale$3;
     /** The app's release history, newest first. */
     releases: Release[];
     /** GitHub repo URL, used to link PRs (e.g. https://github.com/mbuchi/boom). */
@@ -196,7 +196,7 @@ interface ReleaseNotesButtonProps {
     /** The app's release history, newest first. */
     releases: Release[];
     /** UI language for the button + panel chrome. Defaults to English. */
-    locale?: Locale$2;
+    locale?: Locale$3;
     /** localStorage key for unread tracking — namespace per app, e.g. "boom:lastSeenReleaseVersion". */
     storageKey: string;
     /** GitHub repo URL, used to link PRs. */
@@ -237,9 +237,9 @@ declare function useReleaseNotes({ currentVersion, storageKey, }: UseReleaseNote
 
 interface LocaleSelectorProps {
     /** Currently active locale. */
-    locale: Locale$2;
+    locale: Locale$3;
     /** Called with the newly chosen locale when the user changes selection. */
-    onChange: (locale: Locale$2) => void;
+    onChange: (locale: Locale$3) => void;
     /** Accessible label for screen readers. Defaults to "Select language". */
     ariaLabel?: string;
     /** Extra class names appended to the default styling. */
@@ -306,7 +306,7 @@ declare const LEGACY_PROOM_APP_URL = "https://swissnovo-proom.vercel.app";
 declare const LEGACY_TOOLBOX_APP_URL = "https://swissnovo-toolbox.vercel.app";
 declare const LEGACY_GEOPOOL_APP_URL = "https://swissnovo-geopool.vercel.app";
 
-type Locale$1 = 'de' | 'en' | 'fr' | 'it';
+type Locale$2 = 'de' | 'en' | 'fr' | 'it';
 interface SavedParcelsStrings {
     title: string;
     /** Account-card edit-profile button text (lowercase verb, e.g. "edit"). */
@@ -345,12 +345,12 @@ interface SavedParcelsStrings {
     state: Record<PrmState, string>;
     priority: Record<PrmPriority, string>;
 }
-declare const SAVED_PARCELS_STRINGS: Record<Locale$1, SavedParcelsStrings>;
-declare const getSavedParcelsStrings: (locale?: Locale$1) => SavedParcelsStrings;
+declare const SAVED_PARCELS_STRINGS: Record<Locale$2, SavedParcelsStrings>;
+declare const getSavedParcelsStrings: (locale?: Locale$2) => SavedParcelsStrings;
 
 interface SavedParcelsModalProps {
     /** Locale for the modal's UI text. Defaults to 'en'. */
-    locale?: Locale$1;
+    locale?: Locale$2;
     /** Close the modal. */
     onClose: () => void;
     /**
@@ -941,7 +941,7 @@ declare class ErrorLogBoundary extends Component<ErrorLogBoundaryProps, State> {
     render(): ReactNode;
 }
 
-type Locale = 'de' | 'en' | 'fr' | 'it';
+type Locale$1 = 'de' | 'en' | 'fr' | 'it';
 interface BugReportCategoryOption {
     id: string;
     label: string;
@@ -983,14 +983,14 @@ interface BugReportStrings {
     /** Dialog aria-label. */
     dialogLabel: string;
 }
-declare const BUG_REPORT_STRINGS: Record<Locale, BugReportStrings>;
-declare function getBugReportStrings(locale: Locale | string | undefined): BugReportStrings;
+declare const BUG_REPORT_STRINGS: Record<Locale$1, BugReportStrings>;
+declare function getBugReportStrings(locale: Locale$1 | string | undefined): BugReportStrings;
 
 interface BugReportButtonProps {
     /** The app's error logger (from `createErrorLogger` / `installErrorLogging`). */
     logger: Pick<ErrorLogger, 'report'>;
     /** UI language. Default `de`. */
-    locale?: Locale | string;
+    locale?: Locale$1 | string;
     /** Pre-fill the email field (e.g. the signed-in user's address). */
     email?: string;
     /** Corner to dock the button. Default `bottom-left` (keeps clear of Claire). */
@@ -1399,6 +1399,33 @@ interface PortalProps {
  */
 declare function Portal({ children, container }: PortalProps): react.ReactPortal | null;
 
+interface SearchHistoryEntry {
+    /** Backend row id (number) when persisted, or a synthetic local id offline. */
+    id: string;
+    /** The address/place label that was searched (the de-dup key per user). */
+    label: string;
+    lat: number | null;
+    lng: number | null;
+    /** The provider feature id of the picked result (e.g. geo.admin id), if any. */
+    featureId?: string | null;
+    /** Which app recorded the search (telemetry / "where did I find this"). */
+    appName?: string | null;
+    /** How many times this exact place has been searched. */
+    searchCount: number;
+    /** ISO timestamps. */
+    createdAt: string;
+    lastSearchedAt: string;
+}
+/** What a caller passes to record a search — the rest is filled by the backend. */
+interface RecordSearchInput {
+    label: string;
+    lat?: number | null;
+    lng?: number | null;
+    featureId?: string | null;
+    appName?: string | null;
+}
+type SearchHistoryStatus = 'idle' | 'loading' | 'ready' | 'error';
+
 interface MapUserMenuLabels {
     signIn: string;
     userMenu: string;
@@ -1435,7 +1462,7 @@ interface MapUserMenuAction {
 interface MapUserMenuProps {
     dark?: boolean;
     labels: MapUserMenuLabels;
-    locale?: Locale$1;
+    locale?: Locale$2;
     showSavedParcels?: boolean;
     savedParcelsOpenHereLabel?: string;
     extraItems?: MapUserMenuAction[];
@@ -1444,8 +1471,22 @@ interface MapUserMenuProps {
     dropdownSummary?: ReactNode;
     dropdownWidth?: 'default' | 'wide';
     onOpenSavedParcel?: (record: PrmRecord) => void;
+    /**
+     * Show the "My search history" row (opens the cross-app search-history modal).
+     * Defaults to `true` — the user's address searches roam across every Aireon
+     * app, so the account menu is the suite-standard place to review them.
+     */
+    showSearchHistory?: boolean;
+    /** Override the "My search history" row label (defaults to the localized string). */
+    searchHistoryLabel?: string;
+    /**
+     * "Open" a past search — the host decides what that means (map apps recenter on
+     * the entry's lat/lng). When omitted, falls back to a `?lat=&lng=&address=`
+     * reload of the current page.
+     */
+    onOpenSearch?: (entry: SearchHistoryEntry) => void;
 }
-declare function MapUserMenu({ dark, labels, locale, showSavedParcels, savedParcelsOpenHereLabel, extraItems, toolbarItems, toolbarLabel, dropdownSummary, dropdownWidth, onOpenSavedParcel, }: MapUserMenuProps): react_jsx_runtime.JSX.Element;
+declare function MapUserMenu({ dark, labels, locale, showSavedParcels, savedParcelsOpenHereLabel, extraItems, toolbarItems, toolbarLabel, dropdownSummary, dropdownWidth, onOpenSavedParcel, showSearchHistory, searchHistoryLabel, onOpenSearch, }: MapUserMenuProps): react_jsx_runtime.JSX.Element;
 
 declare const SCOORE_RADIUS_CIRCLES: {
     radius: number;
@@ -1901,8 +1942,8 @@ interface MapToolbarProps {
     dark?: boolean;
     /** Localized strings — the app owns its i18n and passes them in. */
     labels: MapToolbarLabels;
-    locale: Locale$2;
-    onLocaleChange: (locale: Locale$2) => void;
+    locale: Locale$3;
+    onLocaleChange: (locale: Locale$3) => void;
     /** Save image (Camera). Rendered only when provided. */
     onCapture?: () => void;
     isCapturing?: boolean;
@@ -1947,6 +1988,8 @@ interface AddressSearchLabels {
     clear: string;
     /** Optional sr-only live-region count, e.g. n => `${n} results`. */
     resultsCount?: (n: number) => string;
+    /** Header above the recent-searches list. Defaults to "Recent searches". */
+    recent?: string;
 }
 interface AddressSearchProps {
     dark?: boolean;
@@ -1969,17 +2012,30 @@ interface AddressSearchProps {
     debounceMs?: number;
     /** Called on a non-abort search error (e.g. to toast). */
     onError?: (err: unknown) => void;
+    /**
+     * Record every pick into the user's cross-app search history (and surface a
+     * "Recent searches" dropdown when the box is focused empty). Default `true`.
+     * The history persists per user on the RES backend, so it follows the user to
+     * every Aireon app.
+     */
+    history?: boolean;
+    /** App id stored alongside recorded searches (telemetry / provenance). */
+    appName?: string;
+    /** Max recent searches to show in the dropdown. Default 6. */
+    maxRecent?: number;
     className?: string;
 }
 /**
  * `AddressSearch` — the suite's address autocomplete: a search box with a
  * debounced, abortable lookup and a keyboard-navigable result dropdown (combobox
  * a11y, loading spinner, empty state). Defaults to the shared Swiss geo.admin
- * geocoder; pass `search` to plug in any provider. Self-contained styling via
+ * geocoder; pass `search` to plug in any provider. When `history` is on (the
+ * default) every pick is saved to the user's cross-app search history and the
+ * box shows a "Recent searches" dropdown on focus. Self-contained styling via
  * `@aireon/shared/map-ui.css` (the `aireon-search-*` classes), so it matches in
  * any host without Tailwind.
  */
-declare function AddressSearch({ dark, locale, labels, onSelect, search, minChars, debounceMs, onError, className, }: AddressSearchProps): react_jsx_runtime.JSX.Element;
+declare function AddressSearch({ dark, locale, labels, onSelect, search, minChars, debounceMs, onError, history, appName, maxRecent, className, }: AddressSearchProps): react_jsx_runtime.JSX.Element;
 
 interface AppNavbarProps {
     /** App name for the wordmark (e.g. "valoo"). */
@@ -1992,7 +2048,7 @@ interface AppNavbarProps {
      * no address lookup). `onSelect` fires with the picked result; the navbar also
      * remembers it to drive the "Open with" cross-app menu (see `openWith`).
      */
-    search?: Pick<AddressSearchProps, 'onSelect' | 'labels' | 'search' | 'locale' | 'onError' | 'minChars'>;
+    search?: Pick<AddressSearchProps, 'onSelect' | 'labels' | 'search' | 'locale' | 'onError' | 'minChars' | 'history' | 'maxRecent'>;
     /**
      * Custom center content (replaces the address search) for apps whose center
      * control isn't a plain address lookup — e.g. a multi-mode district search or
@@ -2044,6 +2100,120 @@ interface AppNavbarProps {
  * (`@aireon/shared/map-ui.css`); the app supplies positioning via `position`.
  */
 declare function AppNavbar({ appName, dark, hideHubLink, search, centerSlot, openWith, toolbar, actionsExtra, userMenu, position, brandTourId, searchTourId, userMenuTourId, className, }: AppNavbarProps): react_jsx_runtime.JSX.Element;
+
+interface UseSearchHistoryResult {
+    /** The user's recent searches, newest first. */
+    entries: SearchHistoryEntry[];
+    /** Loading state of the initial/refresh fetch. */
+    status: 'idle' | 'loading' | 'ready' | 'error';
+    /** True when a signed-in user is backing the history. */
+    authed: boolean;
+    /** Record (or bump) a search. Optimistic; persists in the background. */
+    record: (input: RecordSearchInput) => void;
+    /** Remove one entry by id. */
+    remove: (id: string) => void;
+    /** Clear the whole history. */
+    clear: () => void;
+    /** Force a reload from the backend. */
+    reload: () => void;
+}
+interface UseSearchHistoryOptions {
+    /**
+     * Optional auth-token hint. Components that already have the auth context
+     * (e.g. the account menu) can pass `getAccessToken()` here so the store
+     * reloads the moment the user signs in or out. Components without auth context
+     * (e.g. the address search box) can omit it — the store resolves the token
+     * lazily on its own.
+     */
+    authToken?: string | null;
+}
+/**
+ * `useSearchHistory` — subscribe to the suite-wide address search history. Backed
+ * by a singleton store (one fetch shared across every consumer in the app) that
+ * persists to the RES backend when signed in and to localStorage otherwise, so
+ * the same history follows the user across every Aireon app.
+ */
+declare function useSearchHistory(options?: UseSearchHistoryOptions): UseSearchHistoryResult;
+
+interface SearchHistorySnapshot {
+    entries: SearchHistoryEntry[];
+    status: SearchHistoryStatus;
+    /** True when there is a signed-in user backing the history. */
+    authed: boolean;
+}
+declare const searchHistoryStore: {
+    subscribe(listener: () => void): () => void;
+    getSnapshot(): SearchHistorySnapshot;
+    getServerSnapshot(): SearchHistorySnapshot;
+    /** Load once (first hook mount). Safe to call repeatedly. */
+    ensureInitialized(): void;
+    /** Re-check identity; reload when the signed-in user changed (login/logout). */
+    notifyAuthChanged(): Promise<void>;
+    /** Force a reload from the backend. */
+    reload(): Promise<void>;
+    /** Record (or bump) a search — optimistic, then persisted. */
+    record(input: RecordSearchInput): Promise<void>;
+    /** Remove one entry. */
+    remove(id: string): Promise<void>;
+    /** Clear the whole history for the current user. */
+    clear(): Promise<void>;
+};
+type SearchHistoryStore = typeof searchHistoryStore;
+
+type Locale = 'de' | 'en' | 'fr' | 'it';
+interface SearchHistoryStrings {
+    /** Account-menu row + modal title. */
+    menuRow: string;
+    title: string;
+    /** Header above the recent list in the AddressSearch dropdown. */
+    recent: string;
+    empty: string;
+    emptyHint: string;
+    signinRequired: string;
+    clearAll: string;
+    /** Confirming label after the first "Clear all" click. */
+    clearAllConfirm: string;
+    /** Per-row "open this place again" action. */
+    open: string;
+    remove: string;
+    close: string;
+    /** Trailing meta, e.g. "searched 3×". */
+    searchedTimes: (n: number) => string;
+}
+declare const SEARCH_HISTORY_STRINGS: Record<Locale, SearchHistoryStrings>;
+declare function getSearchHistoryStrings(locale?: Locale): SearchHistoryStrings;
+
+interface SearchHistoryModalProps {
+    /** Locale for the modal's UI text. Defaults to 'en'. */
+    locale?: Locale;
+    /** Close the modal. */
+    onClose: () => void;
+    /**
+     * "Open" a past search — the host decides what that means. Map apps typically
+     * recenter on the entry's lat/lng (and close). Receives the full entry.
+     * When omitted, entries with coordinates fall back to a `?lat=&lng=&address=`
+     * reload of the current page.
+     */
+    onOpen?: (entry: SearchHistoryEntry) => void;
+    /** Auth-token hint so the list refreshes immediately after sign-in. */
+    authToken?: string | null;
+    /**
+     * Force dark styling — needed because the modal portals to `document.body`
+     * and so escapes any nested `.dark` wrapper the app applies.
+     */
+    dark?: boolean;
+}
+declare function SearchHistoryModal({ locale, onClose, onOpen, authToken, dark, }: SearchHistoryModalProps): react.ReactPortal;
+
+declare const SEARCH_HISTORY_API_BASE = "https://res.zeroo.ch/res_api/search_history";
+/** The current user's recent searches, newest first. */
+declare function fetchSearchHistory(token: string): Promise<SearchHistoryEntry[]>;
+/** Record (or bump) one search. Returns the persisted entry. */
+declare function recordSearchEntry(token: string, input: RecordSearchInput): Promise<SearchHistoryEntry>;
+/** Remove a single history entry by id. */
+declare function deleteSearchEntry(token: string, id: string): Promise<void>;
+/** Clear the current user's entire history. */
+declare function clearSearchHistoryRemote(token: string): Promise<void>;
 
 declare module '@tanstack/react-table' {
     interface ColumnMeta<TData extends RowData, TValue> {
@@ -2166,4 +2336,4 @@ interface VirtualListProps<T> {
 }
 declare function VirtualList<T>({ items, renderItem, estimateSize, overscan, getItemKey, onEndReached, endReachedThreshold, loading, skeletonRows, emptyMessage, className, style, ariaLabel, }: VirtualListProps<T>): JSX.Element;
 
-export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AddressSearch, AddressSearch as AddressSearchDefault, type AddressSearchLabels, type AddressSearchProps, type AddressSearchResult, AireonAppWordmark, AireonAppWordmark as AireonAppWordmarkDefault, type AireonAppWordmarkProps, type AireonAppWordmarkSize, AireonHubLink, AireonHubLink as AireonHubLinkDefault, type AireonHubLinkProps, AireonLogo, AireonLogo as AireonLogoDefault, type AireonLogoProps, AppNavbar, AppNavbar as AppNavbarDefault, type AppNavbarProps, type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarGroup, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClairePoiMapPoint, type ClaireTurn, CompareToggleButton, CompareToggleButton as CompareToggleButtonDefault, type CompareToggleButtonLabels, type CompareToggleButtonProps, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, type LaunchApp, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MapToolbar, MapToolbar as MapToolbarDefault, type MapToolbarLabels, type MapToolbarProps, MapUserMenu, type MapUserMenuAction, MapUserMenu as MapUserMenuDefault, type MapUserMenuLabels, type MapUserMenuProps, MunicipalityFlag, type MunicipalityFlagProps, NavIconButton, NavIconButton as NavIconButtonDefault, type NavIconButtonProps, type OpenReplay, type OpenReplayOptions, OpenWithMenu, OpenWithMenu as OpenWithMenuDefault, type OpenWithMenuProps, OverflowNav, OverflowNav as OverflowNavDefault, type OverflowNavItem, type OverflowNavMode, type OverflowNavProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail as ParcelAerialThumbnailDefault, type ParcelAerialThumbnailLabels, type ParcelAerialThumbnailProps, type ParcelBadgeTone, type ParcelContextInput, ParcelOpenInMenu, type ParcelOpenInMenuProps, ParcelPanelShell, ParcelPanelShell as ParcelPanelShellDefault, type ParcelPanelShellLabels, type ParcelPanelShellProps, ParcelStatusBadge, type ParcelStatusBadgeProps, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, type ReleaseNotesController, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, ScooreMiniMap, ScooreMiniMap as ScooreMiniMapDefault, type ScooreMiniMapLabels, type ScooreMiniMapProps, SettingsMenu, SettingsMenu as SettingsMenuDefault, type SettingsMenuItem, type SettingsMenuProps, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseReleaseNotesOptions, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AddressSearch, AddressSearch as AddressSearchDefault, type AddressSearchLabels, type AddressSearchProps, type AddressSearchResult, AireonAppWordmark, AireonAppWordmark as AireonAppWordmarkDefault, type AireonAppWordmarkProps, type AireonAppWordmarkSize, AireonHubLink, AireonHubLink as AireonHubLinkDefault, type AireonHubLinkProps, AireonLogo, AireonLogo as AireonLogoDefault, type AireonLogoProps, AppNavbar, AppNavbar as AppNavbarDefault, type AppNavbarProps, type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarGroup, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClairePoiMapPoint, type ClaireTurn, CompareToggleButton, CompareToggleButton as CompareToggleButtonDefault, type CompareToggleButtonLabels, type CompareToggleButtonProps, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, type LaunchApp, type Locale$3 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MapToolbar, MapToolbar as MapToolbarDefault, type MapToolbarLabels, type MapToolbarProps, MapUserMenu, type MapUserMenuAction, MapUserMenu as MapUserMenuDefault, type MapUserMenuLabels, type MapUserMenuProps, MunicipalityFlag, type MunicipalityFlagProps, NavIconButton, NavIconButton as NavIconButtonDefault, type NavIconButtonProps, type OpenReplay, type OpenReplayOptions, OpenWithMenu, OpenWithMenu as OpenWithMenuDefault, type OpenWithMenuProps, OverflowNav, OverflowNav as OverflowNavDefault, type OverflowNavItem, type OverflowNavMode, type OverflowNavProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail as ParcelAerialThumbnailDefault, type ParcelAerialThumbnailLabels, type ParcelAerialThumbnailProps, type ParcelBadgeTone, type ParcelContextInput, ParcelOpenInMenu, type ParcelOpenInMenuProps, ParcelPanelShell, ParcelPanelShell as ParcelPanelShellDefault, type ParcelPanelShellLabels, type ParcelPanelShellProps, ParcelStatusBadge, type ParcelStatusBadgeProps, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$2 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type RecordSearchInput, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, type ReleaseNotesController, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SEARCH_HISTORY_API_BASE, SEARCH_HISTORY_STRINGS, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, ScooreMiniMap, ScooreMiniMap as ScooreMiniMapDefault, type ScooreMiniMapLabels, type ScooreMiniMapProps, type SearchHistoryEntry, type Locale as SearchHistoryLocale, SearchHistoryModal, type SearchHistoryModalProps, type SearchHistorySnapshot, type SearchHistoryStatus, type SearchHistoryStore, type SearchHistoryStrings, SettingsMenu, SettingsMenu as SettingsMenuDefault, type SettingsMenuItem, type SettingsMenuProps, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseReleaseNotesOptions, type UseSearchHistoryOptions, type UseSearchHistoryResult, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, clearSearchHistoryRemote, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, deleteSearchEntry, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, fetchSearchHistory, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, getSearchHistoryStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, recordSearchEntry, resolveKindMeta, saveClaireConversation, searchHistoryStore, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useSearchHistory, useUserProfile, userManager };
