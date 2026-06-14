@@ -54,7 +54,7 @@ export function AireonHubLink({
   onClick,
 }: AireonHubLinkProps) {
   return (
-    <span className={'inline-flex items-center gap-2 sm:gap-2.5 ' + className} style={style}>
+    <span className={'aireon-hublink inline-flex items-center gap-2 sm:gap-2.5 ' + className} style={style}>
       <a
         href={href}
         target={target}
@@ -63,20 +63,20 @@ export function AireonHubLink({
         aria-label={label}
         title={label}
         className={
-          'inline-flex h-9 w-9 items-center justify-center rounded-lg bg-transparent opacity-100 transition-opacity duration-150 hover:opacity-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ' +
+          'aireon-hublink-btn inline-flex h-9 w-9 items-center justify-center rounded-lg bg-transparent opacity-100 transition-opacity duration-150 hover:opacity-75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ' +
           linkClassName
         }
       >
         <span
           aria-hidden="true"
-          className={iconClassName}
+          className={'aireon-hublink-icon ' + iconClassName}
           style={{
             WebkitMask: `url(${AIREON_HUB_MARK_URL}) center / contain no-repeat`,
             mask: `url(${AIREON_HUB_MARK_URL}) center / contain no-repeat`,
           }}
         />
       </a>
-      {withDivider && <span aria-hidden="true" className={dividerClassName} />}
+      {withDivider && <span aria-hidden="true" className={'aireon-hublink-divider ' + dividerClassName} />}
     </span>
   );
 }

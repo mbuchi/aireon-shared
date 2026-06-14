@@ -40,13 +40,13 @@ function renderWordmarkParts(
   while ((match = re.exec(name)) !== null) {
     if (match.index > lastIndex) {
       parts.push(
-        <span key={`base-${lastIndex}`} className={baseClassName}>
+        <span key={`base-${lastIndex}`} className={`aireon-wm-base ${baseClassName}`}>
           {name.slice(lastIndex, match.index)}
         </span>,
       );
     }
     parts.push(
-      <span key={`accent-${match.index}`} className={accentClassName}>
+      <span key={`accent-${match.index}`} className={`aireon-wm-oo ${accentClassName}`}>
         {name.slice(match.index, match.index + 2)}
       </span>,
     );
@@ -82,7 +82,7 @@ export function AireonAppWordmark({
     <span
       {...rest}
       aria-label={ariaLabel ?? name}
-      className={`inline-flex items-baseline whitespace-nowrap font-normal leading-none select-none ${SIZE_CLASS[size]} ${className}`.trim()}
+      className={`aireon-wordmark aireon-wordmark--${size} inline-flex items-baseline whitespace-nowrap font-normal leading-none select-none ${SIZE_CLASS[size]} ${className}`.trim()}
       style={{ ...WORDMARK_STYLE, ...style }}
     >
       {renderWordmarkParts(name, baseClassName, accentClassName)}
