@@ -1,18 +1,18 @@
-export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
+import { Skeleton } from './chunk-756PMNQV.js';
+export { ComparablesPanel, Skeleton, SkeletonGroup, SkeletonText, getComparablesStrings, rankComparables } from './chunk-756PMNQV.js';
 import './chunk-6YKTLPIC.js';
 export { RES_API_BASE_URL, createResApiClient } from './chunk-J3SBZ4RV.js';
 import { fetchGeminiWithFallback } from './chunk-JGEYZH5N.js';
 export { GEMINI_FALLBACK_CHAIN, buildGeminiModelChain, fetchGeminiWithFallback, isRetriableGeminiStatus } from './chunk-JGEYZH5N.js';
 import { LocalStorageCache, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
 export { GEOADMIN_ADDRESS_SEARCH_CACHE_MAX_BYTES, GEOADMIN_ADDRESS_SEARCH_CACHE_TTL_MINUTES, GEOADMIN_ADDRESS_SEARCH_ENDPOINT, IndexedDBCache, LocalStorageCache, normalizeAddressSearchQuery, searchGeoAdminAddresses } from './chunk-SCW3XOJJ.js';
-import { Skeleton } from './chunk-756PMNQV.js';
-export { ComparablesPanel, Skeleton, SkeletonGroup, SkeletonText, getComparablesStrings, rankComparables } from './chunk-756PMNQV.js';
 import { loadMapboxStyleForMapLibre } from './chunk-JIP6DLQI.js';
 export { loadMapboxStyleForMapLibre, normalizeMapboxResourceUrl, normalizeMapboxStyle } from './chunk-JIP6DLQI.js';
+export { PARCEL_INTERACTION_MIN_ZOOM, isParcelInteractive, wireZoomGatedParcelClick } from './chunk-UNAJ7SZK.js';
 import { jsxs, jsx, Fragment } from 'react/jsx-runtime';
 import { createContext, useRef, useEffect, useState, useMemo, useCallback, useContext, Component, useId } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, ShieldAlert, CheckCircle2, MessageSquareText, Check, CircleUser, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, Settings, Camera, Sun, Moon, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { X, Tag, GitPullRequest, ExternalLink, Search, ChevronUp, ChevronDown, CheckCircle, Lock, MapPin, RefreshCw, Download, LayoutGrid, ArrowUpDown, Compass, Layers, Trash2, Plus, Loader2, SquareCode, AudioLines, PhoneOff, AlertCircle, Send, ShieldAlert, CheckCircle2, MessageSquareText, Check, CircleUser, Table2, LogOut, Map as Map$1, Maximize2, MoreHorizontal, Settings, Camera, Sun, Moon, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight, Copy } from 'lucide-react';
 import { WebStorageStateStore, UserManager } from 'oidc-client-ts';
 import { useReactTable, getPaginationRowModel, getFilteredRowModel, getSortedRowModel, getCoreRowModel, flexRender } from '@tanstack/react-table';
 export { createColumnHelper, flexRender } from '@tanstack/react-table';
@@ -6581,7 +6581,10 @@ var AerialLightbox = ({
   onCloseRef.current = onClose;
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === "Escape") onCloseRef.current();
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onCloseRef.current();
+      }
     };
     document.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
@@ -6745,6 +6748,437 @@ var ParcelAerialThumbnail = ({
   ] });
 };
 var ParcelAerialThumbnail_default = ParcelAerialThumbnail;
+
+// src/nav/launchApps.ts
+var LAUNCH_APPS = [
+  { id: "valoo", name: "valoo" },
+  { id: "scoore", name: "scoore" },
+  { id: "voogle", name: "voogle" },
+  { id: "roofs", name: "roofs" },
+  { id: "roots", name: "roots" },
+  { id: "geopool", name: "geopool" },
+  { id: "groove", name: "groove" },
+  { id: "woom", name: "woom" },
+  { id: "footprint", name: "footprint" },
+  { id: "proom", name: "proom" },
+  { id: "soolar", name: "soolar" },
+  { id: "boom", name: "boom" },
+  { id: "room", name: "room" },
+  { id: "snoop", name: "snoop" }
+];
+var LAUNCH_DEFAULT_ZOOM = "15.00";
+function buildDeepLink(appId, lat, lng, zoom = LAUNCH_DEFAULT_ZOOM) {
+  return `https://${appId}.aireon.ch/?lat=${lat}&lng=${lng}&zoom=${zoom}`;
+}
+function openInApp(appId, lat, lng, zoom = LAUNCH_DEFAULT_ZOOM) {
+  if (typeof window === "undefined") return;
+  window.open(buildDeepLink(appId, lat, lng, zoom), "_blank", "noopener,noreferrer");
+}
+var WIDTH_CLASS = {
+  380: "md:w-[380px]",
+  400: "md:w-[400px]",
+  420: "md:w-[420px]"
+};
+var TOP_CLASS = {
+  "3.5rem": "md:top-14 md:h-[calc(100dvh-3.5rem)]",
+  "4rem": "md:top-16 md:h-[calc(100dvh-4rem)]"
+};
+function CopyButton({
+  text,
+  darkMode,
+  copyLabel,
+  copiedLabel
+}) {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef(null);
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+  const onCopy = () => {
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopied(true);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 1800);
+    }).catch(() => {
+    });
+  };
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsx(
+      "button",
+      {
+        type: "button",
+        onClick: onCopy,
+        title: copied ? copiedLabel : copyLabel,
+        "aria-label": copied ? copiedLabel : copyLabel,
+        className: `inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md transition-all duration-150 ${copied ? darkMode ? "text-emerald-300" : "text-emerald-600" : darkMode ? "text-slate-500 hover:bg-white/[0.06] hover:text-slate-200" : "text-slate-400 hover:bg-slate-100 hover:text-slate-700"}`,
+        children: copied ? /* @__PURE__ */ jsx(Check, { size: 13 }) : /* @__PURE__ */ jsx(Copy, { size: 13 })
+      }
+    ),
+    /* @__PURE__ */ jsx("span", { role: "status", "aria-live": "polite", className: "sr-only", children: copied ? copiedLabel : "" })
+  ] });
+}
+var BADGE_TONES = {
+  emerald: { dark: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/20", light: "bg-emerald-50 text-emerald-700 ring-emerald-200", dot: "bg-emerald-400" },
+  amber: { dark: "bg-amber-500/15 text-amber-300 ring-amber-400/20", light: "bg-amber-50 text-amber-700 ring-amber-200", dot: "bg-amber-400" },
+  sky: { dark: "bg-sky-500/15 text-sky-300 ring-sky-400/20", light: "bg-sky-50 text-sky-700 ring-sky-200", dot: "bg-sky-400" },
+  slate: { dark: "bg-white/[0.06] text-slate-300 ring-white/10", light: "bg-slate-100 text-slate-600 ring-slate-200", dot: "bg-slate-400" },
+  indigo: { dark: "bg-indigo-500/15 text-indigo-300 ring-indigo-400/20", light: "bg-indigo-50 text-indigo-700 ring-indigo-200", dot: "bg-indigo-400" },
+  rose: { dark: "bg-rose-500/15 text-rose-300 ring-rose-400/20", light: "bg-rose-50 text-rose-700 ring-rose-200", dot: "bg-rose-400" }
+};
+function ParcelStatusBadge({ label, darkMode, tone = "emerald", dot = true, icon }) {
+  const t = BADGE_TONES[tone];
+  return /* @__PURE__ */ jsxs(
+    "span",
+    {
+      className: `inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.12em] ring-1 ${darkMode ? t.dark : t.light}`,
+      children: [
+        icon ?? (dot && /* @__PURE__ */ jsx("span", { className: `h-1.5 w-1.5 rounded-full ${t.dot}` })),
+        label
+      ]
+    }
+  );
+}
+var OPEN_IN_ZOOM = 17;
+function ParcelOpenInMenu({
+  lat,
+  lng,
+  label,
+  darkMode,
+  currentAppId,
+  apps = LAUNCH_APPS,
+  zoom = OPEN_IN_ZOOM,
+  fullWidth
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const list = apps.filter((a) => a.id !== currentAppId);
+  const disabled = lat == null || lng == null || list.length === 0;
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e) => {
+      if (!ref.current?.contains(e.target)) setOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        setOpen(false);
+      }
+    };
+    window.addEventListener("mousedown", onClick);
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("mousedown", onClick);
+      window.removeEventListener("keydown", onKey, true);
+    };
+  }, [open]);
+  const choose = (app) => {
+    if (lat == null || lng == null) return;
+    openInApp(app.id, lat, lng, zoom);
+    setOpen(false);
+  };
+  return /* @__PURE__ */ jsxs("div", { ref, className: `relative ${fullWidth ? "w-full" : ""}`, children: [
+    /* @__PURE__ */ jsxs(
+      "button",
+      {
+        type: "button",
+        onClick: () => setOpen((v) => !v),
+        disabled,
+        "aria-haspopup": "true",
+        "aria-expanded": open,
+        title: label,
+        className: `inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-45 ${fullWidth ? "w-full" : ""} ${darkMode ? "bg-white/[0.05] text-slate-200 ring-1 ring-white/[0.07] hover:bg-white/[0.08]" : "bg-slate-100 text-slate-800 ring-1 ring-slate-200 hover:bg-slate-200/70"}`,
+        children: [
+          /* @__PURE__ */ jsx(ExternalLink, { size: 14 }),
+          /* @__PURE__ */ jsx("span", { className: "truncate", children: label }),
+          /* @__PURE__ */ jsx(ChevronUp, { size: 13, className: `transition-transform ${open ? "rotate-180" : ""}` })
+        ]
+      }
+    ),
+    open && !disabled && /* @__PURE__ */ jsx(
+      "div",
+      {
+        className: `absolute bottom-full right-0 z-30 mb-2 max-h-64 w-44 overflow-y-auto rounded-xl border p-1 shadow-xl ${darkMode ? "border-white/10 bg-slate-900/95 backdrop-blur" : "border-slate-200 bg-white/95 backdrop-blur"}`,
+        children: list.map((app) => /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: () => choose(app),
+            className: `flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-xs font-medium transition-colors ${darkMode ? "text-slate-200 hover:bg-white/[0.06]" : "text-slate-700 hover:bg-slate-100"}`,
+            children: [
+              /* @__PURE__ */ jsx(MapPin, { size: 13, className: "flex-shrink-0 text-slate-400" }),
+              /* @__PURE__ */ jsx("span", { className: "truncate", children: app.name })
+            ]
+          },
+          app.id
+        ))
+      }
+    )
+  ] });
+}
+function ParcelPanelShell({
+  darkMode,
+  onClose,
+  aerial,
+  badges,
+  title,
+  subtitle,
+  parcelId,
+  parcelIdLabel = "EGRID",
+  headerActions,
+  headerExtras,
+  children,
+  footer,
+  openIn,
+  width = 400,
+  topOffset = "3.5rem",
+  zIndex = Z_INDEX.drawer,
+  labels,
+  className,
+  titleId: titleIdProp
+}) {
+  const [visible, setVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const dragStartYRef = useRef(null);
+  const closeBtnRef = useRef(null);
+  const previousFocusRef = useRef(null);
+  const panelRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const closeTimerRef = useRef(null);
+  const generatedId = useId();
+  const titleId = titleIdProp ?? `parcel-panel-title-${generatedId}`;
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement;
+    const id = requestAnimationFrame(() => closeBtnRef.current?.focus());
+    return () => {
+      cancelAnimationFrame(id);
+      const prev = previousFocusRef.current;
+      if (prev && typeof prev.focus === "function" && document.contains(prev)) prev.focus();
+      else document.body?.focus?.();
+    };
+  }, []);
+  const handleClose = () => {
+    if (closeTimerRef.current) return;
+    setVisible(false);
+    closeTimerRef.current = setTimeout(() => onCloseRef.current(), 300);
+  };
+  useEffect(() => () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+  }, []);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = panelRef.current;
+    if (!el) return;
+    const SEL = 'a[href],area[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),iframe,[tabindex]:not([tabindex="-1"])';
+    const onKey = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(el.querySelectorAll(SEL)).filter(
+        (n) => n.offsetParent !== null || n === document.activeElement
+      );
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey) {
+        if (active === first || !el.contains(active)) {
+          last.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (active === last || !el.contains(active)) {
+          first.focus();
+          e.preventDefault();
+        }
+      }
+    };
+    el.addEventListener("keydown", onKey);
+    return () => el.removeEventListener("keydown", onKey);
+  }, [isMobile]);
+  const onDragTouchStart = (e) => {
+    if (!isMobile) return;
+    const t = e.touches[0];
+    if (!t) return;
+    dragStartYRef.current = t.clientY;
+    setDragOffset(0);
+  };
+  const onDragTouchMove = (e) => {
+    if (!isMobile) return;
+    const start = dragStartYRef.current;
+    if (start == null) return;
+    const t = e.touches[0];
+    if (!t) return;
+    const delta = t.clientY - start;
+    setDragOffset(delta > 0 ? delta : 0);
+  };
+  const onDragTouchEnd = () => {
+    if (!isMobile) return;
+    const offset = dragOffset;
+    dragStartYRef.current = null;
+    if (offset > 80) handleClose();
+    setDragOffset(0);
+  };
+  const widthClass = WIDTH_CLASS[width] ?? WIDTH_CLASS[400];
+  const topClass = TOP_CLASS[topOffset] ?? TOP_CLASS["3.5rem"];
+  const footerNode = footer ?? (openIn ? /* @__PURE__ */ jsx(
+    ParcelOpenInMenu,
+    {
+      lat: openIn.lat,
+      lng: openIn.lng,
+      label: openIn.label,
+      darkMode,
+      currentAppId: openIn.currentAppId,
+      apps: openIn.apps,
+      fullWidth: true
+    }
+  ) : null);
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsx(
+      "div",
+      {
+        className: `fixed inset-0 transition-opacity duration-300 md:hidden ${visible ? "opacity-100 bg-black/40 backdrop-blur-sm" : "opacity-0 pointer-events-none"}`,
+        style: { zIndex: zIndex - 1 },
+        onClick: handleClose,
+        "aria-hidden": true
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      "div",
+      {
+        role: "dialog",
+        "aria-modal": isMobile || void 0,
+        "aria-labelledby": titleId,
+        className: `fixed transition-all duration-300
+          bottom-0 left-0 right-0 md:bottom-auto md:left-auto md:right-0 ${widthClass} ${topClass}
+          ${visible ? "translate-y-0 md:translate-x-0 opacity-100" : "translate-y-full md:translate-y-0 md:translate-x-full opacity-0"}`,
+        style: {
+          zIndex,
+          transitionTimingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
+          // Live drag transform is a mobile-only gesture; never override the
+          // desktop side-sheet's translate-x slide animation.
+          transform: isMobile && dragOffset > 0 && visible ? `translateY(${dragOffset}px)` : void 0,
+          transition: isMobile && dragOffset > 0 ? "none" : void 0
+        },
+        children: /* @__PURE__ */ jsxs(
+          "div",
+          {
+            ref: panelRef,
+            className: `h-full flex flex-col max-h-[88vh] md:max-h-full shadow-2xl pb-[env(safe-area-inset-bottom)] md:pb-0 ${darkMode ? "bg-[#0b0f15] md:border-l border-white/[0.06] text-slate-200" : "bg-white md:border-l border-gray-200/80 text-slate-900"} ${className ?? ""}`,
+            children: [
+              /* @__PURE__ */ jsx(
+                "div",
+                {
+                  className: "md:hidden flex justify-center pt-2.5 pb-1 touch-none cursor-grab active:cursor-grabbing",
+                  onTouchStart: onDragTouchStart,
+                  onTouchMove: onDragTouchMove,
+                  onTouchEnd: onDragTouchEnd,
+                  onTouchCancel: onDragTouchEnd,
+                  "aria-hidden": true,
+                  children: /* @__PURE__ */ jsx("div", { className: `w-10 h-1 rounded-full ${darkMode ? "bg-white/15" : "bg-gray-300"}` })
+                }
+              ),
+              /* @__PURE__ */ jsxs(
+                "div",
+                {
+                  className: `relative px-5 pt-3.5 pb-4 shrink-0 ${darkMode ? "bg-gradient-to-b from-white/[0.02] to-transparent" : "bg-gradient-to-b from-gray-50/80 to-transparent"}`,
+                  onTouchStart: onDragTouchStart,
+                  onTouchMove: onDragTouchMove,
+                  onTouchEnd: onDragTouchEnd,
+                  onTouchCancel: onDragTouchEnd,
+                  children: [
+                    /* @__PURE__ */ jsxs("div", { className: "flex items-start justify-between gap-3 mb-2.5", children: [
+                      /* @__PURE__ */ jsx("div", { className: "flex items-center gap-1.5 flex-wrap min-h-[1.25rem]", children: badges }),
+                      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 shrink-0", children: [
+                        headerActions,
+                        /* @__PURE__ */ jsx(
+                          "button",
+                          {
+                            ref: closeBtnRef,
+                            type: "button",
+                            onClick: handleClose,
+                            "aria-label": labels.close,
+                            title: labels.close,
+                            className: `w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 ${darkMode ? "text-gray-400 hover:text-white hover:bg-white/[0.08]" : "text-gray-400 hover:text-gray-700 hover:bg-gray-100"}`,
+                            children: /* @__PURE__ */ jsx(X, { size: 16 })
+                          }
+                        )
+                      ] })
+                    ] }),
+                    /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-3", children: [
+                      aerial && labels.aerial && /* @__PURE__ */ jsx(
+                        ParcelAerialThumbnail,
+                        {
+                          lng: aerial.lng,
+                          lat: aerial.lat,
+                          areaM2: aerial.areaM2 ?? null,
+                          dark: darkMode,
+                          labels: labels.aerial
+                        }
+                      ),
+                      /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
+                        /* @__PURE__ */ jsx(
+                          "h2",
+                          {
+                            id: titleId,
+                            className: `text-[18px] font-bold tracking-tight leading-snug ${darkMode ? "text-white" : "text-gray-900"}`,
+                            children: title
+                          }
+                        ),
+                        subtitle && /* @__PURE__ */ jsxs("p", { className: `text-[12.5px] mt-0.5 flex items-center gap-1.5 ${darkMode ? "text-gray-400" : "text-gray-500"}`, children: [
+                          /* @__PURE__ */ jsx(MapPin, { size: 11, className: "shrink-0" }),
+                          /* @__PURE__ */ jsx("span", { className: "truncate", children: subtitle })
+                        ] })
+                      ] })
+                    ] }),
+                    parcelId && /* @__PURE__ */ jsxs("div", { className: `mt-2.5 flex items-center gap-2 rounded-md px-2.5 py-1.5 ${darkMode ? "bg-black/25 text-slate-300" : "bg-white text-slate-700 ring-1 ring-slate-200"}`, children: [
+                      /* @__PURE__ */ jsx("span", { className: `flex-shrink-0 text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-slate-400"}`, children: parcelIdLabel }),
+                      /* @__PURE__ */ jsx("span", { className: "min-w-0 flex-1 break-all font-mono text-[11px] font-semibold leading-tight", children: parcelId }),
+                      /* @__PURE__ */ jsx(
+                        CopyButton,
+                        {
+                          text: parcelId,
+                          darkMode,
+                          copyLabel: labels.copy ?? "Copy",
+                          copiedLabel: labels.copied ?? "Copied"
+                        }
+                      )
+                    ] }),
+                    headerExtras && /* @__PURE__ */ jsx("div", { className: "mt-2.5 space-y-2.5", children: headerExtras })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsx("div", { className: `flex-1 overflow-y-auto px-5 pb-5 panel-scroll ${darkMode ? "panel-scroll-dark" : ""}`, children }),
+              footerNode && /* @__PURE__ */ jsxs("div", { className: `shrink-0 border-t px-5 py-3 ${darkMode ? "border-white/[0.06] bg-white/[0.02]" : "border-gray-200 bg-gray-50/70"}`, children: [
+                labels.primaryActions && /* @__PURE__ */ jsx("p", { className: `mb-2 text-[10px] font-semibold uppercase tracking-wide ${darkMode ? "text-gray-500" : "text-gray-400"}`, children: labels.primaryActions }),
+                footerNode
+              ] })
+            ]
+          }
+        )
+      }
+    )
+  ] });
+}
+var ParcelPanelShell_default = ParcelPanelShell;
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(false);
   useEffect(() => {
@@ -6900,32 +7334,6 @@ function NavIconButton({
   ] });
 }
 var NavIconButton_default = NavIconButton;
-
-// src/nav/launchApps.ts
-var LAUNCH_APPS = [
-  { id: "valoo", name: "valoo" },
-  { id: "scoore", name: "scoore" },
-  { id: "voogle", name: "voogle" },
-  { id: "roofs", name: "roofs" },
-  { id: "roots", name: "roots" },
-  { id: "geopool", name: "geopool" },
-  { id: "groove", name: "groove" },
-  { id: "woom", name: "woom" },
-  { id: "footprint", name: "footprint" },
-  { id: "proom", name: "proom" },
-  { id: "soolar", name: "soolar" },
-  { id: "boom", name: "boom" },
-  { id: "room", name: "room" },
-  { id: "snoop", name: "snoop" }
-];
-var LAUNCH_DEFAULT_ZOOM = "15.00";
-function buildDeepLink(appId, lat, lng, zoom = LAUNCH_DEFAULT_ZOOM) {
-  return `https://${appId}.aireon.ch/?lat=${lat}&lng=${lng}&zoom=${zoom}`;
-}
-function openInApp(appId, lat, lng, zoom = LAUNCH_DEFAULT_ZOOM) {
-  if (typeof window === "undefined") return;
-  window.open(buildDeepLink(appId, lat, lng, zoom), "_blank", "noopener,noreferrer");
-}
 function OpenWithMenu({
   location: location2,
   apps = LAUNCH_APPS,
@@ -7710,4 +8118,4 @@ function VirtualList({
   );
 }
 
-export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AddressSearch, AddressSearch_default as AddressSearchDefault, AireonAppWordmark, AireonAppWordmark_default as AireonAppWordmarkDefault, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AppNavbar, AppNavbar_default as AppNavbarDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapToolbar, MapToolbar_default as MapToolbarDefault, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, SettingsMenu, SettingsMenu_default as SettingsMenuDefault, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AddressSearch, AddressSearch_default as AddressSearchDefault, AireonAppWordmark, AireonAppWordmark_default as AireonAppWordmarkDefault, AireonHubLink, AireonHubLink_default as AireonHubLinkDefault, AireonLogo, AireonLogo_default as AireonLogoDefault, AppNavbar, AppNavbar_default as AppNavbarDefault, AuthProvider, Avatar, BUG_REPORT_STRINGS, BugReportButton, ClaireAssistant_default as ClaireAssistant, DATA_TABLE_STRINGS_EN, DataTable, ErrorLogBoundary, FlagApiError, GEOPOOL_APP_URL, GeminiConfigError, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, LocaleSelector, LocaleSelector_default as LocaleSelectorDefault, LoginModal, MapToolbar, MapToolbar_default as MapToolbarDefault, MapUserMenu, MapUserMenu_default as MapUserMenuDefault, MunicipalityFlag, NavIconButton, NavIconButton_default as NavIconButtonDefault, OpenWithMenu, OpenWithMenu_default as OpenWithMenuDefault, OverflowNav, OverflowNav_default as OverflowNavDefault, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail_default as ParcelAerialThumbnailDefault, ParcelOpenInMenu, ParcelPanelShell, ParcelPanelShell_default as ParcelPanelShellDefault, ParcelStatusBadge, Portal, AuthRequiredError as PrmAuthRequiredError, ProfileModal, RELEASE_NOTES_STRINGS, ReleaseNotesButton, ReleaseNotesPanel, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, ScooreMiniMap, ScooreMiniMap_default as ScooreMiniMapDefault, SettingsMenu, SettingsMenu_default as SettingsMenuDefault, TOOLBOX_APP_URL, VirtualList, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };

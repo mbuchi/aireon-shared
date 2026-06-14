@@ -1530,6 +1530,169 @@ interface ParcelAerialThumbnailProps {
 }
 declare const ParcelAerialThumbnail: ({ lng, lat, areaM2, zoom, sizePx, expandedPx, dark, labels, className, attribution, }: ParcelAerialThumbnailProps) => react_jsx_runtime.JSX.Element;
 
+interface LaunchApp {
+    /** App id == subdomain: `https://<id>.aireon.ch/`. */
+    id: string;
+    /** Display label (suite wordmarks are lowercase). */
+    name: string;
+}
+declare const LAUNCH_APPS: LaunchApp[];
+/** Default zoom for cross-app deep links (launchpad spec). */
+declare const LAUNCH_DEFAULT_ZOOM = "15.00";
+/** Build the deep link that opens `appId` at the given coordinates. */
+declare function buildDeepLink(appId: string, lat: number, lng: number, zoom?: string | number): string;
+/** Open `appId` at the given coordinates in a new tab. */
+declare function openInApp(appId: string, lat: number, lng: number, zoom?: string | number): void;
+
+/**
+ * `ParcelPanelShell` — the suite-standard chrome for a map-first app's
+ * parcel-click side panel.
+ *
+ * It owns the three regions every parcel panel shares, so individual apps stop
+ * re-implementing them (and drifting):
+ *
+ *   ┌───────────────────────────────┐
+ *   │ FIXED HEADER (shrink-0)        │  badges · actions · close
+ *   │  [aerial]  title              │  aerial thumbnail + address
+ *   │            subtitle           │  zip · city · canton
+ *   │  EGRID 1234…            ⧉     │  parcel-id chip (+ copy)
+ *   │  …headerExtras…               │  app-specific extra rows
+ *   ├───────────────────────────────┤
+ *   │ SCROLLABLE BODY (flex-1)      │  children — each app's focus content
+ *   │  …                            │
+ *   ├───────────────────────────────┤
+ *   │ FIXED FOOTER (shrink-0)        │  primary action — "Open in" drop-up
+ *   └───────────────────────────────┘
+ *
+ * The top (aerial · address · parcel id · status badges) and the bottom
+ * (primary action) are standardized; the middle is a free `children` slot so
+ * each app keeps its own focus content (valuation hero, zoning, scoring …).
+ *
+ * Lifted from valoo's reference panel: the mobile drag-to-close bottom-sheet,
+ * focus management (focus close on mount, restore on unmount), and the desktop
+ * right-edge side-sheet are all built in, so every adopting app gets the same
+ * polish for free. Engine- and i18n-agnostic: the four aerial strings + the
+ * chrome strings arrive via `labels`, the suite label-injection pattern.
+ */
+interface ParcelPanelShellLabels {
+    /** aria-label / title for the close (✕) button. */
+    close: string;
+    /** Eyebrow above the footer action. Default "Primary actions" upstream. */
+    primaryActions?: string;
+    /** Copy-button tooltip (idle). */
+    copy?: string;
+    /** Copy-button tooltip (after copy). */
+    copied?: string;
+    /** Aerial thumbnail strings, forwarded to <ParcelAerialThumbnail>. */
+    aerial?: ParcelAerialThumbnailLabels;
+}
+interface ParcelPanelShellProps {
+    darkMode: boolean;
+    onClose: () => void;
+    /**
+     * Aerial thumbnail shown top-left of the header, framed on the parcel
+     * centroid. Omit (or pass null) to hide it — but every map-first parcel panel
+     * should show it. Requires `labels.aerial`.
+     */
+    aerial?: {
+        lng: number;
+        lat: number;
+        areaM2?: number | null;
+    } | null;
+    /**
+     * Status badges row, rendered above the title (e.g. a "Parcel" pill and a
+     * "For sale" pill). Use <ParcelStatusBadge> for the suite look, or pass any
+     * node. Omit to hide the row.
+     */
+    badges?: ReactNode;
+    /** Header title — usually the parcel address, or a fallback like "Selected parcel". */
+    title: ReactNode;
+    /** Header subtitle — e.g. "8001 · Zürich · ZH". Omit to hide. */
+    subtitle?: ReactNode;
+    /**
+     * Parcel id / EGRID — rendered as a monospace chip with a copy button under
+     * the title block. Omit/null to hide the chip.
+     */
+    parcelId?: string | null;
+    /** Eyebrow on the parcel-id chip. Default "EGRID". */
+    parcelIdLabel?: string;
+    /**
+     * Top-right action buttons (save / export / compare / track …). The close
+     * button is appended automatically after these — do not include your own.
+     */
+    headerActions?: ReactNode;
+    /**
+     * Extra header rows rendered under the parcel-id chip, still inside the fixed
+     * header (a summary/advanced toggle, an extra coordinate chip, …).
+     */
+    headerExtras?: ReactNode;
+    /** The flexible scrollable middle — each app's focus content. */
+    children: ReactNode;
+    /**
+     * Fixed footer node. When provided it is rendered as-is inside the footer
+     * bar (under the `primaryActions` eyebrow). Takes precedence over `openIn`.
+     */
+    footer?: ReactNode;
+    /**
+     * Convenience: render the built-in "Open in" drop-up footer for these
+     * coordinates instead of a custom `footer`. Pass the current app id so the
+     * menu never offers to open the parcel in the app you're already in.
+     */
+    openIn?: {
+        lat: number | null;
+        lng: number | null;
+        /** Trigger label, e.g. "Open in". */
+        label: string;
+        currentAppId?: string;
+        /** Restrict / override the app list. Defaults to the suite's map-first apps. */
+        apps?: LaunchApp[];
+    } | null;
+    /** Panel width in px on desktop. Default 400. */
+    width?: 380 | 400 | 420;
+    /** Navbar offset from the top. Default '3.5rem' (matches a `top-14` navbar). */
+    topOffset?: string;
+    /** Stacking level. Default Z_INDEX.drawer (1000). */
+    zIndex?: number;
+    labels: ParcelPanelShellLabels;
+    /** Extra class names on the inner panel surface. */
+    className?: string;
+    /** aria-labelledby target id is generated; pass to override the dialog title id. */
+    titleId?: string;
+}
+type ParcelBadgeTone = 'emerald' | 'amber' | 'sky' | 'slate' | 'indigo' | 'rose';
+interface ParcelStatusBadgeProps {
+    label: ReactNode;
+    darkMode: boolean;
+    tone?: ParcelBadgeTone;
+    /** Show a leading dot (status indicator). Default true. */
+    dot?: boolean;
+    /** Optional leading icon (overrides the dot). */
+    icon?: ReactNode;
+}
+/** Suite-standard status pill for the panel header badges row. */
+declare function ParcelStatusBadge({ label, darkMode, tone, dot, icon }: ParcelStatusBadgeProps): react_jsx_runtime.JSX.Element;
+interface ParcelOpenInMenuProps {
+    lat: number | null;
+    lng: number | null;
+    label: string;
+    darkMode: boolean;
+    /** Exclude the current app from the list (so it never opens itself). */
+    currentAppId?: string;
+    /** Override the offered apps. Defaults to the suite's map-first apps. */
+    apps?: LaunchApp[];
+    /** Deep-link zoom. Defaults to the launch spec. */
+    zoom?: string | number;
+    fullWidth?: boolean;
+}
+/**
+ * The panel footer "Open in" affordance — a drop-UP menu (opens above the
+ * trigger, since it sits at the bottom of the panel) that hands the selected
+ * parcel off to another map-first suite app at the same spot. Panel-styled to
+ * match the shell; distinct from the navbar `OpenWithMenu`.
+ */
+declare function ParcelOpenInMenu({ lat, lng, label, darkMode, currentAppId, apps, zoom, fullWidth, }: ParcelOpenInMenuProps): react_jsx_runtime.JSX.Element;
+declare function ParcelPanelShell({ darkMode, onClose, aerial, badges, title, subtitle, parcelId, parcelIdLabel, headerActions, headerExtras, children, footer, openIn, width, topOffset, zIndex, labels, className, titleId: titleIdProp, }: ParcelPanelShellProps): react_jsx_runtime.JSX.Element;
+
 type OverflowNavMode = 'inline' | 'menu';
 interface OverflowNavItem {
     /** Stable identity for React keys. */
@@ -1615,20 +1778,6 @@ interface NavIconButtonProps {
  * Tailwind config.
  */
 declare function NavIconButton({ icon, label, onClick, active, dark, className, }: NavIconButtonProps): react_jsx_runtime.JSX.Element;
-
-interface LaunchApp {
-    /** App id == subdomain: `https://<id>.aireon.ch/`. */
-    id: string;
-    /** Display label (suite wordmarks are lowercase). */
-    name: string;
-}
-declare const LAUNCH_APPS: LaunchApp[];
-/** Default zoom for cross-app deep links (launchpad spec). */
-declare const LAUNCH_DEFAULT_ZOOM = "15.00";
-/** Build the deep link that opens `appId` at the given coordinates. */
-declare function buildDeepLink(appId: string, lat: number, lng: number, zoom?: string | number): string;
-/** Open `appId` at the given coordinates in a new tab. */
-declare function openInApp(appId: string, lat: number, lng: number, zoom?: string | number): void;
 
 interface OpenWithMenuProps {
     /**
@@ -1983,4 +2132,4 @@ interface VirtualListProps<T> {
 }
 declare function VirtualList<T>({ items, renderItem, estimateSize, overscan, getItemKey, onEndReached, endReachedThreshold, loading, skeletonRows, emptyMessage, className, style, ariaLabel, }: VirtualListProps<T>): JSX.Element;
 
-export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AddressSearch, AddressSearch as AddressSearchDefault, type AddressSearchLabels, type AddressSearchProps, type AddressSearchResult, AireonAppWordmark, AireonAppWordmark as AireonAppWordmarkDefault, type AireonAppWordmarkProps, type AireonAppWordmarkSize, AireonHubLink, AireonHubLink as AireonHubLinkDefault, type AireonHubLinkProps, AireonLogo, AireonLogo as AireonLogoDefault, type AireonLogoProps, AppNavbar, AppNavbar as AppNavbarDefault, type AppNavbarProps, type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarGroup, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClairePoiMapPoint, type ClaireTurn, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, type LaunchApp, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MapToolbar, MapToolbar as MapToolbarDefault, type MapToolbarLabels, type MapToolbarProps, MapUserMenu, type MapUserMenuAction, MapUserMenu as MapUserMenuDefault, type MapUserMenuLabels, type MapUserMenuProps, MunicipalityFlag, type MunicipalityFlagProps, NavIconButton, NavIconButton as NavIconButtonDefault, type NavIconButtonProps, type OpenReplay, type OpenReplayOptions, OpenWithMenu, OpenWithMenu as OpenWithMenuDefault, type OpenWithMenuProps, OverflowNav, OverflowNav as OverflowNavDefault, type OverflowNavItem, type OverflowNavMode, type OverflowNavProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail as ParcelAerialThumbnailDefault, type ParcelAerialThumbnailLabels, type ParcelAerialThumbnailProps, type ParcelContextInput, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, type ReleaseNotesController, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, ScooreMiniMap, ScooreMiniMap as ScooreMiniMapDefault, type ScooreMiniMapLabels, type ScooreMiniMapProps, SettingsMenu, SettingsMenu as SettingsMenuDefault, type SettingsMenuItem, type SettingsMenuProps, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseReleaseNotesOptions, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };
+export { AIREON_HUB_ICON_URL, AIREON_HUB_MARK_URL, AIREON_HUB_URL, AIREON_LOGO_ASPECT, AIREON_LOGO_PATH, AIREON_LOGO_VIEWBOX, AddressSearch, AddressSearch as AddressSearchDefault, type AddressSearchLabels, type AddressSearchProps, type AddressSearchResult, AireonAppWordmark, AireonAppWordmark as AireonAppWordmarkDefault, type AireonAppWordmarkProps, type AireonAppWordmarkSize, AireonHubLink, AireonHubLink as AireonHubLinkDefault, type AireonHubLinkProps, AireonLogo, AireonLogo as AireonLogoDefault, type AireonLogoProps, AppNavbar, AppNavbar as AppNavbarDefault, type AppNavbarProps, type AuthContextValue, AuthProvider, type AuthProviderProps, type AuthStatus, Avatar, type AvatarGroup, type AvatarOption, type AvatarProps, BUG_REPORT_STRINGS, BugReportButton, type BugReportButtonProps, type BugReportStrings, type CallMode, type CallRole, type ChangeItem, type ChangeKind, type ChatTurn, ClaireAssistant, type ClaireAssistantProps, type ClaireContext, type ClaireConversationSummary, type ClairePOIs, type ClairePoiMapPoint, type ClaireTurn, type CreatePrmInput, DATA_TABLE_STRINGS_EN, DataTable, type DataTableProps, type DataTableStrings, type ErrorKind, ErrorLogBoundary, type ErrorLogBoundaryProps, type ErrorLogContext, type ErrorLogger, type ErrorLoggerOptions, type ErrorSeverity, FlagApiError, type FlagFetchOptions, type FlagImageMode, type FlagRecord, GEOPOOL_APP_URL, type GeminiCallOptions, GeminiConfigError, type Gender, KIND_META, LAUNCH_APPS, LAUNCH_DEFAULT_ZOOM, LEGACY_GEOPOOL_APP_URL, LEGACY_PROOM_APP_URL, LEGACY_TOOLBOX_APP_URL, type LaunchApp, type Locale$2 as Locale, LocaleSelector, LocaleSelector as LocaleSelectorDefault, type LocaleSelectorProps, type LocationScore, LoginModal, type LoginModalFeature, type LoginModalProps, MapToolbar, MapToolbar as MapToolbarDefault, type MapToolbarLabels, type MapToolbarProps, MapUserMenu, type MapUserMenuAction, MapUserMenu as MapUserMenuDefault, type MapUserMenuLabels, type MapUserMenuProps, MunicipalityFlag, type MunicipalityFlagProps, NavIconButton, NavIconButton as NavIconButtonDefault, type NavIconButtonProps, type OpenReplay, type OpenReplayOptions, OpenWithMenu, OpenWithMenu as OpenWithMenuDefault, type OpenWithMenuProps, OverflowNav, OverflowNav as OverflowNavDefault, type OverflowNavItem, type OverflowNavMode, type OverflowNavProps, PRM_PRIORITIES, PRM_STATES, PROOM_APP_URL, ParcelAerialThumbnail, ParcelAerialThumbnail as ParcelAerialThumbnailDefault, type ParcelAerialThumbnailLabels, type ParcelAerialThumbnailProps, type ParcelBadgeTone, type ParcelContextInput, ParcelOpenInMenu, type ParcelOpenInMenuProps, ParcelPanelShell, ParcelPanelShell as ParcelPanelShellDefault, type ParcelPanelShellLabels, type ParcelPanelShellProps, ParcelStatusBadge, type ParcelStatusBadgeProps, Portal, type PortalProps, AuthRequiredError as PrmAuthRequiredError, type Locale$1 as PrmLocale, type PrmPriority, type PrmRecord, type PrmState, ProfileModal, type ProfileModalProps, RELEASE_NOTES_STRINGS, type Release, ReleaseNotesButton, type ReleaseNotesButtonProps, type ReleaseNotesController, ReleaseNotesPanel, type ReleaseNotesPanelProps, type ReleaseNotesStrings, SAVED_PARCELS_STRINGS, SCOORE_CATEGORY_COLORS, SCOORE_RADIUS_CIRCLES, SSO_ATTEMPTED_KEY, SWISSNOVO_APP_CATALOG, SWISSNOVO_SUITE_BLURB, SavedParcelsModal, type SavedParcelsModalProps, type SavedParcelsStrings, ScooreMiniMap, ScooreMiniMap as ScooreMiniMapDefault, type ScooreMiniMapLabels, type ScooreMiniMapProps, SettingsMenu, SettingsMenu as SettingsMenuDefault, type SettingsMenuItem, type SettingsMenuProps, type SignalClient, type SignalClientOptions, type SignalTarget, Skeleton, SkeletonGroup, type SkeletonProps, type SkeletonProviderProps, SkeletonText, type SkeletonTextProps, type StartVoiceCallOptions, type StreamParcelChatReplyOptions, type SwissnovoProfile, TOOLBOX_APP_URL, type UseFocusTrapOptions, type UseMunicipalityFlagResult, type UseReleaseNotesOptions, type UseUserProfileResult, VirtualList, type VirtualListProps, type VoiceCallCallbacks, type VoiceCallSession, type ZIndexKey, Z_INDEX, aerialThumbnailZoom, avatarOptions, avatarUrl, avatarUrlById, avatarUrlFromSeed, buildDeepLink, buildParcelContextSummary, buildSwisstopoAerialUrl, canonicalKind, clearFlagCache, computeLocationScore, createErrorLogger, createPrmRecord, createScooreCircleGeoJSON, createSignalClient, defaultProfile, deletePrmRecord, emailOf, fetchClaireContext, fetchClairePOIs, fetchFlagSvgMarkup, fetchPrmByParcel, fetchPrmRecords, fetchRemoteProfile, firstNameOf, fullNameOf, generateParcelChatReply, getAllFlags, getAuthToken, getBugReportStrings, getExistingUser, getFlagApiBase, getFlagByBfs, getFlagsByCanton, getProfile, getReleaseNotesStrings, getSavedParcelsStrings, hydrateFromRemote, identifyOpenReplayUser, initOpenReplay, initialsOf, installErrorLogging, isSvgFlagUrl, listClaireConversations, loadClaireConversation, openInApp, pictureOf, resolveKindMeta, saveClaireConversation, sendClaireMessageSignal, setFlagApiBase, startVoiceCall, stopOpenReplay, streamParcelChatReply, stripAuthParams, subscribe as subscribeProfile, updatePrmPriority, updatePrmState, updatePrmTags, updateProfile, urlHasAuthParams, useAuth, useFocusTrap, useMunicipalityFlag, useReleaseNotes, useUserProfile, userManager };

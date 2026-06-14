@@ -131,7 +131,13 @@ const AerialLightbox = ({
   onCloseRef.current = onClose;
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCloseRef.current(); };
+    // stopPropagation so the Escape that closes this lightbox doesn't also
+    // bubble up to a host panel's window-level Escape handler (e.g.
+    // ParcelPanelShell) and tear the whole panel down. `document` sits below
+    // `window` in the bubble path, so halting here is sufficient.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.stopPropagation(); onCloseRef.current(); }
+    };
     document.addEventListener('keydown', onKey);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden'; // lock background scroll

@@ -308,6 +308,24 @@ export type {
   ParcelAerialThumbnailProps,
 } from './map/ParcelAerialThumbnail';
 
+// Suite-standard parcel-panel chrome: the fixed header (aerial · address ·
+// parcel-id chip · status badges · actions · close), the scrollable flexible
+// middle (`children`), and the fixed "Open in" footer — so every map-first
+// app's parcel-click side panel shares one top/bottom and stops drifting.
+export {
+  ParcelPanelShell,
+  default as ParcelPanelShellDefault,
+  ParcelOpenInMenu,
+  ParcelStatusBadge,
+} from './map/ParcelPanelShell';
+export type {
+  ParcelPanelShellProps,
+  ParcelPanelShellLabels,
+  ParcelOpenInMenuProps,
+  ParcelStatusBadgeProps,
+  ParcelBadgeTone,
+} from './map/ParcelPanelShell';
+
 // Suite-wide parcel-interaction zoom gate — the single threshold + predicate
 // every map-first app uses so hover-highlight and click-to-select only come
 // alive once the map is zoomed past block level (and stay in lock-step).
