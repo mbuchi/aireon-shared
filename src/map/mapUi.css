@@ -1412,3 +1412,29 @@
    search area but without the address-box max-width. */
 .aireon-appnav-center { display: flex; align-items: center; flex: 1 1 0%; min-width: 0; margin-left: 1rem; }
 @media (min-width: 640px) { .aireon-appnav-center { margin-left: 2rem; } }
+
+/* ============================================================================
+   Brand glyphs — self-contained so AppNavbar's wordmark + hub mark render
+   correctly in apps WITHOUT Tailwind. Additive: values match the Tailwind
+   utilities the components also apply, so the Tailwind apps are unaffected.
+   ============================================================================ */
+.aireon-wordmark { display: inline-flex; align-items: baseline; white-space: nowrap; font-weight: 400; line-height: 1; }
+.aireon-wordmark--nav { font-size: 1.25rem; }          /* text-xl */
+@media (min-width: 640px) { .aireon-wordmark--nav { font-size: 1.5rem; } }   /* sm:text-2xl */
+.aireon-wordmark--compact { font-size: 1.25rem; }      /* text-xl */
+.aireon-wordmark--large { font-size: 1.5rem; }         /* text-2xl */
+@media (min-width: 640px) { .aireon-wordmark--large { font-size: 1.875rem; } } /* sm:text-3xl */
+.aireon-wm-oo { color: rgb(239 68 68); }               /* text-red-500 */
+.dark .aireon-wm-oo, [data-theme="dark"] .aireon-wm-oo { color: rgb(248 113 113); } /* dark:text-red-400 */
+
+.aireon-hublink { display: inline-flex; align-items: center; gap: 0.5rem; }
+@media (min-width: 640px) { .aireon-hublink { gap: 0.625rem; } }
+.aireon-hublink-btn { display: inline-flex; height: 2.25rem; width: 2.25rem; align-items: center; justify-content: center; border-radius: 0.5rem; background: transparent; transition: opacity 150ms ease; }
+.aireon-hublink-btn:hover { opacity: 0.75; }
+.aireon-hublink-icon { display: inline-block; height: 1.5rem; width: 1.5rem; background: currentColor; }
+.aireon-hublink-divider { height: 1.25rem; width: 1px; background: currentColor; opacity: 0.2; }
+
+/* AppNavbar brand inherits a sensible text colour so the wordmark base + hub mark
+   (currentColor) render without Tailwind. Tailwind apps override per-glyph, so unaffected. */
+.aireon-appnav-bar .aireon-appnav-brand { color: rgb(17 24 39); }
+.aireon-appnav-bar--dark .aireon-appnav-brand { color: rgb(241 245 249); }
