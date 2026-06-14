@@ -18,7 +18,10 @@ export interface AppNavbarProps {
    * no address lookup). `onSelect` fires with the picked result; the navbar also
    * remembers it to drive the "Open with" cross-app menu (see `openWith`).
    */
-  search?: Pick<AddressSearchProps, 'onSelect' | 'labels' | 'search' | 'locale' | 'onError' | 'minChars'>;
+  search?: Pick<
+    AddressSearchProps,
+    'onSelect' | 'labels' | 'search' | 'locale' | 'onError' | 'minChars' | 'history' | 'maxRecent'
+  >;
 
   /**
    * Custom center content (replaces the address search) for apps whose center
@@ -114,7 +117,7 @@ export function AppNavbar({
 
           {search ? (
             <div className="aireon-appnav-search" data-tour={searchTourId}>
-              <AddressSearch dark={dark} {...search} onSelect={handlePick} />
+              <AddressSearch dark={dark} appName={appName} {...search} onSelect={handlePick} />
             </div>
           ) : centerSlot ? (
             <div className="aireon-appnav-center" data-tour={searchTourId}>{centerSlot}</div>
