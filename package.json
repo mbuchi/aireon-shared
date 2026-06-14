@@ -55,6 +55,7 @@
     "./assets/brand/*": "./dist/assets/brand/*",
     "./map-ui.css": "./src/map/mapUi.css",
     "./basemap.css": "./src/basemap/basemap.css",
+    "./scrollbars.css": "./src/styles/scrollbars.css",
     "./cesium-app": "./src/cesium-app/index.js",
     "./cesium-app/*": "./src/cesium-app/*"
   },
@@ -62,7 +63,8 @@
     "dist",
     "src/map/mapUi.css",
     "src/cesium-app",
-    "src/basemap/basemap.css"
+    "src/basemap/basemap.css",
+    "src/styles/scrollbars.css"
   ],
   "sideEffects": false,
   "scripts": {

@@ -1,0 +1,75 @@
+/*
+ * Shared dark-theme scrollbars — one design for every Aireon app.
+ *
+ * Import once per app, after the app's own global CSS:
+ *   import '@aireon/shared/scrollbars.css';
+ *
+ * Only active under the suite's dark theme — either the Tailwind
+ * `darkMode: 'class'` flag (`.dark` on <html>) or `[data-theme="dark"]`,
+ * mirroring the selector convention already used in mapUi.css. Light theme
+ * is left untouched so the native OS scrollbar shows through there.
+ *
+ * Design: a slim, floating slate pill (slate-400 #94a3b8) on a transparent
+ * track, rounded full via a transparent border + background-clip, that lightens
+ * on hover/active. The selectors cover BOTH the themed element's own scrollbar
+ * (the root viewport bar, since `.dark` lives on <html>) and every descendant
+ * scroll container, so panels, lists and the page itself all match.
+ *
+ * Per-component scrollbars that deliberately differ (e.g. Claire's 3px
+ * `.chat-scroll`, or mapUi's hidden `.map-shell-actions` bar) win via
+ * equal-or-higher specificity / `display:none`, so this never clobbers them.
+ */
+
+/* ── Firefox + the modern standard properties (inherit from the themed root) ── */
+.dark,
+[data-theme="dark"] {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+/* ── WebKit / Blink (Chrome, Edge, Safari): root viewport bar + all descendants ── */
+.dark::-webkit-scrollbar,
+.dark ::-webkit-scrollbar,
+[data-theme="dark"]::-webkit-scrollbar,
+[data-theme="dark"] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.dark::-webkit-scrollbar-track,
+.dark ::-webkit-scrollbar-track,
+[data-theme="dark"]::-webkit-scrollbar-track,
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark::-webkit-scrollbar-thumb,
+.dark ::-webkit-scrollbar-thumb,
+[data-theme="dark"]::-webkit-scrollbar-thumb,
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.4);
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: padding-box;
+}
+
+.dark::-webkit-scrollbar-thumb:hover,
+.dark ::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"]::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.6);
+}
+
+.dark::-webkit-scrollbar-thumb:active,
+.dark ::-webkit-scrollbar-thumb:active,
+[data-theme="dark"]::-webkit-scrollbar-thumb:active,
+[data-theme="dark"] ::-webkit-scrollbar-thumb:active {
+  background-color: rgba(148, 163, 184, 0.75);
+}
+
+.dark::-webkit-scrollbar-corner,
+.dark ::-webkit-scrollbar-corner,
+[data-theme="dark"]::-webkit-scrollbar-corner,
+[data-theme="dark"] ::-webkit-scrollbar-corner {
+  background: transparent;
+}
